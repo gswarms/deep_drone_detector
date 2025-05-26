@@ -26,7 +26,8 @@ class DetectorTracker:
     detect and track blobs in image
     """
     def __init__(self, detector_model_file_path, detection_frame_size,
-                 detection_confidence_th=0.2, bbox_roi_intersection_th=0.1, detector_use_cpu=False):
+                 detection_confidence_th=0.2, bbox_roi_intersection_th=0.1,
+                 detector_use_cpu=False, verbose=False):
         """
         Detect and track fixed wing UAV
 
@@ -39,9 +40,12 @@ class DetectorTracker:
         self.detection_frame_size = detection_frame_size
         self.detection_confidence_th = detection_confidence_th
         self.bbox_roi_intersection_th = bbox_roi_intersection_th
+        self.detector_use_cpu = detector_use_cpu
+        self.verbose = verbose
 
         # Setup detection
-        self.detector = detection.SingleFrameDetector(detector_model_file_path, use_cpu=detector_use_cpu)
+        self.detector = detection.SingleFrameDetector(detector_model_file_path,
+                                                      use_cpu=self.detector_use_cpu, verbose=self.verbose)
 
 
         self.detection_roi_polygon = None

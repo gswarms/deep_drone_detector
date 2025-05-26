@@ -10,17 +10,20 @@ class SingleFrameDetector:
     """
     This object finds circular blobs in stereo images, and triangulates the 3D position of the correspnding landmarks
     """
-    def __init__(self, model_file_path, use_cpu=False):
+    def __init__(self, model_file_path, use_cpu=False, verbose=False):
         """
         setup detection
 
         :param model_file_path: path to deep neural network model file
         :param use_cpu: force to use CPU even if GPU exists (used for timing tests)
         """
+        self.verbose = verbose
         if os.path.isfile(model_file_path):
             self.model = YOLO(model_file_path)
             if use_cpu:
                 self.model.to('cpu')
+                if self.verbose:
+                    print('using CPU only!')
 
 
     def detect(self, image, frame_resize=None):
@@ -55,10 +58,10 @@ class SingleFrameDetector:
         if no_resize:
             # cv2.imshow('yolo input', image)
             # cv2.waitKey(25)
-            results = self.model(image, imgsz=(image.shape[:2]))  # keep image original size
+            results = self.model(image, imgsz=(image.shape[:2]), verbose=self.verbose)  # keep image original size
         else:
             img_resized = cv2.resize(image, frame_resize)
-            results = self.model(img_resized, imgsz=frame_resize[-1::-1])  # change imgsz
+            results = self.model(img_resized, imgsz=frame_resize[-1::-1], verbose=self.verbose)  # change imgsz
 
         res = []
         for r in results:
