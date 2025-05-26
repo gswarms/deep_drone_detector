@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 
 # Load a YOLOv8n model (nano)
-model = YOLO('../yolov8n.pt')
+model = YOLO('../models/yolov8n.pt')
 
 
 
