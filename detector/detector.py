@@ -55,7 +55,7 @@ class SingleFrameDetector:
         if no_resize:
             # cv2.imshow('yolo input', image)
             # cv2.waitKey(25)
-            results = self.model(image)  # keep image original size
+            results = self.model(image, imgsz=(image.shape[:2]))  # keep image original size
         else:
             img_resized = cv2.resize(image, frame_resize)
             results = self.model(img_resized, imgsz=frame_resize[-1::-1])  # change imgsz

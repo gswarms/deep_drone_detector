@@ -14,6 +14,7 @@ from triton.language import dtype
 
 import detector
 
+
 if cv_core.__version__ != '0.1.1':
     raise Exception('invalid cv_core version {}! must be 0.1.1'.format(cv_core.__version__))
 # import time

@@ -7,7 +7,6 @@ import numpy as np
 from test_utils.roi_utils import PolygonPerFrame
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import detector_tracker
 from test_utils.standard_record import StandardRecord
 from ultralytics import YOLO
 
@@ -38,9 +37,9 @@ if __name__ == '__main__':
     # polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_133041_polygons.yaml')  # ***optional
 
     use_cpu = False
-    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
+    yolo_model_path = '../runs/detect/drone_detector_yolov8n/weights/best.pt'
     if os.path.isfile(yolo_model_path):
-            yolo_model = YOLO('runs/detect/drone_detector_yolov8n/weights/best.pt')
+            yolo_model = YOLO('../runs/detect/drone_detector_yolov8n/weights/best.pt')
             if use_cpu:
                 yolo_model.to('cpu')
 

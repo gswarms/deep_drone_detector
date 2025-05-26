@@ -3,7 +3,7 @@ from ultralytics import YOLO
 import cv2
 
 # Load your saved model
-model1 = YOLO('runs/detect/drone_detector_yolov8n/weights/best.pt')
+model1 = YOLO('../runs/detect/drone_detector_yolov8n/weights/best.pt')
 model1.to('cpu')
 
 # Run inference
@@ -35,7 +35,7 @@ for i in range(len(img_resize_shape)):
 
 # Run inference
 # --------------------------------------------------------
-model2 = YOLO('runs/detect/drone_detector_yolov8n/weights/best.pt')
+model2 = YOLO('../runs/detect/drone_detector_yolov8n/weights/best.pt')
 results = model2.predict(test_img_file, imgsz=(320, 240))
 test_imgs = test_img_file * 10
 t1 = time.monotonic()
