@@ -24,7 +24,8 @@ class DetectorTracker:
     """
     detect and track blobs in image
     """
-    def __init__(self, detector_model_file_path, detection_frame_size, detection_confidence_th, detector_use_cpu=False):
+    def __init__(self, detector_model_file_path, detection_frame_size,
+                 detection_confidence_th=0.2, bbox_roi_intersection_th=0.1, detector_use_cpu=False):
         """
         Detect and track fixed wing UAV
 
@@ -36,6 +37,7 @@ class DetectorTracker:
         """
         self.detection_frame_size = detection_frame_size
         self.detection_confidence_th = detection_confidence_th
+        self.bbox_roi_intersection_th = bbox_roi_intersection_th
 
         # Setup detector
         self.detector = detector.SingleFrameDetector(detector_model_file_path, use_cpu=detector_use_cpu)
@@ -185,13 +187,18 @@ class DetectorTracker:
                                  r['bbox'][1] + self.detection_roi_bbox[1],
                                  r['bbox'][2], r['bbox'][3])
 
+                # discard detections of the roi polygon
+                valid_results = []
+                for r in results:
+                    bbox_intersects = self._bbox_in_detection_polygon(r['bbox'])
+                    if bbox_intersects:
+                        valid_results.append(r)
+
                 # update self.tracks
                 self.tracks = []
-                for i, bbox in enumerate(results):
+                for i, bbox in enumerate(valid_results):
                     self.tracks.append({'id': i, 'score': bbox['confidence'], 'bbox': bbox['bbox']})
 
-                # TODO: disqualify any detection that is not in the roi polygon
-                aa=5
 
             elif self.detection_roi_method == 'resize':
                 # make sure roi is inside the image
@@ -212,6 +219,22 @@ class DetectorTracker:
                 a = 5
 
         return self.tracks
+
+    def _bbox_in_detection_polygon(self, bbox):
+
+        bbox = [int(np.floor(v)) for v in bbox]
+        bbox_points = np.array([[bbox[0], bbox[1]],
+                                [bbox[0] + bbox[2], bbox[1]],
+                                [bbox[0] + bbox[2], bbox[1] + bbox[3]],
+                                [bbox[0], bbox[1] + bbox[3]]], dtype=np.int32)
+        poly = np.floor(self.detection_roi_polygon).astype(np.int32)
+        retval, intersected_polygon = cv2.intersectConvexConvex(bbox_points, poly)
+        bbx_intersects = False
+        if retval > 0:
+            bbox_area = bbox[2] * bbox[3]
+            if retval >= bbox_area * self.bbox_roi_intersection_th:
+                bbx_intersects = True
+        return bbx_intersects
 
     def draw(self, img):
         """

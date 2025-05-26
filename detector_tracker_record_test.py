@@ -47,7 +47,8 @@ if __name__ == '__main__':
     # setup blob tracker
     detection_frame_size = (320, 256)
     dttr = detector_tracker.DetectorTracker(yolo_model_path, detection_frame_size,
-                                            detection_confidence_th=0.1, detector_use_cpu=False)
+                                            detection_confidence_th=0.1, bbox_roi_intersection_th=0.1,
+                                            detector_use_cpu=False)
 
     # get roi polygons per frame
     if polygons_file is not None:
