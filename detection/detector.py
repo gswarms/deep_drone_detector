@@ -24,6 +24,8 @@ class SingleFrameDetector:
                 self.model.to('cpu')
                 if self.verbose:
                     print('using CPU only!')
+            if self.verbose:
+                self.model.info(verbose=True)
 
 
     def detect(self, image, frame_resize=None):
@@ -58,10 +60,10 @@ class SingleFrameDetector:
         if no_resize:
             # cv2.imshow('yolo input', image)
             # cv2.waitKey(25)
-            results = self.model(image, imgsz=(image.shape[:2]), verbose=self.verbose)  # keep image original size
+            results = self.model(image, imgsz=(image.shape[:2]), stream=False, verbose=self.verbose)  # keep image original size
         else:
             img_resized = cv2.resize(image, frame_resize)
-            results = self.model(img_resized, imgsz=frame_resize[-1::-1], verbose=self.verbose)  # change imgsz
+            results = self.model(img_resized, imgsz=frame_resize[-1::-1], stream=False, verbose=self.verbose)  # change imgsz
 
         res = []
         for r in results:
