@@ -6,8 +6,13 @@ __pycache__/
 # C extensions
 *.so
 
+# nural network models
+*.pt
+
 # Distribution / packaging
+.idea
 .Python
+runs/
 build/
 develop-eggs/
 dist/
