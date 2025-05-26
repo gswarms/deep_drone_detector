@@ -72,12 +72,13 @@ pip install -r requirements.txt
 
 ### 🧠 Neural Network Model Setup
 
-By default, the system uses [YOLOv8n](https://github.com/ultralytics/ultralytics) for detection. You can also plug in your own trained model.
+We currently use an [ultralytics-YOLOv8n](https://github.com/ultralytics/ultralytics) that has been transfer-learned with our own rc-plane images dataset.
+The model parameter files are currently stored as github release assets.
 
-```python
-# Inside detection.py
-model = YOLO('yolov8n.pt')  # Replace with path to your custom model if needed
-```
+The models should be downloaded from github release along with the corresponding version of the code.
+
+Alternatively the `model_path` parameter can point to any ultralytics compatible model.  
+
 
 
 ---
@@ -85,24 +86,35 @@ model = YOLO('yolov8n.pt')  # Replace with path to your custom model if needed
 
 ### ▶️ Running the System
 
-Use \`main.py\` to start the detection and tracking pipeline:
+
+Use the ***DetectorTracker*** object.
+
+You can configure options using parameters:
+- detector_model_file_path - path to detection deep learning model
+- detection_frame_size - (image width, image height) for detection image
+                                       image will automatically be resized or cropped to this size!
+- detection_confidence_th - minimal confidence threshold for accepting object detection
+- detector_use_cpu - force using CPU for detection even if GPU exists (used for timing tests)
+
+
+Use \`detector_tracker_record_test.py\` to perform detection on an image library:
 
 ```bash
 python detector_tracker_record_test.py
 ```
 
-You can configure options in \`config.yaml\`, including:
-
-- Camera source (e.g., webcam, RTSP stream)
-- Detection confidence threshold
-- Output save path
 
 ### 📊 Output
 
+The ***DetectorTracker*** object outputs a list of tracks after each step.
+Each track has: id, bbox, score
+
+
+The \`detector_tracker_record_test.py\`:
 - Real-time video display with bounding boxes and tracking IDs
 - Optionally saves:
   - Processed video output (\`output.avi\`)
-  - Tracking log (\`track_log.csv\`)
+
 
 
 ---
