@@ -12,7 +12,7 @@ import numpy as np
 import cv_core
 from triton.language import dtype
 
-import detector
+import detection
 
 
 if cv_core.__version__ != '0.1.1':
@@ -30,7 +30,7 @@ class DetectorTracker:
         """
         Detect and track fixed wing UAV
 
-        params: detector_model_file_path - path to detector deep learning model
+        params: detector_model_file_path - path to detection deep learning model
         params: detection_frame_size - (image width, image height) for detection image
                                        image will automatically be resized or cropped to this size!
         params: detection_confidence_th - minimal confidence threshold for accepting object detection
@@ -40,8 +40,8 @@ class DetectorTracker:
         self.detection_confidence_th = detection_confidence_th
         self.bbox_roi_intersection_th = bbox_roi_intersection_th
 
-        # Setup detector
-        self.detector = detector.SingleFrameDetector(detector_model_file_path, use_cpu=detector_use_cpu)
+        # Setup detection
+        self.detector = detection.SingleFrameDetector(detector_model_file_path, use_cpu=detector_use_cpu)
 
 
         self.detection_roi_polygon = None
@@ -152,8 +152,8 @@ class DetectorTracker:
 
         param: image - (mxn) or (mxnx3) image.
                        * run-time relate Note:
-                         if the image is (mxnx3), it will be converted to BGR->HSV->V for the detector, and passed as is to tracker.
-                         if the image is (mxn), it will be passed as is to both detector and tracker, and avoid any copy.
+                         if the image is (mxnx3), it will be converted to BGR->HSV->V for the detection, and passed as is to tracker.
+                         if the image is (mxn), it will be passed as is to both detection and tracker, and avoid any copy.
                          specificly, in the case of KCF tracker, it must use a color image, and therefore will convert the image to BGR
         """
 

@@ -12,7 +12,7 @@ class SingleFrameDetector:
     """
     def __init__(self, model_file_path, use_cpu=False):
         """
-        setup detector
+        setup detection
 
         :param model_file_path: path to deep neural network model file
         :param use_cpu: force to use CPU even if GPU exists (used for timing tests)

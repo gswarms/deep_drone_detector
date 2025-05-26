@@ -75,7 +75,7 @@ pip install -r requirements.txt
 By default, the system uses [YOLOv8n](https://github.com/ultralytics/ultralytics) for detection. You can also plug in your own trained model.
 
 ```python
-# Inside detector.py
+# Inside detection.py
 model = YOLO('yolov8n.pt')  # Replace with path to your custom model if needed
 ```
 
