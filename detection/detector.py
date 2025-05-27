@@ -17,6 +17,12 @@ class SingleFrameDetector:
         setup detection
 
         :param model_file_path: path to deep neural network model file
+                                We support two types of neural network models:
+                                - .pt - better for development or in any case we have GPGPU
+                                - .onnx - better for CPU based platforms
+                                * Note: Exporting a model to .onnx can be done in various ways.\
+                                        we currently support "simplified=True", and "uint8=False"
+                                * Note: In onnx model, the image will automatically be resized to .onnx predefined image size!
         :param use_cpu: force to use CPU even if GPU exists (used for timing tests)
         """
         self.verbose = verbose
@@ -112,6 +118,16 @@ class SingleFrameDetector:
         return results
 
     def _model_predict(self, image, input_shape=(640, 480)):
+        """
+        use model to detect objects in the image
+
+
+        :param image: (mxnx3) image
+        :param input_shape: (w, h) of the size of the image to be sent to the model
+                            This is only relevant to .pt models!
+                            for .onnx model the image will be automatically be resied to the model predefined image size.
+        :return: results: list of dicts: {'class_id': <calar>, 'confidence': <calar>, 'bbox': <xtl,ytl,w,h>}
+        """
 
         need_resize = image.shape[1] != input_shape[0] or image.shape[0] != input_shape[1]
 
@@ -140,6 +156,8 @@ class SingleFrameDetector:
         """
         pre-process image for onnx.
         onnx must have image in the expected size, rgb, normalized to [0,1] and reshaped to HWC → CHW.
+
+        * Note: image will automatically be resized to .onnx predefined image size!
 
         :param image_bgr: [mxnx3] bgr image
         :return: image_input: [3xmxn] image ready for onnx
