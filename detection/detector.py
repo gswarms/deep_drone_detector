@@ -287,25 +287,25 @@ class SingleFrameDetector:
         :param ultralytics_results:
         :return:
         """
-        results = []
+        boxes = []
+        confidences = []
+        class_ids = []
         for r in ultralytics_results:
             for i, box in enumerate(r.boxes):
                 xyxy = box.xyxy[0].tolist()  # [x1, y1, x2, y2]
                 confidence = box.conf[0].item()  # Confidence score
                 class_id = int(box.cls[0].item())  # Class index
                 # print(f"Class ID: {class_id}, Confidence: {confidence}, BBox: {xywh}")
-                results.append({'bbox': (xyxy[0], xyxy[1], xyxy[2]-xyxy[0], xyxy[3]-xyxy[1]),
-                            'confidence': confidence, 'class_id': class_id})
+                boxes.append(xyxy)
+                confidences.append(confidence)
+                class_ids.append(class_id)
 
         # Apply Non-Maximum Suppression (NMS)
-        boxes = [[x['bbox'][0], x['bbox'][1], x['bbox'][0] + x['bbox'][2], x['bbox'][1] + x['bbox'][3]] for x in results]
-        confidences = [x['confidence'] for x in results]
-        class_ids = [x['class_id'] for x in results]
         indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, iou_threshold)
         results = []
         for i in indices:
             i = i[0] if isinstance(i, (list, np.ndarray)) else i
-            # convert back to [xtl,ytl,w,h]
+            # convert to [xtl,ytl,w,h]
             results.append({'bbox': [boxes[i][0], boxes[i][1], boxes[i][2]-boxes[i][0], boxes[i][3]-boxes[i][1]],
                             'confidence': confidences[i], 'class_id': class_ids[i]})
 
