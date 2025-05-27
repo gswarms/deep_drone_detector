@@ -80,6 +80,14 @@ The models should be downloaded from github release along with the corresponding
 Alternatively the `model_path` parameter can point to any ultralytics compatible model.  
 
 
+This repo supports two types of neural network models:
+1. .pt - better for development or in any case we have GPGPU
+2. .onnx - better for CPU based platforms
+
+The detectorTracker will handle them a little differently, but results should be very much the same.
+
+*Note: Exporting a model to .onnx can be done in various ways.\
+we currently support "simplified=True", and "uint8=False"
 
 ---
 ## usage
