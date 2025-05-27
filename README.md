@@ -12,7 +12,7 @@ and **OpenCV** for tracking and visualization.
 ## 🚀 Features
 
 - ✅ Real-time object detection using YOLOv8 (Ultralytics)
-- 🎯 Multi-object tracking with OpenCV or DeepSORT
+- 🎯 Multi-object tracking with OpenCV or DeepSORT (not implemented yet!)
 - 🧠 Easy integration with custom-trained detection models
 - 💾 Option to save tracking logs and video output
 
