@@ -26,19 +26,19 @@ class DetectorTracker:
     detect and track blobs in image
     """
     def __init__(self, detector_model_file_path, detection_frame_size,
-                 detection_confidence_th=0.2, bbox_roi_intersection_th=0.1,
+                 bbox_roi_intersection_th=0.1,
                  detector_use_cpu=False, verbose=False):
         """
         Detect and track fixed wing UAV
 
-        params: detector_model_file_path - path to detection deep learning model
-        params: detection_frame_size - (image width, image height) for detection image
+        :param detector_model_file_path - path to detection deep learning model
+        :param detection_frame_size - (image width, image height) for detection image
                                        image will automatically be resized or cropped to this size!
-        params: detection_confidence_th - minimal confidence threshold for accepting object detection
-        params: detector_use_cpu - force using CPU for detection even if GPU exists (used for timing tests)
+        :param bbox_roi_intersection_th - detections with lesser part of their area intersecting with roi polygon will be discarded
+        :param detector_use_cpu - force using CPU for detection even if GPU exists (used for timing tests)
+        :param verbose - print log data to screen
         """
         self.detection_frame_size = detection_frame_size
-        self.detection_confidence_th = detection_confidence_th
         self.bbox_roi_intersection_th = bbox_roi_intersection_th
         self.detector_use_cpu = detector_use_cpu
         self.verbose = verbose
