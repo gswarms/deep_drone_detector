@@ -57,9 +57,11 @@ class SingleFrameDetector:
             else:
                 raise Exception('invalid model file extention: {}!'.format(model_file_extension))
 
+        else:
+            raise Exception('model file not found! {}'.format(model_file_path))
 
 
-    def detect(self, image, frame_resize=None):
+    def detect(self, image, frame_resize=None, conf_threshold = 0.4 , nms_iou_threshold = 0.5, max_num_detections=10):
         """
         detect objects on a specific frame
 
@@ -72,6 +74,11 @@ class SingleFrameDetector:
                              None -> no resize
                              This is only valid for pt models!
                              onnx models always resize to onnx predefined shape.
+        :param conf_threshold: detections with confidence scores lower than this threshold are discarded.
+        :param nms_iou_threshold: The threshold used in NMS to decide whether boxes overlap too much with respect to
+                                  Intersection over Union (IoU). If the IoU is greater than this value,
+                                  the box with the lower score is suppressed.
+        :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
         """
 
         img_size = image.shape
@@ -98,10 +105,13 @@ class SingleFrameDetector:
             # model predict
             if need_resize:
                 img_resized = cv2.resize(image, frame_resize)
-                outputs = self.model(img_resized, imgsz=(img_resized.shape[:2]), stream=False, verbose=self.verbose)
+                outputs = self.model(img_resized, imgsz=(img_resized.shape[:2]),
+                                     conf=conf_threshold, iou=nms_iou_threshold, stream=False, verbose=self.verbose)
             else:
-                outputs = self.model(image, imgsz=(image.shape[:2]), stream=False, verbose=self.verbose)
-            results = self._pt_postprocess(outputs)
+                outputs = self.model(image, imgsz=(image.shape[:2]),
+                                     conf=conf_threshold, iou=nms_iou_threshold, stream=False, verbose=self.verbose)
+            results = self._pt_postprocess(outputs, conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold,
+                                           max_num_detections=max_num_detections)
 
         elif self.model_type == 'onnx':
             # onnx preprocessing
@@ -109,50 +119,14 @@ class SingleFrameDetector:
             # onnx inference
             outputs = self.model.run(None, {self.onnx_input_name: image_input})
             # onnx post processing
-            results = self._onnx_postprocess(outputs, conf_threshold=0.4, iou_threshold=0.5)
-
-        else:
-            raise Exception('invalid model type: {}!'.format(self.model_type))
-
-
-        return results
-
-    def _model_predict(self, image, input_shape=(640, 480)):
-        """
-        use model to detect objects in the image
-
-
-        :param image: (mxnx3) image
-        :param input_shape: (w, h) of the size of the image to be sent to the model
-                            This is only relevant to .pt models!
-                            for .onnx model the image will be automatically be resied to the model predefined image size.
-        :return: results: list of dicts: {'class_id': <calar>, 'confidence': <calar>, 'bbox': <xtl,ytl,w,h>}
-        """
-
-        need_resize = image.shape[1] != input_shape[0] or image.shape[0] != input_shape[1]
-
-        if self.model_type == 'pt':
-            if need_resize:
-                img_resized = cv2.resize(image, input_shape)
-                outputs = self.model(img_resized, imgsz=(img_resized.shape[:2]), stream=False,
-                                     conf=0.25, iou=0.5, max_det=100, verbose=self.verbose)
-            else:
-                outputs = self.model(image, imgsz=(image.shape[:2]), stream=False,
-                                     conf=0.25, iou=0.5, max_det=100, verbose=self.verbose)
-            results = self._pt_postprocess(outputs)
-
-        elif self.model_type == 'onnx':
-            # onnx preprocessing
-            image_input = self._onnx_preprocess(image)
-            # onnx inference
-            outputs = self.model.run(None, {self.onnx_input_name: image_input})
-            # onnx post processing
-            results = self._onnx_postprocess(outputs, conf_threshold=0.4, iou_threshold=0.5)
+            results = self._onnx_postprocess(outputs, conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold,
+                                             max_num_detections=max_num_detections)
 
         else:
             raise Exception('invalid model type: {}!'.format(self.model_type))
 
         return results
+
 
     def _onnx_preprocess(self, image_bgr):
         """
@@ -182,10 +156,11 @@ class SingleFrameDetector:
         image_input = np.expand_dims(image_transposed, axis=0).astype(np.float32)
         return image_input
 
-    def _sigmoid(self, x):
+    @staticmethod
+    def _sigmoid(x):
         return 1 / (1 + np.exp(-x))
 
-    def _onnx_postprocess(self, predictions, conf_threshold=0.4, iou_threshold=0.5):
+    def _onnx_postprocess(self, predictions, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10):
         """
         post-processing onnx results:
         1. Translate objectness score and class score to confidence level
@@ -208,8 +183,11 @@ class SingleFrameDetector:
 
 
         :param predictions:
-        :param conf_threshold:
-        :param iou_threshold:
+        :param conf_threshold: detections with confidence scores lower than this threshold are discarded.
+        :param nms_iou_threshold: The threshold used in NMS to decide whether boxes overlap too much with respect to
+                                  Intersection over Union (IoU). If the IoU is greater than this value,
+                                  the box with the lower score is suppressed.
+        :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
         :return:
         """
         boxes = []
@@ -262,7 +240,7 @@ class SingleFrameDetector:
                     raise Exception('invalod onnx output size!')
 
         # Apply Non-Maximum Suppression (NMS)
-        indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, iou_threshold)
+        indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, nms_iou_threshold, top_k=max_num_detections)
         results = []
         for i in indices:
             i = i[0] if isinstance(i, (list, np.ndarray)) else i
@@ -272,7 +250,8 @@ class SingleFrameDetector:
         return results
 
 
-    def _pt_postprocess(self, ultralytics_results, conf_threshold=0.4, iou_threshold=0.5):
+    @staticmethod
+    def _pt_postprocess(ultralytics_results, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10):
         """
         Decode ultralytics pt model results to common format:
         1. Translate to simple dicts
@@ -285,6 +264,11 @@ class SingleFrameDetector:
         *** mns already performed by the pt model!
 
         :param ultralytics_results:
+        :param conf_threshold: detections with confidence scores lower than this threshold are discarded.
+        :param nms_iou_threshold: The threshold used in NMS to decide whether boxes overlap too much with respect to
+                                  Intersection over Union (IoU). If the IoU is greater than this value,
+                                  the box with the lower score is suppressed.
+        :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
         :return:
         """
         boxes = []
@@ -301,7 +285,7 @@ class SingleFrameDetector:
                 class_ids.append(class_id)
 
         # Apply Non-Maximum Suppression (NMS)
-        indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, iou_threshold)
+        indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, nms_iou_threshold, top_k=max_num_detections)
         results = []
         for i in indices:
             i = i[0] if isinstance(i, (list, np.ndarray)) else i

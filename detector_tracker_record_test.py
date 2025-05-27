@@ -90,7 +90,7 @@ if __name__ == '__main__':
                 video_initialized = True
 
             # detect and track
-            tr = dttr.step(img)
+            tr = dttr.step(img, conf_threshold=0.5, nms_iou_threshold=0.4, max_num_detections=10)
             img_to_draw = dttr.draw(img)
             img_to_draw = cv2.putText(img_to_draw, '{:d}'.format(frame_id), (20, 20),
                                       fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=(50, 100,200), thickness=2)

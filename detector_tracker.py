@@ -147,18 +147,23 @@ class DetectorTracker:
             tracks.append({'id': self.track_ids[i], 'score': self.track_scores[i], 'bbox': tr['bbox']})
         return tracks
 
-    def step(self, image):
+    def step(self, image, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10):
         """
         prepare frame for detection and detect
         1. crop / resize required image ROI
         2. detect using the required ROI
         3. convert detection coordinates to full image coordinates
 
-        param: image - (mxn) or (mxnx3) image.
+        :param: image - (mxn) or (mxnx3) image.
                        * run-time relate Note:
                          if the image is (mxnx3), it will be converted to BGR->HSV->V for the detection, and passed as is to tracker.
                          if the image is (mxn), it will be passed as is to both detection and tracker, and avoid any copy.
                          specificly, in the case of KCF tracker, it must use a color image, and therefore will convert the image to BGR
+        :param conf_threshold: detections with confidence scores lower than this threshold are discarded.
+        :param nms_iou_threshold: The threshold used in NMS to decide whether boxes overlap too much with respect to
+                                  Intersection over Union (IoU). If the IoU is greater than this value,
+                                  the box with the lower score is suppressed.
+        :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
         """
 
 
@@ -184,7 +189,9 @@ class DetectorTracker:
                 self.detection_frame[:] = image[ytl:ytl+h, xtl:xtl+w]
 
                 # detect without a resize
-                results = self.detector.detect(self.detection_frame, frame_resize=None)
+                results = self.detector.detect(self.detection_frame, frame_resize=None,
+                                               conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold)
+
 
                 # convert back to full image coordinate
                 for r in results:
