@@ -134,9 +134,11 @@ class SingleFrameDetector:
         if self.model_type == 'pt':
             if need_resize:
                 img_resized = cv2.resize(image, input_shape)
-                outputs = self.model(img_resized, imgsz=(img_resized.shape[:2]), stream=False, verbose=self.verbose)
+                outputs = self.model(img_resized, imgsz=(img_resized.shape[:2]), stream=False,
+                                     conf=0.25, iou=0.5, max_det=100, verbose=self.verbose)
             else:
-                outputs = self.model(image, imgsz=(image.shape[:2]), stream=False, verbose=self.verbose)
+                outputs = self.model(image, imgsz=(image.shape[:2]), stream=False,
+                                     conf=0.25, iou=0.5, max_det=100, verbose=self.verbose)
             results = self._pt_postprocess(outputs)
 
         elif self.model_type == 'onnx':
@@ -270,11 +272,15 @@ class SingleFrameDetector:
         return results
 
 
-    def _pt_postprocess(self, ultralytics_results):
+    def _pt_postprocess(self, ultralytics_results, conf_threshold=0.4, iou_threshold=0.5):
         """
-        just convert ultralytics pt model results to common format
-        1. translate to simple dicts
+        Decode ultralytics pt model results to common format:
+        1. Translate to simple dicts
         2. Converts from YOLO center-based box format to corner coordinates
+
+        Apply BBOX based Non-Maximal Supression.
+        * Note: this is already done by uptralytics model. But we noticed overlapping bbox detection sometimes
+                Therefore we apply MNS again, and it solves the problem.
 
         *** mns already performed by the pt model!
 
@@ -290,4 +296,17 @@ class SingleFrameDetector:
                 # print(f"Class ID: {class_id}, Confidence: {confidence}, BBox: {xywh}")
                 results.append({'bbox': (xyxy[0], xyxy[1], xyxy[2]-xyxy[0], xyxy[3]-xyxy[1]),
                             'confidence': confidence, 'class_id': class_id})
+
+        # Apply Non-Maximum Suppression (NMS)
+        boxes = [[x['bbox'][0], x['bbox'][1], x['bbox'][0] + x['bbox'][2], x['bbox'][1] + x['bbox'][3]] for x in results]
+        confidences = [x['confidence'] for x in results]
+        class_ids = [x['class_id'] for x in results]
+        indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, iou_threshold)
+        results = []
+        for i in indices:
+            i = i[0] if isinstance(i, (list, np.ndarray)) else i
+            # convert back to [xtl,ytl,w,h]
+            results.append({'bbox': [boxes[i][0], boxes[i][1], boxes[i][2]-boxes[i][0], boxes[i][3]-boxes[i][1]],
+                            'confidence': confidences[i], 'class_id': class_ids[i]})
+
         return results

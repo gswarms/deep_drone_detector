@@ -16,27 +16,27 @@ if __name__ == '__main__':
     # 1. force match to detection even with no overlap
     # 2. resize image so we track a blob with no shape! (in an adaptive way related to the shape of the target blob)
 
-    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_140609_extracted'
-    frame_size = (640, 480)
-    frame_resize = None
-    start_time = -np.inf
-    blob_detection_params_file = '/home/roee/Projects/blob_detector/examples/blob_detector_params_20250511_kfar_galim.yaml'
-    valid_roi = None
-    output_video_file = os.path.join(record_folder, '20250511_140609_kfar_galim_results.avi')
-    polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_140609_polygons.yaml')  # ***optional
-
-
-    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_133041_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_140609_extracted'
     # frame_size = (640, 480)
     # frame_resize = None
     # start_time = -np.inf
     # blob_detection_params_file = '/home/roee/Projects/blob_detector/examples/blob_detector_params_20250511_kfar_galim.yaml'
     # valid_roi = None
-    # output_video_file = os.path.join(record_folder, '20250511_133041_kfar_galim_results.avi')
-    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_133041_polygons.yaml')  # ***optional
+    # output_video_file = os.path.join(record_folder, '20250511_140609_kfar_galim_results.avi')
+    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_140609_polygons.yaml')  # ***optional
 
-    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
-    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
+
+    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_133041_extracted'
+    frame_size = (640, 480)
+    frame_resize = None
+    start_time = -np.inf
+    blob_detection_params_file = '/home/roee/Projects/blob_detector/examples/blob_detector_params_20250511_kfar_galim.yaml'
+    valid_roi = None
+    output_video_file = os.path.join(record_folder, '20250511_133041_kfar_galim_results.avi')
+    polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_133041_polygons.yaml')  # ***optional
+
+    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
+    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
 
 
     # set video writer
