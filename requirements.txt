@@ -6,3 +6,4 @@ matplotlib~=3.10.3
 scipy~=1.15.3
 triton~=3.3.0
 cv_core~=1.1.0
+onnxruntime~=1.22.0
