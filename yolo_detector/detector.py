@@ -14,7 +14,7 @@ class SingleFrameDetector:
     """
     def __init__(self, model_file_path, use_cpu=False, verbose=False):
         """
-        setup detection
+        setup yolo_detector
 
         :param model_file_path: path to deep neural network model file
                                 We support two types of neural network models:
@@ -66,7 +66,7 @@ class SingleFrameDetector:
         detect objects on a specific frame
 
         frame can be resized to a required size (for runtime)
-        in any case the actual frame for detection width and height must be dividable by 32
+        in any case the actual frame for yolo_detector width and height must be dividable by 32
 
         :param image: (m x n x 3) image
         :param frame_resize: resize frame to (width, height) image size
@@ -174,12 +174,12 @@ class SingleFrameDetector:
             it matters if the onnx is exported with 'simplify'=True or 'simplify'=False!
             if 'simplify'=True the results are (m,5,N) where:
                 - m = batch size (number of images)
-                - data per detection is: [x, y, w, h, confidence]
+                - data per yolo_detector is: [x, y, w, h, confidence]
                 - N = number of detections
 
             if 'simplify'=False the results are (m,5+num_classes,N)
                 - m = batch size (number of images)
-                - data per detection is: [x, y, w, h, objectness_confidence, class1_confidence, ... ,classn_confidence]
+                - data per yolo_detector is: [x, y, w, h, objectness_confidence, class1_confidence, ... ,classn_confidence]
                 - N = number of detections
 
             so different format is needed in post process.
@@ -261,7 +261,7 @@ class SingleFrameDetector:
         2. Converts from YOLO center-based box format to corner coordinates
 
         Apply BBOX based Non-Maximal Supression.
-        * Note: this is already done by uptralytics model. But we noticed overlapping bbox detection sometimes
+        * Note: this is already done by uptralytics model. But we noticed overlapping bbox yolo_detector sometimes
                 Therefore we apply MNS again, and it solves the problem.
 
         *** mns already performed by the pt model!

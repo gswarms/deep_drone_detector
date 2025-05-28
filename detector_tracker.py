@@ -12,7 +12,7 @@ import numpy as np
 import cv_core
 from triton.language import dtype
 
-import detection
+import yolo_detector
 
 
 if cv_core.__version__ != '0.1.1':
@@ -31,11 +31,11 @@ class DetectorTracker:
         """
         Detect and track fixed wing UAV
 
-        :param detector_model_file_path - path to detection deep learning model
-        :param detection_frame_size - (image width, image height) for detection image
+        :param detector_model_file_path - path to yolo_detector deep learning model
+        :param detection_frame_size - (image width, image height) for yolo_detector image
                                        image will automatically be resized or cropped to this size!
         :param bbox_roi_intersection_th - detections with lesser part of their area intersecting with roi polygon will be discarded
-        :param detector_use_cpu - force using CPU for detection even if GPU exists (used for timing tests)
+        :param detector_use_cpu - force using CPU for yolo_detector even if GPU exists (used for timing tests)
         :param verbose - print log data to screen
         """
         self.detection_frame_size = detection_frame_size
@@ -43,9 +43,9 @@ class DetectorTracker:
         self.detector_use_cpu = detector_use_cpu
         self.verbose = verbose
 
-        # Setup detection
-        self.detector = detection.SingleFrameDetector(detector_model_file_path,
-                                                      use_cpu=self.detector_use_cpu, verbose=self.verbose)
+        # Setup yolo_detector
+        self.detector = yolo_detector.SingleFrameDetector(detector_model_file_path,
+                                                          use_cpu=self.detector_use_cpu, verbose=self.verbose)
 
 
         self.detection_roi_polygon = None
@@ -64,9 +64,9 @@ class DetectorTracker:
 
     def set_detection_roi_polygon(self, polygon_points, method='crop'):
         """
-        set detection ROI from a polygon
+        set yolo_detector ROI from a polygon
 
-        a smaller ROI will be passed for detection (useful for reducing runtime)
+        a smaller ROI will be passed for yolo_detector (useful for reducing runtime)
 
         There are two main metods:
         1. resize: polygon bounding box will be resized to the required size
@@ -74,7 +74,7 @@ class DetectorTracker:
                  in a way that best overlaps, with the given polygon
 
         params: polygon_points - (nx2) 2D image points polygon
-        params: detection_frame_size - (width, height) frame size for detection
+        params: detection_frame_size - (width, height) frame size for yolo_detector
         params: method - one of the following: ["resize","crop"]
                          crop - crop a part of the image of the required size that best overlaps the polygon
                                 if polygon is larget than roi, take equal margins around polygon
@@ -149,15 +149,15 @@ class DetectorTracker:
 
     def step(self, image, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10):
         """
-        prepare frame for detection and detect
+        prepare frame for yolo_detector and detect
         1. crop / resize required image ROI
         2. detect using the required ROI
-        3. convert detection coordinates to full image coordinates
+        3. convert yolo_detector coordinates to full image coordinates
 
         :param: image - (mxn) or (mxnx3) image.
                        * run-time relate Note:
-                         if the image is (mxnx3), it will be converted to BGR->HSV->V for the detection, and passed as is to tracker.
-                         if the image is (mxn), it will be passed as is to both detection and tracker, and avoid any copy.
+                         if the image is (mxnx3), it will be converted to BGR->HSV->V for the yolo_detector, and passed as is to tracker.
+                         if the image is (mxn), it will be passed as is to both yolo_detector and tracker, and avoid any copy.
                          specificly, in the case of KCF tracker, it must use a color image, and therefore will convert the image to BGR
         :param conf_threshold: detections with confidence scores lower than this threshold are discarded.
         :param nms_iou_threshold: The threshold used in NMS to decide whether boxes overlap too much with respect to
@@ -176,7 +176,7 @@ class DetectorTracker:
 
                 if image.shape[0] < self.detection_frame_size[1] or image.shape[1] < self.detection_frame_size[0]:
                     raise Exception(
-                        'image ({}x{}) is smaller than detection image size ({x})'.format(self.detection_frame_size[1],
+                        'image ({}x{}) is smaller than yolo_detector image size ({x})'.format(self.detection_frame_size[1],
                                                                                           self.detection_frame_size[0],
                                                                                           image.shape[1],
                                                                                           image.shape[0]))
@@ -264,7 +264,7 @@ class DetectorTracker:
                         (x + w, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=(100, 255, 255),
                         thickness=1)
 
-        # draw detection roi
+        # draw yolo_detector roi
         if self.detection_roi_method is not None:
             poly = np.floor(self.detection_roi_polygon).astype(np.int32)
             img = cv2.polylines(img, [poly], isClosed=True, color=(255, 50, 50), thickness=1)

@@ -13,7 +13,7 @@ from test_utils.standard_record import StandardRecord
 if __name__ == '__main__':
 
     # trackign problem from close range - maybe try:
-    # 1. force match to detection even with no overlap
+    # 1. force match to yolo_detector even with no overlap
     # 2. resize image so we track a blob with no shape! (in an adaptive way related to the shape of the target blob)
 
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_140609_extracted'
@@ -103,7 +103,7 @@ if __name__ == '__main__':
             if output_video_file is not None:
                 out.write(img_to_draw)
 
-            if len(tr)>0:  # debug - find first detection
+            if len(tr)>0:  # debug - find first yolo_detector
                 aa=5
             frame_id = frame_id+1
 

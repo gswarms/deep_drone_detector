@@ -12,7 +12,7 @@ class LosPixelConverter:
         """
         This object is used for converting pixels to line of sight and vice versa
         Functionality:
-        1) body frame los + los_uncertainty to image polygon (can be used to set_roi_polygon for blob detection)
+        1) body frame los + los_uncertainty to image polygon (can be used to set_roi_polygon for blob yolo_detector)
         2) pixel to los - convert image pixel to body frame los (can be used to convert tracking results to 3D los)
         3) world to pixel - convert a 3D doby frame world point to an image pixel
 

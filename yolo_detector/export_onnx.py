@@ -47,7 +47,7 @@ shutil.copyfile(onnx_model_file_path, onnx_model_file_path2)
 # workspace - float or None. default=None. Sets the maximum workspace size in GiB for TensorRT optimizations,
 #             balancing memory usage and performance. Use None for auto-allocation by TensorRT up to device maximum.
 # nms -	bool. default=False. Adds Non-Maximum Suppression (NMS) to the exported model when supported (see Export Formats),
-#       improving detection post-processing efficiency. Not available for end2end models.
+#       improving yolo_detector post-processing efficiency. Not available for end2end models.
 # batch - int. default=1. Specifies export model batch inference size or the maximum number of images
 #         the exported model will process concurrently in predict mode. For Edge TPU exports, this is automatically set to 1.
 # device - str. default=None. Specifies the device for exporting: GPU (device=0), CPU (device=cpu),

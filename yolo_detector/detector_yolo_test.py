@@ -13,7 +13,7 @@ from ultralytics import YOLO
 if __name__ == '__main__':
 
     # trackign problem from close range - maybe try:
-    # 1. force match to detection even with no overlap
+    # 1. force match to yolo_detector even with no overlap
     # 2. resize image so we track a blob with no shape! (in an adaptive way related to the shape of the target blob)
 
     record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_140609_extracted'
@@ -95,7 +95,7 @@ if __name__ == '__main__':
                 poly = np.floor(roi_polygon).astype(np.int32)
                 img_to_draw = cv2.polylines(img, [poly], isClosed=True, color=(255, 50, 50), thickness=1)
 
-            # draw detection results
+            # draw yolo_detector results
             for r in res:
                 x, y, w, h = [int(v) for v in r['bbox']]
                 img_to_draw = cv2.rectangle(img_to_draw, (x, y), (x + w, y + h), color=(50, 50, 255), thickness=1)
