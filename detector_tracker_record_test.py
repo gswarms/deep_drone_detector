@@ -35,8 +35,8 @@ if __name__ == '__main__':
     output_video_file = os.path.join(record_folder, '20250511_133041_kfar_galim_results.avi')
     polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_133041_polygons.yaml')  # ***optional
 
-    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
-    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
+    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
+    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
 
 
     # set video writer

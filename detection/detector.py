@@ -85,6 +85,9 @@ class SingleFrameDetector:
         if len(img_size) != 3:
             raise Exception('expecting (mxnx3) color image')
 
+        if frame_resize is not None and (frame_resize[0]<=0 or frame_resize[1]<=0):
+            frame_resize = None
+
         if self.model_type == 'pt':
 
             # check frame resize input
