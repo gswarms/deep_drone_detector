@@ -37,8 +37,12 @@ def on_mouse(event, x, y, buttons, user_param):
 if __name__ == '__main__':
 
     # ***** replace with required image path *****
-    images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_133041_extracted/images'
-    polygon_file = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_133041_extracted/kfar_galim_20250511_133041_polygons.yaml'
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250519_083827_extracted/images'
+    # polygon_file = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250519_083827_extracted/kfar_galim_20250511_133041_polygons.yaml'
+
+    images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827_extracted/images'
+    polygon_file = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827_extracted/kfar_galim_20250519_083827_polygons.yaml'
+
 
     image_resize = None  # (640, 480)
     image_file_suffix = 'png'

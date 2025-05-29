@@ -20,23 +20,29 @@ if __name__ == '__main__':
     # frame_size = (640, 480)
     # frame_resize = None
     # start_time = -np.inf
-    # blob_detection_params_file = '/home/roee/Projects/blob_detector/examples/blob_detector_params_20250511_kfar_galim.yaml'
-    # valid_roi = None
     # output_video_file = os.path.join(record_folder, '20250511_140609_kfar_galim_results.avi')
     # polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_140609_polygons.yaml')  # ***optional
 
 
-    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_133041_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_133041_extracted'
+    # frame_size = (640, 480)
+    # frame_resize = None
+    # start_time = -np.inf
+    # output_video_file = os.path.join(record_folder, '20250511_133041_kfar_galim_results.avi')
+    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_133041_polygons.yaml')  # ***optional
+
+
+    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827_extracted'
     frame_size = (640, 480)
     frame_resize = None
     start_time = -np.inf
-    blob_detection_params_file = '/home/roee/Projects/blob_detector/examples/blob_detector_params_20250511_kfar_galim.yaml'
-    valid_roi = None
-    output_video_file = os.path.join(record_folder, '20250511_133041_kfar_galim_results.avi')
-    polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_133041_polygons.yaml')  # ***optional
+    output_video_file = os.path.join(record_folder, '20250519_083827_kfar_galim_results.avi')
+    polygons_file = os.path.join(record_folder, 'kfar_galim_20250519_083827_polygons.yaml')  # ***optional
+
 
     yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
     # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
+
 
 
     # set video writer
@@ -46,8 +52,8 @@ if __name__ == '__main__':
         out = cv2.VideoWriter(output_video_file, fourcc, 20, (640, 480))
 
     # setup blob tracker
-    # detection_frame_size = (320, 256)
     detection_frame_size = (320, 320)
+    # detection_frame_size = (640, 480)
     dttr = detector_tracker.DetectorTracker(yolo_model_path, detection_frame_size,
                                             bbox_roi_intersection_th=0.1, detector_use_cpu=False, verbose=False)
 
