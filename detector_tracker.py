@@ -23,7 +23,7 @@ class DetectorTracker:
         Detect and track fixed wing UAV
 
         :param detector_model_file_path - path to yolo_detector deep learning model
-        :param detection_frame_size - (image width, image height) for yolo_detector image
+        :param detection_frame_size - (image width, image height) image size for yolo_detector.
                                        image will automatically be resized or cropped to this size!
         :param bbox_roi_intersection_th - detections with lesser part of their area intersecting with roi polygon will be discarded
         :param detector_use_cpu - force using CPU for yolo_detector even if GPU exists (used for timing tests)
