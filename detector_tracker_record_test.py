@@ -44,7 +44,6 @@ if __name__ == '__main__':
     # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
 
 
-
     # set video writer
     if output_video_file is not None:
         print('saving record video to: {}'.format(output_video_file))

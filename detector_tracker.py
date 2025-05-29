@@ -38,6 +38,17 @@ class DetectorTracker:
         self.detector = yolo_detector.SingleFrameDetector(detector_model_file_path,
                                                           use_cpu=self.detector_use_cpu, verbose=self.verbose)
 
+        # onnx must work with it's predefined input size!
+        # if self.detection_frame_size does not match, there might be unexpected behavior!
+        # DetectorTracker will crop / resize according to self.detection_frame_size,
+        # but then detector will resize to the onnx predefined size.
+        # In this case we except to prevent unexpected behavior.
+        if self.detector.model_type == 'onnx':
+            if (self.detection_frame_size[0] != self.detector.onnx_input_size[0] or
+                    self.detection_frame_size[1] != self.detector.onnx_input_size[1]):
+                 raise Exception('detection_frame_size ({},{}) does not match onnx predefined size ({},{})'.format(
+                     self.detection_frame_size[0], self.detection_frame_size[1],
+                     self.detector.onnx_input_size[0], self.detector.onnx_input_size[1]))
 
         self.detection_roi_polygon = None
         self.detection_roi_bbox = None
