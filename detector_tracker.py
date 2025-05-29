@@ -1,17 +1,8 @@
 """ Detect and track blobs in image
 """
-import time
-from pickletools import uint8
-
 import cv2
 import numpy as np
-# import yaml
-# import os
-# from ultralytics import YOLO
-# from . import bbox_utils as bbu
 import cv_core
-from triton.language import dtype
-
 import yolo_detector
 
 

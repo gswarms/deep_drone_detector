@@ -1,6 +1,5 @@
 """ Detect and track blobs in image
 """
-import time
 import cv2
 import os
 import numpy as np
