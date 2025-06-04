@@ -40,9 +40,8 @@ if __name__ == '__main__':
     polygons_file = os.path.join(record_folder, 'kfar_galim_20250519_083827_polygons.yaml')  # ***optional
 
 
-    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
-    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
-
+    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
+    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
 
     # set video writer
     if output_video_file is not None:
@@ -51,8 +50,8 @@ if __name__ == '__main__':
         out = cv2.VideoWriter(output_video_file, fourcc, 20, (640, 480))
 
     # setup blob tracker
-    detection_frame_size = (320, 320)
-    # detection_frame_size = (640, 480)
+    # detection_frame_size = (320, 320)
+    detection_frame_size = (640, 480)
     dttr = detector_tracker.DetectorTracker(yolo_model_path, detection_frame_size,
                                             bbox_roi_intersection_th=0.1, detector_use_cpu=False, verbose=False)
 
