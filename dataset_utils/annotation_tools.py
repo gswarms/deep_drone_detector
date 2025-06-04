@@ -4,21 +4,14 @@ import json
 # import coco_dataset_utils as cdu
 
 
-class AnnotatorSimple:
-    def __init__(self, image_folder, window_name='Annotator'):
+class Annotator:
+    def __init__(self, window_name='Annotator'):
         """
         helper class for annotating images
 
-        :param image_folder: images folder
+        :param window_name: opencv window for draw folder
         :param annotations_file: annotations file
         """
-
-        self.images_folder = image_folder
-        if not os.path.isdir(image_folder):
-            raise Exception('images_folder not found: {}'.format(image_folder))
-        self.image_files = sorted([f for f in os.listdir(self.images_folder)
-                                   if f.lower().endswith(('.jpg', '.jpeg', '.png')) ])
-        self.annotations = {}
 
         # current image variables
         self.current_image_idx = None
@@ -34,46 +27,14 @@ class AnnotatorSimple:
 
         self.window_name = window_name
 
-    def load_annotations(self, annotations_file):
-        if os.path.isfile(annotations_file):
-            with open(annotations_file, "r") as f:
-                self.annotations = json.load(f)
-        else:
-            raise Exception('annotations_file not found: {}'.format(annotations_file))
+    def load(self):
+        raise NotImplementedError("Subclasses must implement load()")
 
     def save_annotations_to_file(self, annotations_file):
-        with open(annotations_file, "w") as f:
-            json.dump(self.annotations, f, indent=2)
-
-    def save_current_image_annotations(self):
-        filename = self.image_files[self.current_image_idx]
-        self.annotations[filename] = [{"bbox": list(b), "class": c} for b, c in zip(self.current_boxes, self.current_classes)]
+        raise NotImplementedError("Subclasses must implement save_annotations_to_file()")
 
     def load_image(self, idx_offset=1):
-        """
-        load image
-
-        :param idx_offset - idx shift from current image idx
-                            e.g.
-                            1 - next image
-                            0 - load current image again
-                            -1 - prev image
-        :return:
-        """
-        if self.current_image_idx is None:
-            self.current_image_idx = 0
-        else:
-            self.current_image_idx = max(min(self.current_image_idx + idx_offset, len(self.image_files)-1), 0)
-
-        filename = self.image_files[self.current_image_idx]
-        path = os.path.join(self.images_folder, filename)
-        self.current_image = cv2.imread(path)
-        self.current_boxes = []
-        self.current_classes = []
-        if filename in self.annotations:
-            for ann in self.annotations[filename]:
-                self.current_boxes.append(tuple(ann["bbox"]))
-                self.current_classes.append(ann["class"])
+        raise NotImplementedError("Subclasses must implement load_image()")
 
     def clear_current_annotations(self):
         self.current_boxes = []
@@ -155,6 +116,65 @@ class AnnotatorSimple:
                 self.current_classes.append(self.current_class)
             self.update_display()
 
+
+class AnnotatorSimple(Annotator):
+    def __init__(self, image_folder, window_name='Annotator'):
+        """
+        helper class for annotating images
+
+        :param image_folder: images folder
+        :param annotations_file: annotations file
+        """
+        super().__init__(window_name)  # Call base class __init__
+
+        self.images_folder = image_folder
+        if not os.path.isdir(image_folder):
+            raise Exception('images_folder not found: {}'.format(image_folder))
+        self.image_files = sorted([f for f in os.listdir(self.images_folder)
+                                   if f.lower().endswith(('.jpg', '.jpeg', '.png')) ])
+        self.annotations = {}
+
+
+    def load_annotations(self, annotations_file):
+        if os.path.isfile(annotations_file):
+            with open(annotations_file, "r") as f:
+                self.annotations = json.load(f)
+        else:
+            raise Exception('annotations_file not found: {}'.format(annotations_file))
+
+    def save_annotations_to_file(self, annotations_file):
+        with open(annotations_file, "w") as f:
+            json.dump(self.annotations, f, indent=2)
+
+    def save_current_image_annotations(self):
+        filename = self.image_files[self.current_image_idx]
+        self.annotations[filename] = [{"bbox": list(b), "class": c} for b, c in zip(self.current_boxes, self.current_classes)]
+
+    def load_image(self, idx_offset=1):
+        """
+        load image
+
+        :param idx_offset - idx shift from current image idx
+                            e.g.
+                            1 - next image
+                            0 - load current image again
+                            -1 - prev image
+        :return:
+        """
+        if self.current_image_idx is None:
+            self.current_image_idx = 0
+        else:
+            self.current_image_idx = max(min(self.current_image_idx + idx_offset, len(self.image_files)-1), 0)
+
+        filename = self.image_files[self.current_image_idx]
+        path = os.path.join(self.images_folder, filename)
+        self.current_image = cv2.imread(path)
+        self.current_boxes = []
+        self.current_classes = []
+        if filename in self.annotations:
+            for ann in self.annotations[filename]:
+                self.current_boxes.append(tuple(ann["bbox"]))
+                self.current_classes.append(ann["class"])
 
 
 # ----------------------------- Main -----------------------------
