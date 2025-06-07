@@ -6,7 +6,9 @@ import onnxruntime as ort
 # Load your saved model
 pt_model_file_path = '../runs/detect/drone_detector_yolov8n/weights/best.pt'
 model = YOLO(pt_model_file_path)
-model.export(format='onnx', simplify=True, device='cpu', imgsz=(320, 320), name='best_320')   # or 'tflite', 'coreml', etc.
+model.export(format='onnx', simplify=True, device='cpu', imgsz=(256, 256), name='best')   # or 'tflite', 'coreml', etc.
+res_file_name = '_256'
+
 
 filename, file_extension = os.path.splitext(pt_model_file_path)
 onnx_model_file_path = filename + '.onnx'
@@ -18,7 +20,7 @@ print(input_info)
 
 # quickly coy file before ultralytics export with (640X640) and overwrites it!
 filename, file_extension = os.path.splitext(onnx_model_file_path)
-onnx_model_file_path2 = filename + '_{}'.format(input_info.name) + file_extension
+onnx_model_file_path2 = filename + '_{}'.format(res_file_name) + file_extension
 shutil.copyfile(onnx_model_file_path, onnx_model_file_path2)
 
 
