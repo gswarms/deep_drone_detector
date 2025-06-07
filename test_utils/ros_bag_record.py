@@ -387,15 +387,22 @@ if __name__ == '__main__':
     # output_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_140609_extracted/'
     # video_output_file = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_140609.avi'
 
-    bag_file = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/2025-05-19_11-38-20_bags/camera_2025_5_19-8_38_27'
-    valid_record_times = {'start': 1747643941, 'end': np.inf}
+    # bag_file = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/2025-05-19_11-38-20_bags/camera_2025_5_19-8_38_27'
+    # valid_record_times = {'start': 1747643941, 'end': np.inf}
+    # image_topic = '/camera/image_raw'
+    # ref_bbox_topic = None
+    # output_folder = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827_extracted/'
+    # video_output_file = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827.avi'
+
+
+    bag_file = '/home/roee/Downloads/camera_2025_6_5-12_56_26'
+    valid_record_times = {'start': -np.inf, 'end': np.inf}
     image_topic = '/camera/image_raw'
     ref_bbox_topic = None
-    output_folder = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827_extracted/'
-    video_output_file = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827.avi'
+    output_folder = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted/'
+    video_output_file = '/home/roee/Downloads/camera_2025_6_5-12_56_26.avi'
 
-
-    # analyse and sync record
+# analyse and sync record
     ros_record = RosBagRecord(bag_file, image_topic=image_topic, ref_bbox_topic=ref_bbox_topic)
     ros_record.analyse_bag()
     ros_record.save_to_folder(output_folder, start_time=valid_record_times['start'], end_time=valid_record_times['end'])

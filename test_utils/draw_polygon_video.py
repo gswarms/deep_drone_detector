@@ -38,6 +38,7 @@ if __name__ == '__main__':
     # ***** replace with required image path *****
     video_file = '../examples/drone_example1.mp4'
     polygon_file = '../examples/drone_example1_polygons.yaml'
+
     image_resize = (960, 540)
 
     polygon_num_points = 4

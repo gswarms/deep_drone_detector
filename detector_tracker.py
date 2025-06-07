@@ -199,8 +199,8 @@ class DetectorTracker:
 
                 # convert back to full image coordinate
                 for r in results:
-                    r['bbox'] = (r['bbox'][0] + self.detection_roi_bbox[0],
-                                 r['bbox'][1] + self.detection_roi_bbox[1],
+                    r['bbox'] = (r['bbox'][0] + xtl,
+                                 r['bbox'][1] + ytl,
                                  r['bbox'][2], r['bbox'][3])
 
                 # discard detections of the roi polygon
