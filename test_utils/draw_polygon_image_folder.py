@@ -43,10 +43,15 @@ if __name__ == '__main__':
     # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827_extracted/images'
     # polygon_file = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827_extracted/kfar_galim_20250519_083827_polygons.yaml'
 
+    # images_folder = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted/images'
+    # polygon_file = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted/kfar_galim_20250605_125626_polygons.yaml'
 
-    images_folder = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted/images'
-    polygon_file = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted/kfar_galim_20250605_125626_polygons.yaml'
+    # images_folder = '/home/roee/Downloads/camera_2025_6_6-3_0_31_extracted/images'
+    # polygon_file = '/home/roee/Downloads/camera_2025_6_6-3_0_31_extracted/kfar_galim_20250606_030031_polygons.yaml'
 
+
+    images_folder = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/images'
+    polygon_file = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/kfar_galim_20250605_114739_polygons.yaml'
 
     image_resize = None  # (640, 480)
     image_file_suffix = 'png'

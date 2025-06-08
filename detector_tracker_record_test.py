@@ -40,17 +40,34 @@ if __name__ == '__main__':
     # polygons_file = os.path.join(record_folder, 'kfar_galim_20250519_083827_polygons.yaml')  # ***optional
 
 
-    record_folder = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted'
+    # record_folder = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted'
+    # frame_size = (640, 480)
+    # frame_resize = None
+    # start_time = -np.inf
+    # output_video_file = os.path.join(record_folder, '20250605_125626_kfar_galim_results.avi')
+    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250605_125626_polygons.yaml')  # ***optional
+
+
+    # record_folder = '/home/roee/Downloads//camera_2025_6_6-3_0_31_extracted/'
+    # frame_size = (640, 480)
+    # frame_resize = None
+    # start_time = -np.inf
+    # output_video_file = os.path.join(record_folder, '20250606_030031_kfar_galim_results.avi')
+    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250606_030031_polygons.yaml')  # ***optional
+
+
+    record_folder = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/'
     frame_size = (640, 480)
     frame_resize = None
     start_time = -np.inf
-    output_video_file = os.path.join(record_folder, '20250605_125626_kfar_galim_results.avi')
-    polygons_file = os.path.join(record_folder, 'kfar_galim_20250605_125626_polygons.yaml')  # ***optional
+    output_video_file = os.path.join(record_folder, '20250605_114739_kfar_galim_results.avi')
+    polygons_file = os.path.join(record_folder, 'kfar_galim_20250605_114739_polygons.yaml')  # ***optional
 
 
     # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
     # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
-    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
+    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
+    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_224.onnx'
 
     # set video writer
     if output_video_file is not None:
@@ -59,7 +76,8 @@ if __name__ == '__main__':
         out = cv2.VideoWriter(output_video_file, fourcc, 20, (640, 480))
 
     # setup blob tracker
-    detection_frame_size = (256, 256)
+    detection_frame_size = (224, 224)
+    # detection_frame_size = (256, 256)
     # detection_frame_size = (320, 320)
     # detection_frame_size = (640, 480)
     dttr = detector_tracker.DetectorTracker(yolo_model_path, detection_frame_size,
