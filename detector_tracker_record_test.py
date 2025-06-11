@@ -4,11 +4,28 @@ import os
 import cv2
 import sys
 import numpy as np
+import re
+from test_utils.standard_record import StandardRecord
 from test_utils.roi_utils import PolygonPerFrame
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import detector_tracker
-from test_utils.standard_record import StandardRecord
+
+
+def path_to_scenario_name(scenario_folder_path):
+    """
+    reformat a file / folder name to a scenario name.
+    path format:  <path>/year_month_day-hour_min_sec_<any suffix>
+    scenario name: yyyymmdd_HHMMSS
+
+    :param scenario_folder_path:
+    :return:
+    """
+    base_name = os.path.basename(os.path.abspath(scenario_folder_path))
+    sp = re.split('_|-', base_name)
+    scenario_name = '{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}'.format(int(sp[0]), int(sp[1]), int(sp[2]), int(sp[3]), int(sp[4]), int(sp[5]))
+
+    return scenario_name
 
 if __name__ == '__main__':
 
@@ -48,7 +65,7 @@ if __name__ == '__main__':
     # polygons_file = os.path.join(record_folder, 'kfar_galim_20250605_125626_polygons.yaml')  # ***optional
 
 
-    # record_folder = '/home/roee/Downloads//camera_2025_6_6-3_0_31_extracted/'
+    # record_folder = '/home/roee/Downloads/camera_2025_6_6-3_0_31_extracted/'
     # frame_size = (640, 480)
     # frame_resize = None
     # start_time = -np.inf
@@ -56,18 +73,46 @@ if __name__ == '__main__':
     # polygons_file = os.path.join(record_folder, 'kfar_galim_20250606_030031_polygons.yaml')  # ***optional
 
 
-    record_folder = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/'
+    # record_folder = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/'
+    # frame_size = (640, 480)
+    # frame_resize = None
+    # start_time = -np.inf
+    # output_video_file = os.path.join(record_folder, '20250605_114739_kfar_galim_results.avi')
+    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250605_114739_polygons.yaml')  # ***optional
+
+    # ------------------ kfar massarik 08.06.2025 ------------------------------
+
+
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_17-30-42/camera_2025_6_8-14_30_56_extracted'  # bad
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-04-53/camera_2025_6_8-15_4_56_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-17-57/camera_2025_6_8-15_18_8_extracted'  # bad
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-29-51/camera_2025_6_8-15_29_54_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-51-15/camera_2025_6_8-15_51_18_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-52-56/camera_2025_6_8-15_52_58_extracted'  # ???
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-53-46/camera_2025_6_8-15_53_49_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-58-42/camera_2025_6_8-15_58_44_extracted'  # bad
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-59-46/camera_2025_6_8-15_59_49_extracted'  # ???
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-00-25/camera_2025_6_8-16_0_28_extracted'  # ???
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-08-34/camera_2025_6_8-16_8_48_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-09-33/camera_2025_6_8-16_9_38_extracted'  # bad
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-17-25/camera_2025_6_8-16_17_28_extracted'  # bad
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-18-31/camera_2025_6_8-16_18_34_extracted'  # bad
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-24-31/camera_2025_6_8-16_24_34_extracted'  # bad
+    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-25-35/camera_2025_6_8-16_25_38_extracted'  # ???
+
     frame_size = (640, 480)
     frame_resize = None
     start_time = -np.inf
-    output_video_file = os.path.join(record_folder, '20250605_114739_kfar_galim_results.avi')
-    polygons_file = os.path.join(record_folder, 'kfar_galim_20250605_114739_polygons.yaml')  # ***optional
+    scen_name = path_to_scenario_name(os.path.join(record_folder,'..'))
+    output_video_file = os.path.join(record_folder, scen_name+'_kfar_masarik_results.avi')
+    polygons_file = os.path.join(record_folder, scen_name+'_recorded_detection_roi_polygons.yaml')  # ***optional
+    # polygons_file = os.path.join(record_folder, scen_name+'_manual_detection_roi_polygons.yaml')  # ***optional
 
 
     # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
     # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
-    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
-    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_224.onnx'
+    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
+    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_224.onnx'
 
     # set video writer
     if output_video_file is not None:
@@ -76,8 +121,8 @@ if __name__ == '__main__':
         out = cv2.VideoWriter(output_video_file, fourcc, 20, (640, 480))
 
     # setup blob tracker
-    detection_frame_size = (224, 224)
-    # detection_frame_size = (256, 256)
+    # detection_frame_size = (224, 224)
+    detection_frame_size = (256, 256)
     # detection_frame_size = (320, 320)
     # detection_frame_size = (640, 480)
     dttr = detector_tracker.DetectorTracker(yolo_model_path, detection_frame_size,

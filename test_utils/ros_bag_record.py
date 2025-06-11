@@ -3,6 +3,8 @@
 import os
 import numpy as np
 import cv2
+import time
+import re
 from rosbags.highlevel import AnyReader
 # from rosbags.rosbag1 import Writer
 # from rosbags.serde import serialize_ros1
@@ -15,6 +17,7 @@ import pathlib
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('TkAgg')
+import roi_utils
 
 
 class RosBagRecord:
@@ -24,7 +27,8 @@ class RosBagRecord:
     1) analyses record timing (camera frames and bbox reference)
     2) save rosbag record to standard folder record
     """
-    def __init__(self, bag_file, image_topic=None, ref_bbox_topic=None):
+    def __init__(self, bag_file, image_topic=None, ref_bbox_topic=None,  detection_polygon_topic=None,
+                              detection_results_bbox_topic=None):
 
         self.frames = None
         self.start_time = None
@@ -36,8 +40,14 @@ class RosBagRecord:
         self.image_topic = image_topic
         self.ref_bbox_topic = ref_bbox_topic
 
+        self.detection_polygon_topic = detection_polygon_topic
+        self.detection_results_bbox_topic = detection_results_bbox_topic
+
         self.frame_times = None
         self.ref_bbox_times = None
+        self.detection_input_polygon_data = []
+        self.detection_results_data = []
+        self.frame_size = None
         return
 
     def analyse_bag(self):
@@ -57,6 +67,9 @@ class RosBagRecord:
             # get bbox reference times
             self.ref_bbox_times = None
             self._get_bag_ref_bbox_times(self.ref_bbox_topic)
+
+            self._get_bag_detection_polygon()
+            self._get_bag_detection_results()
 
             # analyse image and bbox record statistics
             print('analysing frame times ...')
@@ -161,11 +174,108 @@ class RosBagRecord:
         self.ref_bbox_times = np.array(ref_bbox_times)
         return
 
+
+    def _get_bag_detection_polygon(self):
+        """
+        get imu times
+        """
+
+        polygon_data = []
+        if self.detection_polygon_topic is not None:
+            connections = [x for x in self.bag.connections if x.topic == self.detection_polygon_topic]
+            for connection, timestamp, rawdata in self.bag.messages(connections=connections):
+                msg = self.bag.deserialize(rawdata, connection.msgtype)
+                if msg.__msgtype__ == 'visualization_msgs/msg/ImageMarker':
+                    polygon_time = self.__to_time(msg.header.stamp)
+                    polygon_points = np.array([[p.x for p in msg.points], [p.y for p in msg.points]]).T
+                    polygon_points = polygon_points[:-1,:]  # last one repeats the first
+                    polygon_data.append({'time': polygon_time, 'points': polygon_points})
+                else:
+                    print('Warning: on topic {} bad msg! expecting {} got {}'.format(self.detection_polygon_topic, 'visualization_msgs/msg/ImageMarker', msg.__msgtype__))
+        self.detection_input_polygon_data = polygon_data
+        return
+
+
+    def _get_bag_detection_results(self):
+        """
+        get imu times
+        """
+        detection_res_data = []
+        if self.detection_polygon_topic is not None:
+            connections = [x for x in self.bag.connections if x.topic == self.detection_results_bbox_topic]
+            for connection, timestamp, rawdata in self.bag.messages(connections=connections):
+                msg = self.bag.deserialize(rawdata, connection.msgtype)
+                if msg.__msgtype__ == 'visualization_msgs/msg/ImageMarker':
+                    bbox_time = self.__to_time(msg.header.stamp)
+                    bbox_points = np.array([[p.x for p in msg.points], [p.y for p in msg.points]]).T
+                    bbox_points = bbox_points[:-1,:]  # last one repeats the first
+                    detection_res_data.append({'time': bbox_time, 'points': bbox_points})
+                else:
+                    print('Warning: on topic {} bad msg! expecting {} got {}'.format(self.detection_results_bbox_topic, 'visualization_msgs/msg/ImageMarker', msg.__msgtype__))
+
+        self.detection_results_data = detection_res_data
+        return
+
+
+    def _get_closest_detection_polygon(self, query_times, time_step):
+        """
+        get the closest polygon to a specific time
+        """
+
+        if not isinstance(query_times, list):
+            query_times = [query_times]
+
+        res_polygons = None
+        # get detection input polygon
+        if len(self.detection_input_polygon_data) > 0:
+            polygon_times = np.array([p['time'] for p in self.detection_input_polygon_data])
+
+            # find the closest polygon in time
+            res_polygons = []
+            for t in query_times:
+                idx = np.argmin(np.abs(t - polygon_times))
+                if np.abs(t - polygon_times[idx]) < 2*time_step/3:
+                    res_polygons.append(self.detection_input_polygon_data[idx]['points'])
+                else:
+                    res_polygons.append(None)
+
+        return res_polygons
+
+
+    def _get_closest_detection_results(self, query_times, time_step):
+        """
+        get the closest polygon to a specific time
+        """
+
+        if not isinstance(query_times, list):
+            query_times = [query_times]
+
+        detection_results = None
+        # get detection input polygon
+        if len(self.detection_input_polygon_data) > 0:
+            detection_result_times = np.array([p['time'] for p in self.detection_results_data])
+
+            # find the closest polygon in time
+            detection_results = []
+            for t in query_times:
+                idx = np.argmin(np.abs(t - detection_result_times))
+                if np.abs(t - detection_result_times[idx]) < time_step:
+                    detection_results.append(self.detection_results_data[idx]['points'])
+                else:
+                    detection_results.append(None)
+
+        return detection_results
+
+
+        return
+
+
+
     @staticmethod
     def __to_time(ros_time_stamp):
         return ros_time_stamp.sec + ros_time_stamp.nanosec * 1e-9
 
-    def save_to_folder(self, output_folder, start_time=None, end_time=None):
+    def save_to_folder(self, output_folder, start_time=None, end_time=None, detection_polygon_output_file=None):
         """
         save camera frames and bbox reference to standard record folder format
         - output folder: output folder
@@ -191,16 +301,21 @@ class RosBagRecord:
 
             # save images
             print('   - saving images')
-            self._camera_images_to_folder(output_folder, self.image_topic)
+            # self._camera_images_to_folder(output_folder, self.image_topic)
+            self._camera_images_to_folder(output_folder, self.image_topic, detection_polygons_output_file=detection_polygon_output_file)
 
             # save bbox ref data
             self._save_bbox_ref(output_folder, self.ref_bbox_topic)
+
+            # if detection_polygon_output_file is not None:
+            #     self._save_detection_input_polygon(detection_polygon_output_file)
+
 
         print('Done')
         return
 
 
-    def save_to_video(self, output_video_file, start_time=None, end_time=None):
+    def save_to_video(self, output_video_file, start_time=None, end_time=None, draw_detection_polygon=False, draw_detection_results=False):
         """
         save camera frames to video format
         - output_video_file: output video file
@@ -238,18 +353,41 @@ class RosBagRecord:
 
                     msg_timestamp = timestamp * 1e-9
                     if self.start_time <= msg_timestamp <= self.end_time:
-                        # write images
+                        # get images
                         im = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, -1)
                         if im.shape[2] == 1:
-                            cv_img = im.squeeze()
+                            cv_img = np.copy(im.squeeze())
                         elif im.shape[2] == 3:
                             pass
-                            cv_img = im
+                            cv_img = np.copy(im)
                             # cv_img = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
                             # raise Exception('got color image! expecting grayscale!')
                         else:
                             raise Exception('invalid image!')
 
+                        frames_time_step = np.median(np.diff(self.frame_times))
+
+                        # get detection input polygon
+                        if draw_detection_polygon:
+                            if np.abs(frame_time - 1749395144.490971) < 0.05:
+                                aa = 5
+                            polygon_points = self._get_closest_detection_polygon(frame_time, frames_time_step)
+                            polygon_points = polygon_points[0]
+                            if polygon_points is not None:
+                                pp = np.round(polygon_points).astype(np.int32)
+                                cv_img = cv2.polylines(cv_img, np.array([pp]), isClosed=True,
+                                                       color=(255, 0, 0), thickness=1)
+
+                        # get detection results
+                        if draw_detection_results:
+                            bbox_points = self._get_closest_detection_results(frame_time, frames_time_step)
+                            bbox_points = bbox_points[0]
+                            if bbox_points is not None:
+                                bp = np.round(bbox_points).astype(np.int32)
+                                cv_img = cv2.polylines(cv_img, np.array([bp]), isClosed=True,
+                                                       color=(255, 255, 0), thickness=1)
+
+                        # write to video
                         if video_obj is None:
                             fourcc = cv2.VideoWriter_fourcc(*"XVID")
                             video_obj = cv2.VideoWriter(output_video_file, fourcc, 20.0, (im.shape[1], im.shape[0]), isColor=True)
@@ -264,7 +402,7 @@ class RosBagRecord:
         print('Done')
         return
 
-    def _camera_images_to_folder(self, output_folder, image_topic):
+    def _camera_images_to_folder(self, output_folder, image_topic, detection_polygons_output_file=None):
         """
         save camera frames to a folder
         camera_frame_sync: True - use synced times
@@ -272,6 +410,9 @@ class RosBagRecord:
         save_only_stereo_frames: True - save only common stereo frames
                                  False - save all frames for each camera
         """
+
+        t_img = 0
+        t_poly = 0
 
         if not os.path.isdir(output_folder):
             os.makedirs(output_folder)
@@ -285,6 +426,15 @@ class RosBagRecord:
         max_frame_id = self.frame_times.size
         num_frame_id_digits = int(np.ceil(np.log10(max_frame_id)))
 
+        save_detection_polygons = detection_polygons_output_file is not None
+        if save_detection_polygons:
+            detection_polygons_output_folder = os.path.dirname(detection_polygons_output_file)
+            if not os.path.isdir(detection_polygons_output_folder):
+                os.makedirs(detection_polygons_output_folder)
+            frames_time_step = np.median(np.diff(self.frame_times))
+            self.frame_size = None
+            frame_polygons = roi_utils.PolygonPerFrame(frame_size=self.frame_size)
+
         frame_id_left = 0
         timestamps_data = []
         if image_topic is not None:
@@ -295,6 +445,7 @@ class RosBagRecord:
 
                 msg_timestamp = timestamp * 1e-9
                 if self.start_time <= msg_timestamp <= self.end_time:
+                    t1 = time.monotonic()
                     image_file_name = '{:0{x}d}.png'.format(frame_id_left, x=num_frame_id_digits)
                     frame_id_left += 1
                     timestamps_data.append({'time': frame_time, 'image_file': image_file_name})
@@ -312,6 +463,32 @@ class RosBagRecord:
                         raise Exception('invalid image!')
                     image_file_path = os.path.join(image_subfolder_name, image_file_name)
                     cv2.imwrite(image_file_path, cv_img)
+
+                    t_img = t_img + (time.monotonic() - t1)
+
+                    if self.frame_size is None:
+                        self.frame_size = (im.shape[1], im.shape[0])
+                        frame_polygons.frame_size = self.frame_size
+                    elif self.frame_size[0] != im.shape[1] or self.frame_size[1] != im.shape[0]:
+                        print('warning: image size ({}x{}) is not consistent with first image size ({}x{})'.format(im.shape[1], im.shape[0], self.frame_size[0], self.frame_size[1]))
+
+
+                    if save_detection_polygons:
+                        t1 = time.monotonic()
+                        detection_polygon = self._get_closest_detection_polygon(frame_time, frames_time_step)
+                        if detection_polygon[0] is not None:
+                            detection_polygon[0] = detection_polygon[0].tolist()
+                        frame_polygons.set(frame_id_left, detection_polygon[0])
+                        # frame_polygons.save(detection_polygons_output_file)
+                        t_poly = t_poly + (time.monotonic() - t1)
+
+            if save_detection_polygons:
+                t1 = time.monotonic()
+                frame_polygons.save(detection_polygons_output_file)
+                t_poly = t_poly + (time.monotonic() - t1)
+
+            print('saving images time = {}sec'.format(t_img))
+            print('saving polygons time = {}sec'.format(t_poly))
 
             # save timestamps file
             camera_left_timestamp_file = os.path.join(image_subfolder_name, timestamp_file_basename)
@@ -364,12 +541,41 @@ class RosBagRecord:
 
         return
 
+
+    def _save_detection_input_polygon(self, output_file):
+        """
+        save detection_input_polygon data to a yaml file
+        """
+        polygon_data = roi_utils.PolygonPerFrame(self.frame_size)
+        for i, p in enumerate(self.detection_input_polygon_data):
+            polygon_points = p['points'].tolist()  # xy to pixel, and convert to list
+            polygon_data.set(i, polygon_points)
+        polygon_data.save(output_file)
+        return
+
     def __del__(self):
         if type(self.bag) == AnyReader and self.bag.isopen:
             self.bag.close()
 
 
+def path_to_scenario_name(scenario_folder_path):
+    """
+    reformat a file / folder name to a scenario name.
+    path format:  <path>/year_month_day-hour_min_sec_<any suffix>
+    scenario name: yyyymmdd_HHMMSS
+
+    :param scenario_folder_path:
+    :return:
+    """
+
+    base_name = os.path.basename(os.path.abspath(scenario_folder_path))
+    sp = re.split('_|-', base_name)
+    scenario_name = '{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}'.format(int(sp[0]), int(sp[1]), int(sp[2]), int(sp[3]), int(sp[4]), int(sp[5]))
+
+    return scenario_name
+
 if __name__ == '__main__':
+
 
     # bag_file = '/home/roee/Projects/datasets/interceptor_drone/common_tests/2025-04-07-08-07-18_gazebo/'
     # valid_record_times = {'start': -np.inf, 'end': np.inf}
@@ -395,17 +601,78 @@ if __name__ == '__main__':
     # video_output_file = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827.avi'
 
 
-    bag_file = '/home/roee/Downloads/camera_2025_6_5-12_56_26'
+    # bag_file = '/home/roee/Downloads/camera_2025_6_5-12_56_26'
+    # valid_record_times = {'start': -np.inf, 'end': np.inf}
+    # image_topic = '/camera/image_raw'
+    # detection_polygon_topic = '/detection/visualization/roi_bounding_box'
+    # detection_results_bbox_topic = '/detection/visualization/target_bounding_box'
+    # image_topic = '/camera/image_raw'
+    # ref_bbox_topic = None
+    # output_folder = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted/'
+    # video_output_file = '/home/roee/Downloads/camera_2025_6_5-12_56_26.avi'
+
+    # bag_file = '/home/roee/Downloads/camera_2025_6_6-3_0_31'
+    # valid_record_times = {'start': -np.inf, 'end': np.inf}
+    # image_topic = '/camera/image_raw'
+    # ref_bbox_topic = None
+    # output_folder = '/home/roee/Downloads/camera_2025_6_6-3_0_31_extracted/'
+    # video_output_file = '/home/roee/Downloads/camera_2025_6_6-3_0_31.avi'
+
+    # bag_file = '/home/roee/Downloads/camera_2025_6_5-11_47_39'
+    # valid_record_times = {'start': -np.inf, 'end': np.inf}
+    # image_topic = '/camera/image_raw'
+    # ref_bbox_topic = None
+    # detection_polygon_topic='/detection/visualization/roi_bounding_box'
+    # detection_results_bbox_topic='/detection/visualization/target_bounding_box'
+    # output_folder = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/'
+    # video_output_file = '/home/roee/Downloads/camera_2025_6_5-11_47_39.avi'
+
+    # ------------------ kfar massarik 08.06.2025 ------------------------------
+
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_17-30-42/camera_2025_6_8-14_30_56'  # bad
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-04-53/camera_2025_6_8-15_4_56'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-17-57/camera_2025_6_8-15_18_8'  # bad
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-29-51/camera_2025_6_8-15_29_54'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-51-15/camera_2025_6_8-15_51_18'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-52-56/camera_2025_6_8-15_52_58'  # ???
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-53-46/camera_2025_6_8-15_53_49'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-58-42/camera_2025_6_8-15_58_44'  # bad
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-59-46/camera_2025_6_8-15_59_49'  # ???
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-00-25/camera_2025_6_8-16_0_28'  # ???
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-08-34/camera_2025_6_8-16_8_48'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-09-33/camera_2025_6_8-16_9_38'  # bad
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-17-25/camera_2025_6_8-16_17_28'  # bad
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-18-31/camera_2025_6_8-16_18_34'  # bad
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-24-31/camera_2025_6_8-16_24_34'  # bad
+    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-25-35/camera_2025_6_8-16_25_38'  # ???
+
+
     valid_record_times = {'start': -np.inf, 'end': np.inf}
     image_topic = '/camera/image_raw'
     ref_bbox_topic = None
-    output_folder = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted/'
-    video_output_file = '/home/roee/Downloads/camera_2025_6_5-12_56_26.avi'
+    detection_polygon_topic='/detection/visualization/roi_bounding_box'
+    detection_results_bbox_topic='/detection/visualization/target_bounding_box'
+    output_folder = bag_folder + '_extracted'
+    video_output_file = bag_folder + '.avi'
+    scen_name = path_to_scenario_name(os.path.join(bag_folder,'..'))
+    detection_polygon_output_file = os.path.join(output_folder, scen_name+'_recorded_detection_roi_polygons.yaml')
+    frame_size = (640, 480)
+
 
 # analyse and sync record
-    ros_record = RosBagRecord(bag_file, image_topic=image_topic, ref_bbox_topic=ref_bbox_topic)
+    ros_record = RosBagRecord(bag_folder, image_topic=image_topic, ref_bbox_topic=ref_bbox_topic,
+                              detection_polygon_topic=detection_polygon_topic,
+                              detection_results_bbox_topic=detection_results_bbox_topic)
     ros_record.analyse_bag()
-    ros_record.save_to_folder(output_folder, start_time=valid_record_times['start'], end_time=valid_record_times['end'])
-    ros_record.save_to_video(video_output_file, start_time=valid_record_times['start'], end_time=valid_record_times['end'])
+
+    t1 = time.monotonic()
+    ros_record.save_to_folder(output_folder, start_time=valid_record_times['start'], end_time=valid_record_times['end'],
+                              detection_polygon_output_file = detection_polygon_output_file)
+    print('save_to_folder time - {}sec'.format(time.monotonic()-t1))
+
+    t1 = time.monotonic()
+    ros_record.save_to_video(video_output_file, start_time=valid_record_times['start'], end_time=valid_record_times['end'],
+                             draw_detection_polygon=True, draw_detection_results=True)
+    print('save_to_video time - {}sec'.format(time.monotonic()-t1))
 
     print('Done!')

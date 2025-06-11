@@ -49,9 +49,36 @@ if __name__ == '__main__':
     # images_folder = '/home/roee/Downloads/camera_2025_6_6-3_0_31_extracted/images'
     # polygon_file = '/home/roee/Downloads/camera_2025_6_6-3_0_31_extracted/kfar_galim_20250606_030031_polygons.yaml'
 
+    # images_folder = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/images'
+    # polygon_file = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/kfar_galim_20250605_114739_polygons.yaml'
 
-    images_folder = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/images'
-    polygon_file = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/kfar_galim_20250605_114739_polygons.yaml'
+    # ------------------ kfar massarik 08.06.2025 ------------------------------
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-04-53/camera_2025_6_8-15_4_56_extracted/images'
+    # polygon_file = os.path.join(images_folder,'..','20250608_180453_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-29-51/camera_2025_6_8-15_29_54_extracted/images'
+    # polygon_file = os.path.join(images_folder,'..','20250608_182951_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-51-15/camera_2025_6_8-15_51_18_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250608_185115_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-52-56/camera_2025_6_8-15_52_58_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250608_185256_manual_detection_roi_polygons.yaml')
+    #
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-53-46/camera_2025_6_8-15_53_49_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250608_185346_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-59-46/camera_2025_6_8-15_59_49_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250608_185946_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-00-25/camera_2025_6_8-16_0_28_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250608_190025_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-08-34/camera_2025_6_8-16_8_48_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250608_190834_manual_detection_roi_polygons.yaml')
+
+    images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-25-35/camera_2025_6_8-16_25_38_extracted/images'
+    polygon_file = os.path.join(images_folder, '..', '20250608_192535_manual_detection_roi_polygons.yaml')
 
     image_resize = None  # (640, 480)
     image_file_suffix = 'png'
