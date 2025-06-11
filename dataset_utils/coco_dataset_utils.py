@@ -18,8 +18,9 @@ class CocoDatasetManager:
                                  #          'weather': weather description **optional
                                  #          }
         self.image_records_id_index = {}  # dict image id to data (only pointers, no data duplication)
+        self.image_records_id_to_idx = {}  # dict image id to index
         self.image_id_counter = 0
-        self.curr_image_id = 1
+        self.curr_image_index = 0
 
         # image annotations
         self.annotations = []   # list of {'id': category id,
@@ -72,7 +73,12 @@ class CocoDatasetManager:
             img_file_name = os.path.abspath(os.path.join(dataset_dir, img['file_name']))
             image_width = img.get('width', 0)
             image_height = img.get('height', 0)
-            new_id = self.add_image(img_file_name, image_width, image_height)
+            date = img.get('date', 0)
+            daytime = img.get('daytime', 0)
+            cloud_coverage = img.get('cloud_coverage', 0)
+            place = img.get('place', 0)
+            new_id = self.add_image(img_file_name, image_width, image_height,
+                                    date=date, daytime=daytime, cloud_coverage=cloud_coverage, place=place)
             image_id_map[img['id']] = new_id
 
         # add annotations
@@ -82,8 +88,9 @@ class CocoDatasetManager:
                 iscrowd = ann['iscrowd']
             else:
                 iscrowd = 0
+            distance_from_camera = img.get('distance_from_camera', 0)
             self.add_annotation(image_id_map[new_ann['image_id']], category_id_map[new_ann['category_id']],
-                                new_ann['bbox'], iscrowd=iscrowd)
+                                new_ann['bbox'], iscrowd=iscrowd, distance_from_camera=distance_from_camera)
 
         #------------------ sort by image file name ------------------------------------
         self._sort_images()
@@ -191,28 +198,43 @@ class CocoDatasetManager:
         print(f"COCO dataset exported to: {out_json_path}")
 
 
-    def add_image(self, file_name, image_width, image_height):
+    def add_image(self, file_name, image_width, image_height, date=None, daytime=None, cloud_coverage=None, place=None):
         """
         add image to dataset
 
         :param file_name: image file name
         :param image_size: [width, height]
+        :param date: date image was taken yyyymmdd string  ** optional
+        :param daytime: time of day HHMMSS string  ** optional
+        :param cloud_coverage: scalar [0,1]  ** optional
+        :param place: string the name of the place where this image was taken  ** optional
         :return: image dataset new id
         """
         new_id = self.image_id_counter + 1
-        self.image_records.append({
+        image_record = {
             'id': new_id,
             'file_name': file_name,
             'width': image_width,
             'height': image_height
-        })
+        }
+        if date is not None:
+            image_record['date'] = date
+        if daytime is not None:
+            image_record['daytime'] = daytime
+        if cloud_coverage is not None:
+            image_record['cloud_coverage'] = cloud_coverage
+        if place is not None:
+            image_record['place'] = place
+
+        self.image_records.append(image_record)
         self.image_id_counter += 1
         self.image_records_id_index[new_id] = self.image_records[-1]
+        self.image_records_id_to_idx[new_id] = len(self.image_records) - 1
 
         return new_id
 
 
-    def add_annotation(self, image_id, category_id, bbox, iscrowd=0):
+    def add_annotation(self, image_id, category_id, bbox, iscrowd=0, distance_from_camera=None):
         """
         add annotation to dataset
 
@@ -220,17 +242,21 @@ class CocoDatasetManager:
         :param category_id: category id
         :param bbox: [xtl, ytl, w, h]
         :param iscrowd: flag that tells if this bbox is a single object or a crowd or an inseparable multiple objects
+        :param distance_from_camera: distance of object from camera (scalar)  ** optional
         :return: annotation new id
         """
         annotation_id = self.annotation_id_counter + 1
-        self.annotations.append({
+        annotation = {
             'id': annotation_id,
             'image_id': image_id,
             'category_id': category_id,
             'bbox': bbox,
             'area': bbox[2] * bbox[3],
             'iscrowd': iscrowd
-        })
+        }
+        if distance_from_camera is not None:
+            annotation['distance_from_camera'] = distance_from_camera
+        self.annotations.append(annotation)
         self.annotation_id_counter += 1
 
         # update annotations_image_id_index
@@ -289,9 +315,9 @@ class CocoDatasetManager:
 
     def get_category_name_by_id(self, cat_id):
         res = None
-        for k in self.categories:
-            if self.categories[k]['id'] == cat_id:
-                res = self.categories[k]['name']
+        for cat in self.categories:
+            if cat['id'] == cat_id:
+                res = cat['name']
         return res
 
 
@@ -303,12 +329,14 @@ class CocoDatasetManager:
         return res
 
 
-    def get_image(self, image_id=None):
+    def get_image(self, image_id=None, image_index=None):
         """
-        get image record data
+        get image record data by image id or by index
 
         :param image_id: image id to get
-                         if None - get next image!
+        :param image_index: image index to get
+        * if both are None, we get the next image (by image index)
+
         :return: image data dict:
                      {'id': image id,
                      'file_name': image absolute file path,
@@ -319,15 +347,20 @@ class CocoDatasetManager:
                      'weather': weather description **optional
                      }
         """
+        # TODO: add auxiliary fields
+        if image_id is None and image_index is None:
+            image_index = self.curr_image_index
 
         if image_id is None:
-            image_id = self.curr_image_id
+            res_img_data = self.image_records[image_index]
+            self.curr_image_index = min(image_index + 1, len(self.image_records)-1)
 
-        if image_id in self.image_records_id_index:
+        elif image_id in self.image_records_id_index:
             res_img_data = self.image_records_id_index[image_id]
+            self.curr_image_index = self.image_records_id_index[image_id] + 1
+
         else:
             res_img_data = None
-        self.curr_image_id = image_id + 1
 
         return res_img_data
 
@@ -340,6 +373,7 @@ class CocoDatasetManager:
         self.image_records.sort(key=lambda x: x['file_name'])
         # fix image record index
         self.image_records_id_index = {x['id']: x for x in self.image_records}
+        self.image_records_id_to_idx = {x['id']: i for i,x in enumerate(self.image_records)}
         return
 
 
