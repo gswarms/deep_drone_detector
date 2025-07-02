@@ -315,7 +315,8 @@ class RosBagRecord:
         return
 
 
-    def save_to_video(self, output_video_file, start_time=None, end_time=None, draw_detection_polygon=False, draw_detection_results=False):
+    def save_to_video(self, output_video_file, start_time=None, end_time=None,
+                      draw_detection_polygon=False, draw_detection_results=False, draw_frame_id=False):
         """
         save camera frames to video format
         - output_video_file: output video file
@@ -344,6 +345,7 @@ class RosBagRecord:
             video_obj = None
 
             timestamps_data = []
+            frame_id = 0
             if image_topic is not None:
                 connections = [x for x in self.bag.connections if x.topic == image_topic]
                 for connection, timestamp, rawdata in self.bag.messages(connections=connections):
@@ -386,6 +388,12 @@ class RosBagRecord:
                                 bp = np.round(bbox_points).astype(np.int32)
                                 cv_img = cv2.polylines(cv_img, np.array([bp]), isClosed=True,
                                                        color=(255, 255, 0), thickness=1)
+
+                        if draw_frame_id:
+                            cv2.putText(cv_img, 'frame {}'.format(frame_id), (20, 20),
+                                        fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=(100, 255, 255))
+                            frame_id = frame_id + 1
+
 
                         # write to video
                         if video_obj is None:
@@ -644,7 +652,20 @@ if __name__ == '__main__':
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-17-25/camera_2025_6_8-16_17_28'  # bad
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-18-31/camera_2025_6_8-16_18_34'  # bad
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-24-31/camera_2025_6_8-16_24_34'  # bad
-    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-25-35/camera_2025_6_8-16_25_38'  # ???
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-25-35/camera_2025_6_8-16_25_38'  # ???
+
+    # ------------------ kfar galim 01.07.2025 ------------------------------
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_08-26-13/camera_2025_7_1-5_26_17'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-01-54/camera_2025_7_1-6_2_3'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-27-36/camera_2025_7_1-6_27_39'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-34-06/camera_2025_7_1-6_34_9'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-46-51/camera_2025_7_1-6_46_54'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-48-20/camera_2025_7_1-6_48_22'  # bad
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-03-29/camera_2025_7_1-7_3_32'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-04-48/camera_2025_7_1-7_4_52'  # bad
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-47-42/camera_2025_7_1-7_47_54'  # bad
+    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-49-24/camera_2025_7_1-7_49_27'
 
 
     valid_record_times = {'start': -np.inf, 'end': np.inf}
@@ -672,7 +693,7 @@ if __name__ == '__main__':
 
     t1 = time.monotonic()
     ros_record.save_to_video(video_output_file, start_time=valid_record_times['start'], end_time=valid_record_times['end'],
-                             draw_detection_polygon=True, draw_detection_results=True)
+                             draw_detection_polygon=True, draw_detection_results=True, draw_frame_id=True)
     print('save_to_video time - {}sec'.format(time.monotonic()-t1))
 
     print('Done!')
