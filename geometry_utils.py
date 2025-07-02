@@ -314,93 +314,28 @@ def triangle_area(a, b, c):
                       b[0] * (c[1] - a[1]) +
                       c[0] * (a[1] - b[1])))
 
-# def image_polygon_from_los(pinhole_camera: phc.PinholeCamera, los, los_angular_uncertainty, num_points=12, int_polygon_coordinates=False):
-#     """
-#     translate los with angular uncertainty in body frame to ROI in camera image
-#
-#     param: pinhole_camera - cv_core.pinhole_camera.PinholeCamera
-#     param: los - line of sight in body frame
-#     param: los_angular_uncertainty - los scalar angle uncertainty
-#     param: num_points - number of polygon points
-#     param: int_polygon_coordinates - convert polygon point coordinates to int (and round them)
-#     """
-#
-#     los = np.array(los, dtype=np.float32)
-#     if los.size != 3:
-#         raise Exception('invalid los input!')
-#
-#     if num_points <= 6:
-#         raise Exception('number of points must e >= 6!')
-#     los = np.array(los)
-#     los = los / np.linalg.norm(los)
-#
-#     # Choose a random vector w that is not parallel to los
-#     w = np.array([1, 0, 0]) if np.dot(los, [1, 0, 0])<=0.707 else np.array([0, 1, 0])
-#     # Project w onto the plane perpendicular to v
-#     w_proj = w - np.dot(w, los) * los
-#     # Normalize the projection of w
-#     w_proj = w_proj / np.linalg.norm(w_proj)
-#     # Now we have a vector perpendicular to v (w_proj)
-#     # The desired vector u is a combination of v and w_proj such that the angle between them is theta
-#     u = np.cos(los_angular_uncertainty) * los + np.sin(los_angular_uncertainty) * w_proj
-#
-#     # find multiple vectors with the same angle theta from los
-#     # rotate u around the los
-#     n = num_points
-#     a = np.linspace(0, (2 * np.pi)*((n-1)/n) , n)
-#     ui = np.zeros((n, 3), dtype=np.float32)
-#     for i in range(n):
-#         rot_vec = los * a[i]
-#         R, _ = cv2.Rodrigues(rot_vec)
-#         ui[i, :] = np.matmul(R, u)
-#         # print('ui angle to los: {}'.format(np.arccos(np.dot(los, ui[i, :]))*180/np.pi))
-#
-#     # project to camera image
-#     body_pose = g3d.rigid3dtform.Rigid3dTform(np.eye(3), (0, 0, 0))
-#     image_points, is_in_image = pinhole_camera.project_points(ui, body_pose)
-#
-#     image_borders = np.array(((0, 0),
-#                               (pinhole_camera.image_size[0], 0),
-#                               (pinhole_camera.image_size[0], pinhole_camera.image_size[1]),
-#                               (0, pinhole_camera.image_size[1])))
-#
-#     valid_polygon_points = g2d.polygon_2D.polygon_intersect(image_points, image_borders, use_shapely=True)
-#     valid_polygon_points = np.array(valid_polygon_points.exterior.coords)
-#     if valid_polygon_points.shape[0] < 3:
-#         valid_polygon_points = None
-#
-#     if (valid_polygon_points is not None) and int_polygon_coordinates:
-#         valid_polygon_points = np.round(valid_polygon_points).astype(np.int32)
-#
-#     return valid_polygon_points
 
+def calc_target_los_angular_uncertainty(prior_angular_uncertainty=0, relative_position_uncertainty=None,
+                                        range_to_target=None, agular_uncertainty_limit=None):
+    """
+    calc angular uncertainty for the line of sight to some target
 
-# def mask_from_image_polygon(polygon_points, image_size):
-#     """
-#     Create a binary image with a polygon filled in white.
-#
-#     :param polygon_points: List of (x, y) tuples representing the polygon's vertices.
-#     :param image_size: Tuple (width, height) for the size of the image. Default is (500, 500).
-#     :return: A binary image with the polygon filled in white.
-#     """
-#
-#     polygon_points = np.array(polygon_points).reshape((-1, 2))
-#
-#     if np.any(polygon_points[:, 0] < 0) or np.any(polygon_points[:, 0] > image_size[0]) or\
-#         np.any(polygon_points[:, 1] < 0) or np.any(polygon_points[:, 1] > image_size[1]):
-#         raise Exception('some polygon points are outside the image!')
-#
-#     if not(isinstance(polygon_points, np.ndarray) and polygon_points.shape[1]==2):
-#         raise Exception('invalid polygon points format!')
-#
-#     # Create a black image with the specified size (black background)
-#     image = np.zeros(image_size[::-1], dtype=np.uint8)
-#
-#     # Convert vertices to numpy array
-#     points = np.array(polygon_points, dtype=np.int32)
-#     points = points.reshape((-1, 1, 2))  # Reshape for fillPoly function
-#
-#     # Fill the polygon with white (255)
-#     cv2.fillPoly(image, [points], color=255)
-#
-#     return image
+    :param prior_angular_uncertainty - prior angular uncertainty in [rad]
+    :param relative_position_uncertainty - relative position uncertainty in [m]
+    :param range_to_target - range between us and the target in [m]
+    :param agular_uncertainty_limit - top limit to total error [rad]. Usually it makes sense to limit to 90 deg.
+    """
+
+    if relative_position_uncertainty is None and range_to_target is None:
+        position_induced_uncertainty = 0
+    elif relative_position_uncertainty is not None and range_to_target is not None:
+        position_induced_uncertainty = np.arctan2(np.abs(relative_position_uncertainty), range_to_target)
+    else:
+        raise Exception('invalid input! relative_position_uncertainty and range_to_target must be set together!')
+
+    if agular_uncertainty_limit is not None:
+        res = min(float(prior_angular_uncertainty) + float(position_induced_uncertainty), agular_uncertainty_limit)  # can't be more than 90 degrees
+    else:
+        res = float(prior_angular_uncertainty) + float(position_induced_uncertainty)
+    return res
+
