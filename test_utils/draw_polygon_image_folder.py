@@ -77,8 +77,47 @@ if __name__ == '__main__':
     # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-08-34/camera_2025_6_8-16_8_48_extracted/images'
     # polygon_file = os.path.join(images_folder, '..', '20250608_190834_manual_detection_roi_polygons.yaml')
 
-    images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-25-35/camera_2025_6_8-16_25_38_extracted/images'
-    polygon_file = os.path.join(images_folder, '..', '20250608_192535_manual_detection_roi_polygons.yaml')
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_19-25-35/camera_2025_6_8-16_25_38_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250608_192535_manual_detection_roi_polygons.yaml')
+
+
+    # ------------------ kfar galim 01.07.2025 ------------------------------
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_08-26-13/camera_2025_7_1-5_26_17_extracted/images'
+    # polygon_file = os.path.join(images_folder,'..','20250701_082613_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-01-54/camera_2025_7_1-6_2_3_extracted/images'
+    # polygon_file = os.path.join(images_folder,'..','20250701_090154_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-27-36/camera_2025_7_1-6_27_39_extracted/images'
+    # polygon_file = os.path.join(images_folder,'..','20250701_092736_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-34-06/camera_2025_7_1-6_34_9_extracted/images'
+    # polygon_file = os.path.join(images_folder,'..','20250701_093406_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images'
+    # polygon_file = os.path.join(images_folder,'..','20250701_093510_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-46-51/camera_2025_7_1-6_46_54_extracted/images'
+    # polygon_file = os.path.join(images_folder,'..','20250701_094651_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-48-20/camera_2025_7_1-6_48_22_extracted'  # bad
+    # polygon_file = os.path.join(images_folder, '..', '20250701_???_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-03-29/camera_2025_7_1-7_3_32_extracted/images'
+    # polygon_file = os.path.join(images_folder,'..','20250701_100329_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-04-48/camera_2025_7_1-7_4_52_extracted/images'  # bad
+    # polygon_file = os.path.join(images_folder, '..', '20250701_???_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-47-42/camera_2025_7_1-7_47_54_extracted/images'  # bad
+    # polygon_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-49-24/camera_2025_7_1-7_49_27'
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-47-42/camera_2025_7_1-7_47_54_extracted/images'  # bad
+    # polygon_file = os.path.join(images_folder, '..', '20250701_???_manual_detection_roi_polygons.yaml')
+
+    images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-49-24/camera_2025_7_1-7_49_27_extracted/images'
+    polygon_file = os.path.join(images_folder, '..', '20250701_104924_manual_detection_roi_polygons.yaml')
+
 
     image_resize = None  # (640, 480)
     image_file_suffix = 'png'
