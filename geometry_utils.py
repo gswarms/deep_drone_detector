@@ -358,7 +358,7 @@ if __name__ == '__main__':
     image_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images/000.png'
     camera_calibration_file = '/home/roee/Projects/datasets/interceptor_drone/20250612_calibration/20250612_pz001_calibration/camera_intrinsics_IDC1.yaml'
 
-    los = np.array([[0.5,0,1]])
+    los = np.array([[0.2,0,1]])
     los_angular_uncertainty = 20*np.pi/180
 
     # load image
