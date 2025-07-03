@@ -1,5 +1,6 @@
 """ 3D geometry tools
 """
+import cv_core.pinhole_camera
 import numpy as np
 import cv2
 from cv_core import pinhole_camera as phc
@@ -316,14 +317,14 @@ def triangle_area(a, b, c):
 
 
 def calc_target_los_angular_uncertainty(prior_angular_uncertainty=0, relative_position_uncertainty=None,
-                                        range_to_target=None, agular_uncertainty_limit=None):
+                                        range_to_target=None, angular_uncertainty_limit=None):
     """
     calc angular uncertainty for the line of sight to some target
 
     :param prior_angular_uncertainty - prior angular uncertainty in [rad]
     :param relative_position_uncertainty - relative position uncertainty in [m]
     :param range_to_target - range between us and the target in [m]
-    :param agular_uncertainty_limit - top limit to total error [rad]. Usually it makes sense to limit to 90 deg.
+    :param angular_uncertainty_limit - top limit to total error [rad]. Usually it makes sense to limit to 90 deg.
     """
 
     if relative_position_uncertainty is None and range_to_target is None:
@@ -333,9 +334,40 @@ def calc_target_los_angular_uncertainty(prior_angular_uncertainty=0, relative_po
     else:
         raise Exception('invalid input! relative_position_uncertainty and range_to_target must be set together!')
 
-    if agular_uncertainty_limit is not None:
-        res = min(float(prior_angular_uncertainty) + float(position_induced_uncertainty), agular_uncertainty_limit)  # can't be more than 90 degrees
+    if angular_uncertainty_limit is not None:
+        res = min(float(prior_angular_uncertainty) + float(position_induced_uncertainty), angular_uncertainty_limit)  # can't be more than 90 degrees
     else:
         res = float(prior_angular_uncertainty) + float(position_induced_uncertainty)
     return res
 
+
+# if __name__ == '__main__':
+#
+#     image_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images/000.png'
+#     camera_calibration_file = '/home/roee/Projects/datasets/interceptor_drone/20250612_calibration/20250612_pz001_calibration/camera_intrinsics_IDC1.yaml'
+#
+#     los = np.array([[0,0,1]])
+#     los_angular_uncertainty = 10*np.pi/180
+#
+#     # load image
+#     img = cv2.imread(image_file)
+#
+#     # load camera
+#     cam = cv_core.pinhole_camera.PinholeCamera()
+#     cam.load(camera_calibration_file)
+#     camera_intrinsic_matrix = cam.K
+#     distortion_coefficients = cam.distortion_coefficients
+#     image_size = cam.image_size
+#     camera_extrinsic_matrix = np.eye(4)  # cam.T_cam_to_body
+#
+#     lpc =  LosPixelConverter()
+#     lpc.set_camera(camera_intrinsic_matrix, distortion_coefficients, image_size, camera_extrinsic_matrix)
+#
+#     roi_polygon =  lpc.image_polygon_from_los(los, los_angular_uncertainty, num_points=12, int_polygon_coordinates=False, keep_num_points=False, verbose=False)
+#
+#
+#     cv2.imshow('image with roi polygon', img)
+#     cv2.waitKey(50)
+#
+#     print('done!')
+#     cv2.destroyAllWindows()
