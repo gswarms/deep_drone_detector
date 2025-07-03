@@ -227,6 +227,17 @@ class LosPixelConverter:
         image_points = self.camera.project_points(world_points, T)
         return image_points
 
+    @staticmethod
+    def calc_target_los_angular_uncertainty(prior_angular_uncertainty=0, relative_position_uncertainty=None,
+                                            range_to_target=None, angular_uncertainty_limit=None):
+        """
+        see calc_target_los_angular_uncertainty
+        This doesn't really belong to this class. This method is here to make implementation easier.
+        """
+        return calc_target_los_angular_uncertainty(prior_angular_uncertainty=0, relative_position_uncertainty=None,
+                                                   range_to_target=None, angular_uncertainty_limit=None)
+
+
 def polygon_adjust_number_of_points(polygon_points, required_num_points):
     """
     add / remove points from a polygon to get a required number of points.
@@ -341,33 +352,38 @@ def calc_target_los_angular_uncertainty(prior_angular_uncertainty=0, relative_po
     return res
 
 
-# if __name__ == '__main__':
-#
-#     image_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images/000.png'
-#     camera_calibration_file = '/home/roee/Projects/datasets/interceptor_drone/20250612_calibration/20250612_pz001_calibration/camera_intrinsics_IDC1.yaml'
-#
-#     los = np.array([[0,0,1]])
-#     los_angular_uncertainty = 10*np.pi/180
-#
-#     # load image
-#     img = cv2.imread(image_file)
-#
-#     # load camera
-#     cam = cv_core.pinhole_camera.PinholeCamera()
-#     cam.load(camera_calibration_file)
-#     camera_intrinsic_matrix = cam.K
-#     distortion_coefficients = cam.distortion_coefficients
-#     image_size = cam.image_size
-#     camera_extrinsic_matrix = np.eye(4)  # cam.T_cam_to_body
-#
-#     lpc =  LosPixelConverter()
-#     lpc.set_camera(camera_intrinsic_matrix, distortion_coefficients, image_size, camera_extrinsic_matrix)
-#
-#     roi_polygon =  lpc.image_polygon_from_los(los, los_angular_uncertainty, num_points=12, int_polygon_coordinates=False, keep_num_points=False, verbose=False)
-#
-#
-#     cv2.imshow('image with roi polygon', img)
-#     cv2.waitKey(50)
-#
-#     print('done!')
-#     cv2.destroyAllWindows()
+if __name__ == '__main__':
+
+    image_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images/000.png'
+    camera_calibration_file = '/home/roee/Projects/datasets/interceptor_drone/20250612_calibration/20250612_pz001_calibration/camera_intrinsics_IDC1.yaml'
+
+    los = np.array([[0,0,1]])
+    los_angular_uncertainty = 10*np.pi/180
+
+    # load image
+    img = cv2.imread(image_file)
+
+    # load camera
+    cam = cv_core.pinhole_camera.PinholeCamera()
+    cam.load(camera_calibration_file)
+    camera_intrinsic_matrix = cam.K
+    distortion_coefficients = cam.distortion_coefficients
+    image_size = cam.image_size
+    camera_extrinsic_matrix = np.eye(4)  # cam.T_cam_to_body
+
+    lpc =  LosPixelConverter()
+    lpc.set_camera(camera_intrinsic_matrix, distortion_coefficients, image_size, camera_extrinsic_matrix)
+
+    roi_polygon =  lpc.image_polygon_from_los(los, los_angular_uncertainty, num_points=12, int_polygon_coordinates=False, keep_num_points=False, verbose=False)
+
+    roi_polygon = np.round(roi_polygon).astype(np.int32)
+    points = roi_polygon.reshape((-1, 1, 2))
+
+
+    cv2.polylines(img, [points], isClosed=True, color=(0, 255, 0), thickness=3)
+
+    cv2.imshow('image with roi polygon', img)
+    cv2.waitKey(50)
+
+    print('done!')
+    cv2.destroyAllWindows()
