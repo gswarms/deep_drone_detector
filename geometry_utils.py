@@ -137,11 +137,11 @@ class LosPixelConverter:
         image_points, is_in_image = self.camera.project_points(ui, body_pose)
         is_in_front = ui[:,2] > 0
         image_points = image_points[is_in_front, :]
-        is_in_image = is_in_image[is_in_front]
+        # is_in_image = is_in_image[is_in_front]
 
-        if not np.any(is_in_image):
-            valid_polygon_points = np.zeros((0, 2))
-            return valid_polygon_points
+        # if not np.any(is_in_image):  # this is a bug if polygon is bigger than the image
+        #     valid_polygon_points = np.zeros((0, 2))
+        #     return valid_polygon_points
 
         if verbose:
             print('projected to image')
@@ -358,8 +358,8 @@ if __name__ == '__main__':
     image_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images/000.png'
     camera_calibration_file = '/home/roee/Projects/datasets/interceptor_drone/20250612_calibration/20250612_pz001_calibration/camera_intrinsics_IDC1.yaml'
 
-    los = np.array([[0,0,1]])
-    los_angular_uncertainty = 10*np.pi/180
+    los = np.array([[0.5,0,1]])
+    los_angular_uncertainty = 20*np.pi/180
 
     # load image
     img = cv2.imread(image_file)
@@ -384,7 +384,7 @@ if __name__ == '__main__':
     cv2.polylines(img, [points], isClosed=True, color=(0, 255, 0), thickness=3)
 
     cv2.imshow('image with roi polygon', img)
-    cv2.waitKey(50)
+    cv2.waitKey(200)
 
     print('done!')
     cv2.destroyAllWindows()
