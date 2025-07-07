@@ -125,6 +125,13 @@ The \`detector_tracker_record_test.py\`:
 
 
 
+### ▶️ analysing test scenarios
+
+1. Extracting a bag record to images standard folder with [ros_bag_record.py](./test_utils/ros_bag_record.py) (with roi polygons in available)
+2. Run the detector on image folder scenario with [detector_tracker_record_test.py](./detector_tracker_record_test.py).
+
+
+
 ---
 
 ## 📌 Use Cases
