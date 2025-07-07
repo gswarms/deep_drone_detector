@@ -78,6 +78,8 @@ class DetectorTracker:
                  in a way that best overlaps, with the given polygon
 
         params: polygon_points - (nx2) 2D image points polygon
+                                  None - no roi polygon applied - use the entire image.
+                                  empty (0X2) - roi is outside the image - don't detect
         params: detection_frame_size - (width, height) frame size for yolo_detector
         params: method - one of the following: ["resize","crop"]
                          crop - crop a part of the image of the required size that best overlaps the polygon
@@ -98,7 +100,10 @@ class DetectorTracker:
             try:
                 polygon_points = np.array(polygon_points).reshape(-1,2)
                 if polygon_points.size == 0:
-                    return False
+                    # return False
+                    polygon_points_valid = False
+                else:
+                    polygon_points_valid = True
                 self.detection_roi_polygon = polygon_points
             except:
                 raise Exception('invalid polygon input!')
@@ -109,36 +114,41 @@ class DetectorTracker:
                 raise Exception('invalid polygon roi method: {}!'.format(method))
 
             # calc roi bbox
-            xmn = np.min(self.detection_roi_polygon[:, 0])
-            xmx = np.max(self.detection_roi_polygon[:, 0])
-            ymn = np.min(self.detection_roi_polygon[:, 1])
-            ymx = np.max(self.detection_roi_polygon[:, 1])
-            w = xmx - xmn
-            h = ymx - ymn
-            xc = np.mean(self.detection_roi_polygon[:, 0])
-            yc = np.mean(self.detection_roi_polygon[:, 1])
-
-            if method == 'crop':
-                # if polygon is larget than roi, take equal margins around polygon
-                # if polygon is smaller than roi, roi is symmetric to polygon center
-                # each axis is set separately
-                if w <= self.detection_frame_size[0]:
-                    xtl = int(np.floor(xc - (float(self.detection_frame_size[0])/2)))
-                else:
-                    xtl = int(np.floor(xmn + float(w - self.detection_frame_size[0])/2))
-
-                if h <= self.detection_frame_size[1]:
-                    ytl = int(np.floor(yc - (float(self.detection_frame_size[1])/2)))
-                else:
-                    ytl = int(np.floor(ymn + float(h - self.detection_frame_size[1])/2))
-
-                self.detection_roi_bbox = (xtl, ytl, self.detection_frame_size[0], self.detection_frame_size[1])
-
-            elif method == 'resize':
-                self.detection_roi_bbox = (xmn, ymn, xmx - xmn, ymx - ymn)
+            if not polygon_points_valid:
+                # detectino ROI is empty
+                self.detection_roi_bbox = (0, 0, 0, 0)
 
             else:
-                raise Exception('invalid roi method {}!'.format(self.detection_roi_method))
+                xmn = np.min(self.detection_roi_polygon[:, 0])
+                xmx = np.max(self.detection_roi_polygon[:, 0])
+                ymn = np.min(self.detection_roi_polygon[:, 1])
+                ymx = np.max(self.detection_roi_polygon[:, 1])
+                w = xmx - xmn
+                h = ymx - ymn
+                xc = np.mean(self.detection_roi_polygon[:, 0])
+                yc = np.mean(self.detection_roi_polygon[:, 1])
+
+                if method == 'crop':
+                    # if polygon is larget than roi, take equal margins around polygon
+                    # if polygon is smaller than roi, roi is symmetric to polygon center
+                    # each axis is set separately
+                    if w <= self.detection_frame_size[0]:
+                        xtl = int(np.floor(xc - (float(self.detection_frame_size[0])/2)))
+                    else:
+                        xtl = int(np.floor(xmn + float(w - self.detection_frame_size[0])/2))
+
+                    if h <= self.detection_frame_size[1]:
+                        ytl = int(np.floor(yc - (float(self.detection_frame_size[1])/2)))
+                    else:
+                        ytl = int(np.floor(ymn + float(h - self.detection_frame_size[1])/2))
+
+                    self.detection_roi_bbox = (xtl, ytl, self.detection_frame_size[0], self.detection_frame_size[1])
+
+                elif method == 'resize':
+                    self.detection_roi_bbox = (xmn, ymn, xmx - xmn, ymx - ymn)
+
+                else:
+                    raise Exception('invalid roi method {}!'.format(self.detection_roi_method))
 
         return True
 
@@ -170,12 +180,11 @@ class DetectorTracker:
         :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
         """
 
-
         if self.detection_roi_method is None:
+            # no ROI - use the entire frame
             self.detector.detect(image, frame_resize=None)
 
         else:
-
             if self.detection_roi_method == 'crop':
 
                 if image.shape[0] < self.detection_frame_size[1] or image.shape[1] < self.detection_frame_size[0]:
@@ -189,50 +198,54 @@ class DetectorTracker:
                 xtl = min(max(xtl, 0), image.shape[1]-w)
                 ytl = min(max(ytl, 0), image.shape[0]-h)
 
-                # take roi
-                self.detection_frame[:] = image[ytl:ytl+h, xtl:xtl+w]
-
-                # detect without a resize
-                results = self.detector.detect(self.detection_frame, frame_resize=None,
-                                               conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold)
-
-
-                # convert back to full image coordinate
-                for r in results:
-                    r['bbox'] = (r['bbox'][0] + xtl,
-                                 r['bbox'][1] + ytl,
-                                 r['bbox'][2], r['bbox'][3])
-
-                # discard detections of the roi polygon
-                valid_results = []
-                for r in results:
-                    bbox_intersects = self._bbox_in_detection_polygon(r['bbox'])
-                    if bbox_intersects:
-                        valid_results.append(r)
-
-                # update self.tracks
                 self.tracks = []
-                for i, bbox in enumerate(valid_results):
-                    self.tracks.append({'id': i, 'score': bbox['confidence'], 'bbox': bbox['bbox']})
+                valid_detection_roi_bbox =  w>0 and h>0
+                if valid_detection_roi_bbox:
+                    # take roi
+                    self.detection_frame[:] = image[ytl:ytl+h, xtl:xtl+w]
+
+                    # detect without a resize
+                    results = self.detector.detect(self.detection_frame, frame_resize=None,
+                                                   conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold)
+
+                    # convert back to full image coordinate
+                    for r in results:
+                        r['bbox'] = (r['bbox'][0] + xtl,
+                                     r['bbox'][1] + ytl,
+                                     r['bbox'][2], r['bbox'][3])
+
+                    # discard detections of the roi polygon
+                    valid_results = []
+                    for r in results:
+                        bbox_intersects = self._bbox_in_detection_polygon(r['bbox'])
+                        if bbox_intersects:
+                            valid_results.append(r)
+
+                    # update self.tracks
+                    for i, bbox in enumerate(valid_results):
+                        self.tracks.append({'id': i, 'score': bbox['confidence'], 'bbox': bbox['bbox']})
 
 
-            elif self.detection_roi_method == 'resize':
-                # make sure roi is inside the image
-                xtl, ytl, w, h = self.detection_roi_bbox
-                xbr = min(xtl + w, image.shape[1])
-                ybr = min(ytl + h, image.shape[0])
-                xtl = max(xtl, 0)
-                ytl = max(ytl, 0)
+                elif self.detection_roi_method == 'resize':
+                    # make sure roi is inside the image
+                    xtl, ytl, w, h = self.detection_roi_bbox
+                    xbr = min(xtl + w, image.shape[1])
+                    ybr = min(ytl + h, image.shape[0])
+                    xtl = max(xtl, 0)
+                    ytl = max(ytl, 0)
 
-                # take roi
-                self.detection_frame[:] = image[ytl:ybr, xtl:xbr]
+                    self.tracks = []
+                    valid_detection_roi_bbox = w > 0 and h > 0
+                    if valid_detection_roi_bbox:
+                        # take roi
+                        self.detection_frame[:] = image[ytl:ybr, xtl:xbr]
 
-                # resize and detect
-                res = self.detector.detect(self.detection_frame, frame_resize=self.detection_frame_size)
+                        # resize and detect
+                        res = self.detector.detect(self.detection_frame, frame_resize=self.detection_frame_size)
 
-                # convert back to full image coordinates
-                # update self.tracks
-                a = 5
+                        # convert back to full image coordinates
+                        # update self.tracks
+                        a = 5
 
         return self.tracks
 
