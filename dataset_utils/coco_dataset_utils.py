@@ -278,6 +278,8 @@ class CocoDatasetManager:
             else:
                 iscrowd = 0
             distance_from_camera = img.get('distance_from_camera', 0)
+            if new_ann['category_id'] not in category_id_map:
+                raise Exception('invalid category {}'.format(new_ann['category_id']))
             self.add_annotation(image_id_map[new_ann['image_id']], category_id_map[new_ann['category_id']],
                                 new_ann['bbox'], iscrowd=iscrowd, distance_from_camera=distance_from_camera)
 
@@ -364,7 +366,7 @@ class CocoDatasetManager:
                 raise Exception('missing image files')
 
 
-    def save(self, out_json_path: str):
+    def save(self, out_json_path: str, verbose=False):
         export_dir = os.path.dirname(os.path.abspath(out_json_path))
 
         # convert image paths relative to coco dataset yaml file
@@ -387,7 +389,8 @@ class CocoDatasetManager:
         with open(out_json_path, 'w') as f:
             json.dump(coco, f, indent=2)
 
-        print(f"COCO dataset exported to: {out_json_path}")
+        if verbose:
+            print(f"COCO dataset exported to: {out_json_path}")
 
 
     def add_image(self, file_name, image_width, image_height, scenario=None, date=None, daytime=None, weather=None, cloud_coverage=None):
@@ -705,8 +708,6 @@ class CocoDatasetManager:
         for image_record in self.image_records:
             if os.path.isfile(image_record['file_name']):
                 valid_image_counter = valid_image_counter + 1
-            else:
-                aa=5
             annotations = self.get_annotations(image_record['id'])
             if annotations is not None:
                 annotated_image_counter = annotated_image_counter + 1
@@ -768,7 +769,7 @@ if __name__ == '__main__':
         manager = CocoDatasetManager()
         manager.load_yolo(scen_path)
         coco_dataset_file = os.path.join(scen_path, 'coco_dataset.json')
-        manager.save(coco_dataset_file)
+        manager.save(coco_dataset_file, verbose=True)
 
     # join coco datasets to one dataset
     manager = CocoDatasetManager()
@@ -777,4 +778,4 @@ if __name__ == '__main__':
     for scen_path in dataset_scearios:
         coco_dataset_file = os.path.join(scen_path, 'coco_dataset.json')
         manager.load(coco_dataset_file)
-    manager.save(os.path.join(dataset_base_dir, 'coco_dataset.json'))
+    manager.save(os.path.join(dataset_base_dir, 'coco_dataset.json'), verbose=True)
