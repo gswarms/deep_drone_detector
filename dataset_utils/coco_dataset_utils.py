@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import List, Dict
 from enum import Enum
 
+from charset_normalizer.md import annotations
+
+
 class ImageRecord:
     def __init__(self, id=None, file_name=None, width=None, height=None,
                  scenario=None, date=None, daytime=None, weather=None, cloud_coverage=None):
@@ -216,6 +219,7 @@ class CocoDatasetManager:
                                 #                     ** optional
                                 #          'range_from_camera': distance from camera (float )  **optional
                                 #           }
+        self.annotations_id_to_index = {}  # dict annotation id to index
         self.annotations_image_id_index = {}  # dict image id to a list of all corresponding data (only pointers, no data duplication)
         self.annotation_id_counter = 0
 
@@ -371,6 +375,9 @@ class CocoDatasetManager:
             img_copy['file_name'] = rel_path
             coco_images.append(img_copy)
 
+        # sort by image id (for readability)
+        coco_images = sorted(coco_images, key=lambda x: x["id"])
+
         coco = {
             'images': coco_images,
             'annotations': self.annotations,
@@ -421,6 +428,42 @@ class CocoDatasetManager:
 
         return new_id
 
+    def remove_image(self, image_id):
+        """
+        remove image from the dataset
+
+        :param image_id: image id to remove
+        """
+
+        if image_id in self.image_records_id_to_idx:
+            # find image index
+            img_idx = self.image_records_id_to_idx[image_id]
+
+            # remove image
+            self.image_records.pop(img_idx)
+            self.image_records_id_index.pop(image_id)
+
+            # fix id->idx dict
+            for imgid in self.image_records_id_to_idx:
+                if self.image_records_id_to_idx[imgid] > img_idx:
+                    self.image_records_id_to_idx[imgid] = self.image_records_id_to_idx[imgid] - 1
+            self.image_records_id_to_idx.pop(image_id)
+
+            # update self.curr_image_index
+            if self.curr_image_index >= img_idx:
+                self.curr_image_index = max(self.curr_image_index - 1, 0)
+
+            # remove corresponding annotations
+            ann = self.get_annotations(image_id)
+            for a in ann:
+                self.remove_annotation(a['id'])
+
+            res = True
+
+        else:
+            res = False
+
+        return res
 
     def add_annotation(self, image_id, category_id, bbox, iscrowd=0, distance_from_camera=None):
         """
@@ -446,6 +489,7 @@ class CocoDatasetManager:
             annotation['distance_from_camera'] = distance_from_camera
         self.annotations.append(annotation)
         self.annotation_id_counter += 1
+        self.annotations_id_to_index[annotation_id] = len(self.annotations) - 1
 
         # update annotations_image_id_index
         if image_id not in self.annotations_image_id_index:
@@ -454,6 +498,65 @@ class CocoDatasetManager:
 
         return annotation_id
 
+    def update_annotation(self, annotation_id, category_id, bbox, iscrowd=None, distance_from_camera=None):
+        """
+        update existing annotation
+
+        :param annotation_id: existing annotation id
+        :param category_id: category id
+        :param bbox: [xtl, ytl, w, h]
+        :param iscrowd: flag that tells if this bbox is a single object or a crowd or an inseparable multiple objects
+        :param distance_from_camera: distance of object from camera (scalar)  ** optional
+        :return: True/False - success flag
+        """
+
+        if annotation_id in self.annotations_id_to_index:
+            idx = self.annotations_id_to_index[annotation_id]
+            self.annotations[idx]["category_id"] = category_id
+            self.annotations[idx]["bbox"] = bbox
+            self.annotations[idx]["area"] = bbox[2] * bbox[3]
+            if iscrowd is not None:
+                self.annotations[idx]["iscrowd"] = iscrowd
+            if distance_from_camera is not None:
+                self.annotations[idx]['distance_from_camera'] = distance_from_camera
+            res = True
+
+        else:
+            res = False
+
+        return res
+
+    def remove_annotation(self, annotation_id):
+        """
+        remove annotation from the dataset
+
+        :param annotation_id: annotation id to remove
+        """
+
+        if annotation_id in self.annotations_id_to_index:
+            # find annotation index
+            ann_idx = self.annotations_id_to_index[annotation_id]
+
+            # remove annotation
+            self.annotations.pop(ann_idx)
+            self.annotations_image_id_index.pop(annotation_id)
+
+            # fix id->idx dict
+            for annid in self.annotations_id_to_index:
+                if self.annotations_id_to_index[annid] > ann_idx:
+                    self.annotations_id_to_index[annid] = self.annotations_id_to_index[annid] - 1
+            self.annotations_id_to_index.pop(annotation_id)
+
+            # update self.curr_image_index
+            if self.curr_image_index >= ann_idx:
+                self.curr_image_index = max(self.curr_image_index - 1, 0)
+
+            res = True
+
+        else:
+            res = False
+
+        return res
 
     def add_category(self, category_name, supercategory='none'):
         """
@@ -497,8 +600,11 @@ class CocoDatasetManager:
                                      ** optional
                           }
         """
-
-        return self.annotations_image_id_index[image_id]
+        if image_id in self.annotations_image_id_index:
+            image_annotations = self.annotations_image_id_index[image_id]
+        else:
+            image_annotations = None
+        return image_annotations
 
 
     def get_categories(self):
@@ -572,13 +678,44 @@ class CocoDatasetManager:
 
         return res_img_data
 
-    def get_annotated_image_ids(self):
+    def get_image_ids(self, only_annotated=False):
         """
-        get all annotated image ids
+        get all image ids
+        :param only_annotated - bool flag.
+                                False - get all image ids
+                                True - get only annotated image ids
         :return:
         """
-        image_ids = [x for x in self.annotations_image_id_index.keys() if self.annotations_image_id_index[x] is not None and len(self.annotations_image_id_index[x])>0]
+        if only_annotated:
+            image_ids = [x for x in self.annotations_image_id_index.keys() if self.annotations_image_id_index[x] is not None and len(self.annotations_image_id_index[x])>0]
+        else:
+            image_ids = [x['id'] for x in self.image_records]
+
         return image_ids
+
+
+    def verify(self):
+        """
+        verify coco data
+        :return:
+        """
+
+        valid_image_counter = 0
+        annotated_image_counter = 0
+        for image_record in self.image_records:
+            if os.path.isfile(image_record['file_name']):
+                valid_image_counter = valid_image_counter + 1
+            else:
+                aa=5
+            annotations = self.get_annotations(image_record['id'])
+            if annotations is not None:
+                annotated_image_counter = annotated_image_counter + 1
+
+        print('found {} images:'.format(len(self.image_records)))
+        print('   - {} valid image files'.format(valid_image_counter))
+        print('   - {} annotated images'.format(annotated_image_counter))
+
+        return
 
 
     def _sort_images(self):
