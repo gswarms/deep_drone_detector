@@ -52,6 +52,11 @@ class SingleFrameDetector:
                 if self.verbose:
                     print('using onnx model:')
                     print(input_info)
+                H, W = self.onnx_input_size[1], self.onnx_input_size[0]
+                self.onnx_img_uint_bgr = np.empty((H, W, 3), dtype=np.uint8)
+                self.onnx_img_uint_rgb = np.empty((H, W, 3), dtype=np.uint8)
+                self.onnx_img_normlized = np.empty((H, W, 3), dtype=np.float32)
+                self.onnx_img = np.empty((1, 3, H, W), dtype=np.float32)
 
             else:
                 raise Exception('invalid model file extention: {}!'.format(model_file_extension))
@@ -117,9 +122,9 @@ class SingleFrameDetector:
 
         elif self.model_type == 'onnx':
             # onnx preprocessing
-            image_input = self._onnx_preprocess(image)
+            self._onnx_preprocess(image)
             # onnx inference
-            outputs = self.model.run(None, {self.onnx_input_name: image_input})
+            outputs = self.model.run(None, {self.onnx_input_name: self.onnx_img})
             # onnx post processing
             results = self._onnx_postprocess(outputs, conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold,
                                              max_num_detections=max_num_detections)
@@ -140,23 +145,27 @@ class SingleFrameDetector:
         :param image_bgr: [mxnx3] bgr image
         :return: image_input: [3xmxn] image ready for onnx
         """
-        # RGB -> BGR
-        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
 
         # resize image to onnx expected size
-        need_resize = image_rgb.shape[1] != self.onnx_input_size[0] or image_rgb.shape[0] != self.onnx_input_size[1]
+        need_resize = image_bgr.shape[1] != self.onnx_input_size[0] or image_bgr.shape[0] != self.onnx_input_size[1]
         if need_resize:
-            image_resized = cv2.resize(image_rgb, self.onnx_input_size)
+            cv2.resize(image_bgr, self.onnx_input_size, dst=self.onnx_img_uint_bgr)
         else:
-            image_resized = image_rgb
+            self.onnx_img_uint_bgr[:] = image_bgr[:]
+            # np.copyto(self.onnx_img_uint, image_bgr)
+
+        # RGB -> BGR
+        cv2.cvtColor(self.onnx_img_uint_bgr, cv2.COLOR_BGR2RGB, dst=self.onnx_img_uint_rgb)
 
         # normalize image values to [0,1]
-        image_normalized = image_resized / 255.0  # Normalize to 0-1
+        np.copyto(self.onnx_img_normlized, self.onnx_img_uint_rgb)
+        self.onnx_img_normlized /= 255.0  # in-place normalization
 
         # reshape HWC → CHW
-        image_transposed = np.transpose(image_normalized, (2, 0, 1))  # HWC to CHW
-        image_input = np.expand_dims(image_transposed, axis=0).astype(np.float32)
-        return image_input
+        self.onnx_img[0][:] = np.transpose(self.onnx_img_normlized, (2, 0, 1))
+        # np.copyto(self.onnx_img[0], np.transpose(self.onnx_img_normlized, (2, 0, 1)))
+
+        return
 
     @staticmethod
     def _sigmoid(x):

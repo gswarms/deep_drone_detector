@@ -177,7 +177,7 @@ if __name__ == '__main__':
             # test - tmp
             # if frame_id > 50:
             #     roi_polygon = np.zeros((0,2), dtype=np.int32)
-            dttr.set_detection_roi_polygon(roi_polygon, method='crop')
+            # dttr.set_detection_roi_polygon(roi_polygon, method='crop')
 
             if (output_video_file is not None) and (not video_initialized):
                 print('saving record video to: {}'.format(output_video_file))
