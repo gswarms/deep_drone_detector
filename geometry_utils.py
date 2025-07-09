@@ -1,5 +1,7 @@
 """ 3D geometry tools
 """
+import copy
+
 import cv_core.pinhole_camera
 import numpy as np
 import cv2
@@ -138,6 +140,11 @@ class LosPixelConverter:
         is_in_front = ui[:,2] > 0
         image_points = image_points[is_in_front, :]
         # is_in_image = is_in_image[is_in_front]
+
+        # we can't intersect a polygon of less than 3 points!
+        # TODO: try to find a solution to this case - maybe project the rest of the points to the plane perpendicular to camera z...
+        if 0 < image_points.shape[0] < 3:
+            image_points = np.zeros((0,2))
 
         # if not np.any(is_in_image):  # this is a bug if polygon is bigger than the image
         #     valid_polygon_points = np.zeros((0, 2))
@@ -358,8 +365,16 @@ if __name__ == '__main__':
     image_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images/000.png'
     camera_calibration_file = '/home/roee/Projects/datasets/interceptor_drone/20250612_calibration/20250612_pz001_calibration/camera_intrinsics_IDC1.yaml'
 
-    los = np.array([[0.5,0,1]])
-    los_angular_uncertainty = 0.1  # 20*np.pi/180
+    # los = np.array([[0.5,0,1]])
+
+    n = 100
+    a = np.linspace(0,np.pi*2,n)
+    los_z = np.cos(a)
+    los_y = np.zeros_like(a)
+    los_x = np.sin(a)
+    los = np.vstack((los_x, los_y, los_z)).T
+
+    los_angular_uncertainty = 0.15  # 20*np.pi/180
 
     # load image
     img = cv2.imread(image_file)
@@ -374,16 +389,22 @@ if __name__ == '__main__':
 
     lpc =  LosPixelConverter()
     lpc.set_camera(camera_intrinsic_matrix, distortion_coefficients, image_size, camera_extrinsic_matrix)
-    roi_polygon =  lpc.image_polygon_from_los(los, los_angular_uncertainty, num_points=12, int_polygon_coordinates=False, keep_num_points=False, verbose=False)
 
-    roi_polygon = np.round(roi_polygon).astype(np.int32)
-    points = roi_polygon.reshape((-1, 1, 2))
+    for i in range(n):
+        img_draw = copy.deepcopy(img)
+        roi_polygon =  lpc.image_polygon_from_los(los[i, :], los_angular_uncertainty, num_points=12, int_polygon_coordinates=False, keep_num_points=False, verbose=False)
 
+        roi_polygon = np.round(roi_polygon).astype(np.int32)
+        points = roi_polygon.reshape((-1, 1, 2))
 
-    cv2.polylines(img, [points], isClosed=True, color=(0, 255, 0), thickness=3)
-
-    cv2.imshow('image with roi polygon', img)
-    cv2.waitKey(200)
+        cv2.polylines(img_draw, [points], isClosed=True, color=(0, 255, 0), thickness=3)
+        img_draw = cv2.putText(img_draw, 'ang={:.2f}'.format(a[i]*180/np.pi), (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5, (50, 255, 50), 1, lineType=cv2.LINE_AA)
+        cv2.imshow('image with roi polygon', img_draw)
+        cv2.waitKey(50)
+        # print('ang={:.2f}'.format(a[i]*180/np.pi))
+        # print(roi_polygon)
+        aa=5
 
     print('done!')
     cv2.destroyAllWindows()

@@ -197,9 +197,9 @@ class DetectorTracker:
                 xtl, ytl, w, h = self.detection_roi_bbox
                 xtl = min(max(xtl, 0), image.shape[1]-w)
                 ytl = min(max(ytl, 0), image.shape[0]-h)
+                valid_detection_roi_bbox = w > 0 and h > 0
 
                 self.tracks = []
-                valid_detection_roi_bbox =  w>0 and h>0
                 if valid_detection_roi_bbox:
                     # take roi
                     self.detection_frame[:] = image[ytl:ytl+h, xtl:xtl+w]
