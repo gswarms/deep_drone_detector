@@ -162,7 +162,10 @@ class LosPixelConverter:
         # image_points_int = image_points.astype(int)
         # img = cv2.polylines(img, [image_points_int], isClosed=True, color=(100, 255, 100), thickness=1)
 
-        valid_polygon_points = g2d.polygon_2D.polygon_intersect(image_points, image_borders, use_shapely=True)
+        try:
+            valid_polygon_points = g2d.polygon_2D.polygon_intersect(image_points, image_borders, use_shapely=True)
+        except:
+            raise Exception('*** polygon_intersect failed! los=({},{},{}), +-{}. projected points:{} '.format(los[0], los[1], los[2], los_angular_uncertainty, image_points))
         if valid_polygon_points.shape[0] == image_points.shape[0] + 1:
             valid_polygon_points = valid_polygon_points[:-1,:2]  # remove last point. It is a duplicate of the first because shapely returns close polygons.
 
@@ -367,11 +370,12 @@ if __name__ == '__main__':
 
     # los = np.array([[0.5,0,1]])
 
-    n = 100
+    n = 200
     a = np.linspace(0,np.pi*2,n)
     los_z = np.cos(a)
     los_y = np.zeros_like(a)
     los_x = np.sin(a)
+
     los = np.vstack((los_x, los_y, los_z)).T
 
     los_angular_uncertainty = 0.15  # 20*np.pi/180
