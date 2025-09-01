@@ -565,7 +565,6 @@ class RosBagRecord:
         if type(self.bag) == AnyReader and self.bag.isopen:
             self.bag.close()
 
-
 def path_to_scenario_name(scenario_folder_path):
     """
     reformat a file / folder name to a scenario name.
@@ -665,8 +664,60 @@ if __name__ == '__main__':
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-03-29/camera_2025_7_1-7_3_32'
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-04-48/camera_2025_7_1-7_4_52'  # bad
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-47-42/camera_2025_7_1-7_47_54'  # bad
-    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-49-24/camera_2025_7_1-7_49_27'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-49-24/camera_2025_7_1-7_49_27'
 
+
+    # ------------------ kfar galim 06.07.2025 ------------------------------
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_09-42-30/camera_2025_7_6-6_42_42'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_10-03-00/camera_2025_7_6-7_3_4'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_10-25-45/camera_2025_7_6-7_25_48'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_10-26-27/camera_2025_7_6-7_26_32'  # is this missing?
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_10-33-09/camera_2025_7_6-7_33_16'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_10-33-58/camera_2025_7_6-7_34_2'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_10-34-30/camera_2025_7_6-7_34_36'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_10-49-34/camera_2025_7_6-7_49_37'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_10-50-16/camera_2025_7_6-7_50_20'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_10-53-26/camera_2025_7_6-7_53_29'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_10-54-07/camera_2025_7_6-7_54_30'  # bug with roi polygon!
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_11-07-57/camera_2025_7_6-8_8_2'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_11-08-38/camera_2025_7_6-8_8_42'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_11-14-42/camera_2025_7_6-8_14_49'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_11-15-43/camera_2025_7_6-8_15_46'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_11-20-06/camera_2025_7_6-8_20_9'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250706_kfar_galim/2025-07-06_11-20-52/camera_2025_7_6-8_20_56'  # is this missing?
+
+
+    # ------------------ kfar galim 10.07.2025 ------------------------------
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_07-40-11/camera_2025_7_10-4_40_14'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_07-54-07/camera_2025_7_10-4_54_11'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_08-01-21/camera_2025_7_10-5_1_32'  # 2X0.1
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_08-12-42/camera_2025_7_10-5_12_45'  # 1X0.1
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_08-24-03/camera_2025_7_10-5_24_17'  # 1X0.1
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_08-32-49/camera_2025_7_10-5_32_52'  # 4X0.1
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_09-17-03/camera_2025_7_10-6_17_15'  # bad
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_09-17-03/camera_2025_7_10-6_17_15'  # bad
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_09-17-49/camera_2025_7_10-6_17_53'  # bad
+
+    # ------------------ kfar galim 16.07.2025 ------------------------------
+    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_08-42-21/camera_2025_7_16-5_42_34'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-16-28/camera_2025_7_16-6_16_31'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-17-35/camera_2025_7_16-6_17_39'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-14/camera_2025_7_16-6_18_18'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-58/camera_2025_7_16-6_19_1'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_11-03-44/camera_2025_7_16-8_3_56'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_11-04-35/camera_2025_7_16-8_4_38'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_11-05-19/camera_2025_7_16-8_5_23'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_11-05-41/camera_2025_7_16-8_5_53'  # bad bag
+
+    # ------------------ kfar galim 30.07.2025 ------------------------------
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_07-59-08/camera_2025_7_30-4_59_23'  # 6 frame missed 0.1sec
+    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-13-53/camera_2025_7_30-5_13_58'  # 4 frame missed 0.1sec
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-24-20/camera_2025_7_30-5_24_24'  # 3 frame missed 0.1sec
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-25-35/camera_2025_7_30-5_25_39'  # 2 frame missed 0.1sec
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-42-38/camera_2025_7_30-5_42_41'  # no frame misses
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-48-07/camera_2025_7_30-5_48_17'  # 7 frame missed 0.1sec
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-50-03/camera_2025_7_30-5_50_7'  # 1 frame missed 0.1sec
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_09-45-04/camera_2025_7_30-6_45_8'  # bad bag
 
     valid_record_times = {'start': -np.inf, 'end': np.inf}
     image_topic = '/camera/image_raw'
@@ -680,7 +731,7 @@ if __name__ == '__main__':
     frame_size = (640, 480)
 
 
-# analyse and sync record
+    # analyse and sync record
     ros_record = RosBagRecord(bag_folder, image_topic=image_topic, ref_bbox_topic=ref_bbox_topic,
                               detection_polygon_topic=detection_polygon_topic,
                               detection_results_bbox_topic=detection_results_bbox_topic)

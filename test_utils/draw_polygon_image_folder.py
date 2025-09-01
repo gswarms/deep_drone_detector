@@ -115,8 +115,22 @@ if __name__ == '__main__':
     # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-47-42/camera_2025_7_1-7_47_54_extracted/images'  # bad
     # polygon_file = os.path.join(images_folder, '..', '20250701_???_manual_detection_roi_polygons.yaml')
 
-    images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-49-24/camera_2025_7_1-7_49_27_extracted/images'
-    polygon_file = os.path.join(images_folder, '..', '20250701_104924_manual_detection_roi_polygons.yaml')
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-49-24/camera_2025_7_1-7_49_27_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250701_104924_manual_detection_roi_polygons.yaml')
+
+    # ------------------ Kfar Galim 10.07.2025 ------------------------------
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_07-40-11/camera_2025_7_10-4_40_14_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250710_074011_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_07-54-07/camera_2025_7_10-4_54_11_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250710_075407_manual_detection_roi_polygons.yaml')
+
+    # images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_08-12-42/camera_2025_7_10-5_12_45_extracted/images'
+    # polygon_file = os.path.join(images_folder, '..', '20250710_081242_manual_detection_roi_polygons.yaml')
+
+    images_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_08-24-03/camera_2025_7_10-5_24_17_extracted/images'
+    polygon_file = os.path.join(images_folder, '..', '20250710_082403_manual_detection_roi_polygons.yaml')
+
 
 
     image_resize = None  # (640, 480)

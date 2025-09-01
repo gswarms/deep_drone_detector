@@ -1,7 +1,9 @@
 """Extract information from a rosbag. """
+import copy
 import os
 import cv2
 import numpy as np
+from dataset_utils import coco_dataset
 import matplotlib
 
 matplotlib.use('TkAgg')
@@ -22,7 +24,14 @@ class StandardRecord:
             raise Exception('record folder: {} not found!'.format(self.record_folder))
         self.frames = None
         self._get_camera_frames()
-        self._get_bbox_ref()
+
+        # get bbox ref file if exists
+        self.dataset = None
+        annotations_dataset_file = os.path.join(self.record_folder, 'annotations.yaml')
+        if os.path.isfile(annotations_dataset_file):
+            self._get_annotations(annotations_dataset_file)
+
+        return
 
     def _get_camera_frames(self):
         """
@@ -38,42 +47,35 @@ class StandardRecord:
         if not os.path.isdir(images_folder):
             raise Exception('images folder: {} not found!'.format(images_folder))
 
+        frame_id = 0
         with open(timestamps_file, 'r') as f:
             lines = f.readlines()
             for l in lines:
                 if len(l) > 0 and l[0] != '#':
                     sp = l.split()
-                    self.frames.append({'time': float(sp[0]),
-                                               'image_file': os.path.join(images_folder, sp[1]),
-                                               'bbox': None})
+                    self.frames.append({'id': frame_id,
+                                        'time': float(sp[0]),
+                                        'image_file': os.path.join(images_folder, sp[1]),
+                                        'bbox': None})
+                    frame_id = frame_id + 1
+
+            # sort by frame id
+            self.frames = sorted(self.frames, key=lambda x: x["id"])
         return
 
-    def _get_bbox_ref(self, time_epsilon = 1e-4):
+    def _get_annotations(self, dataset_annotations_file, time_epsilon = 1e-4):
         """
-        get bounding box reference
+        get annotations file using a yaml format similar to coco dataset format.
+
+        :param dataset_annotations_file - the coco style dataset file
         """
-
-        bbox_ref_file = os.path.join(self.record_folder, 'bbox_reference.txt')
-        # if not os.path.isfile(bbox_ref_file):
-        #     raise Exception('bbox ref file: {} not found!'.format(bbox_ref_file))
-
-        if os.path.isfile(bbox_ref_file):
-            camera_timestamps = np.array([x['time'] for x in self.frames])
-            with open(bbox_ref_file, 'r') as f:
-                lines = f.readlines()
-                for l in lines:
-                    if len(l) > 0 and l[0] != '#':
-                        sp = l.split()
-                        timestamp = float(sp[0])
-                        bbox = (float(sp[1]), float(sp[2]), float(sp[3]), float(sp[4]))
-                        dt = np.abs(camera_timestamps - timestamp)
-                        if np.min(dt) <= time_epsilon:
-                            idx = np.argmin(dt)
-                            self.frames[idx]['bbox'] = bbox
-
+        if not os.path.isfile(dataset_annotations_file):
+            raise Exception('file: {} not found!'.format(dataset_annotations_file))
+        self.dataset = coco_dataset_utils.CocoDatasetManager()
+        self.dataset.load_coco(dataset_annotations_file)
         return
 
-    def draw(self, output_video_file=None):
+    def draw(self, output_video_file=None, draw_annotations=False):
         """
         draw record frames along with reference bbox if exists
 
@@ -95,17 +97,25 @@ class StandardRecord:
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
             out = cv2.VideoWriter(output_video_file, fourcc, frame_rate, (int(frame_size[1]), int(frame_size[0])))
 
-        # record all frames
+        # draw all frames
         font = cv2.FONT_HERSHEY_SIMPLEX
         fontScale = 0.5
-        for cf in record.frames:
-            img = cv2.imread(cf['image_file'])
-            img_annotated = img.copy()
-            img_annotated = cv2.putText(img_annotated, '{:.3f}'.format(cf['time']), (10, 20), font, fontScale, color=(0, 0, 0), thickness=1)
-            if cf['bbox'] is not None:
-                pt1 = (int(cf['bbox'][0] - cf['bbox'][2] / 2), int(cf['bbox'][1] - cf['bbox'][3] / 2))
-                pt2 = (int(cf['bbox'][0] + cf['bbox'][2] / 2), int(cf['bbox'][1] + cf['bbox'][3] / 2))
-                img_annotated = cv2.rectangle(img_annotated, pt1, pt2, color=(200, 200, 50), thickness=1)
+        for frame in self.frames:
+            img = cv2.imread(frame['image_file'])
+            img_to_draw = copy.deepcopy(img)
+
+            # wrtite time
+            img_annotated = cv2.putText(img_to_draw, '{:.3f}'.format(frame['time']), (10, 20), font, fontScale, color=(0, 0, 0), thickness=1)
+
+            # draw annotations
+            if self.dataset is not None:
+                annotations = self.dataset.get_annotations(frame['id'])
+                for ann in annotations:
+                    bbox = ann['bbox']
+                    pt1 = (int(bbox[0] - bbox[2] / 2), int(bbox[1] - bbox[3] / 2))
+                    pt2 = (int(bbox[0] + bbox[2] / 2), int(bbox[1] + bbox[3] / 2))
+                    img_annotated = cv2.rectangle(img_annotated, pt1, pt2, color=(200, 200, 50), thickness=1)
+
             if output_video_file is not None:
                 out.write(img)
             cv2.imshow('recorded frames', img_annotated)

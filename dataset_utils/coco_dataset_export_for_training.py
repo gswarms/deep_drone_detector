@@ -5,9 +5,8 @@ import random
 
 import cv2
 import numpy as np
-from collections import defaultdict
 import yaml
-import coco_dataset_utils
+import coco_dataset
 import dataset_training_utils
 
 
@@ -15,7 +14,7 @@ import dataset_training_utils
 def export_for_training(coco_dataset_json_file, output_dir, split_ratios={'train': 0.7, 'val': 0.15, 'test':0.15},
                         augment_crop_size=None, augment_crop_number=None):
     """
-    make coco dataset ready for yolo ultralytics training.
+    export coco dataset for yolo ultralytics training format.
 
     dataset file structure:
 
@@ -29,7 +28,26 @@ def export_for_training(coco_dataset_json_file, output_dir, split_ratios={'train
     │   ├── instances_val.json
     │   └── instances_test.json
 
-    additional
+    output yolo dataset structure:
+    yolo_output_dir/
+    ├── yolo_data.yaml
+    ├── images/
+    │   ├── train/
+    │   ├── val/
+    │   └── test/
+    ├── labels/
+    │   ├── train
+    │   │   ├── <imgid 1>.txt
+    │   │   ├── ...
+    │   │   ├── <imgid n>.txt
+    │   ├── val
+    │   │   ├── <imgid n+1>.txt
+    │   │   ├── ...
+    │   │   ├── <imgid m>.txt
+    │   ├── test
+    │   │   ├── <imgid m+1>.txt
+    │   │   ├── ...
+    │   │   ├── <imgid k>.txt
 
     :param coco_dataset_json_file: path to coco json file
     :param output_dir: path train-ready dataset folder
@@ -72,12 +90,15 @@ def export_for_training(coco_dataset_json_file, output_dir, split_ratios={'train
 
     #---------------------- load dataset -----------------------
     coco_dataset = coco_dataset_utils.CocoDatasetManager()
-    coco_dataset.load(coco_dataset_json_file, verify_images = True)
+    coco_dataset.load_coco(coco_dataset_json_file, verify_images = True)
 
+    print('loaded coco dataset from: {}'.format(coco_dataset_json_file))
+    coco_dataset.verify()
 
     #----------------- split to train / test / val sets -------------------
     # get all annotated images
-    image_ids = coco_dataset.get_annotated_image_ids()
+    # image_ids = [x['id'] for x in coco_dataset.image_records]  # TODO: augment all images - with ro without annotations
+    image_ids = coco_dataset.get_image_ids()
 
     # split dataset
     # 0=train, 1=val, 2=test
@@ -108,8 +129,9 @@ def export_for_training(coco_dataset_json_file, output_dir, split_ratios={'train
         shutil.copy(img_abs_path, img_dst_path)
 
         # convert relative path considering the new annotations file and image file
-        img_relative_path = os.path.relpath(img_dst_path, output_annotations_folder)
-        img_record.file_name = img_relative_path
+        # img_relative_path = os.path.relpath(img_dst_path, output_annotations_folder)
+        # img_record.file_name = img_relative_path
+        img_record.file_name = img_dst_path
 
         # get annotations
         img_annotations_dict = coco_dataset.get_annotations(img_record.id)
@@ -124,7 +146,10 @@ def export_for_training(coco_dataset_json_file, output_dir, split_ratios={'train
 
         img_records =  [img_record]
         img_annotations_records = [img_annotations]
-        bboxes_orig = [x.bbox for x in img_annotations]
+        if img_annotations is not None:
+            bboxes_orig = [x.bbox for x in img_annotations]
+        else:
+            bboxes_orig = None
         img_annotations_orig = img_annotations
 
         # augment-crop images
@@ -134,14 +159,17 @@ def export_for_training(coco_dataset_json_file, output_dir, split_ratios={'train
             pth = os.path.dirname(img_dst_path)
             for j in range(augment_crop_number):
                 img_cropped, bboxes_cropped_i = dataset_training_utils.augment_crop_image(img, augment_crop_size,
-                                                      bboxes=bboxes_orig, resize_to_original=True)
+                                                      bboxes=bboxes_orig, resize_to_original=True, min_valid_bbox_crop_ratio=0.3)
                 cropped_img_file = os.path.join(pth, sp[0]+'_aug{}.'.format(j)+sp[1])
                 cv2.imwrite(cropped_img_file, img_cropped)
+                # cropped_img_relative_path = os.path.relpath(cropped_img_file, output_annotations_folder)
                 img_record_cropped = copy.deepcopy(img_record)
                 img_record_cropped.file_name = cropped_img_file
                 img_records.append(img_record_cropped)
 
-                if img_annotations_orig is not None:
+                if img_annotations_orig is None:
+                    img_annotations_records.append(None)
+                else:
                     img_annotations_cropped = copy.deepcopy(img_annotations_orig)
                     for k, irc in enumerate(img_annotations_cropped):
                             irc.bbox = bboxes_cropped_i[k]
@@ -197,22 +225,109 @@ def export_for_training(coco_dataset_json_file, output_dir, split_ratios={'train
     coco_val_dataset.save(output_annotations_val_file)
     coco_test_dataset.save(output_annotations_test_file)
 
+    print('verifying train dataset:')
+    coco_train_dataset.verify()
+    print('verifying val dataset:')
+    coco_val_dataset.verify()
+    print('verifying test dataset:')
+    coco_test_dataset.verify()
 
-    #----------------- make output dataset yolo yaml file -------------------
-    cat = []
-    for i, c in enumerate(coco_dataset.categories):
-        if c['id'] != i+1:
-            raise Exception('unordered categories')
-        cat.append(c['name'])
 
-    data = {'train': output_annotations_train_file,
-            'val': output_annotations_val_file,
-            'test': output_annotations_test_file,
-            'nc': len(cat),
-            'names': cat
-            }
-    with open(output_dataset_yolo_yaml_file, 'w') as f:
-        yaml.dump(data, f, sort_keys=False)
+    # convert to analytics-yolo format
+    output_labels_train_dir = os.path.join(output_dir,'labels','train')
+    os.makedirs(output_labels_train_dir, exist_ok=True)
+    export_coco_to_yolo(output_annotations_train_file, output_labels_train_dir)
+
+    output_labels_val_dir = os.path.join(output_dir,'labels','val')
+    os.makedirs(output_labels_val_dir, exist_ok=True)
+    export_coco_to_yolo(output_annotations_val_file, output_labels_val_dir)
+
+    output_labels_test_dir = os.path.join(output_dir,'labels','test')
+    os.makedirs(output_labels_test_dir, exist_ok=True)
+    export_coco_to_yolo(output_annotations_test_file, output_labels_test_dir)
+
+    # Save yolo dataset yaml file
+    cats = coco_dataset.get_categories()
+
+    cat_str = {c['id']: c['name'] for c in cats}
+    output_yolo_data_file = os.path.join(output_dir, 'yolo_dataset.yaml')
+    yolo_dataset_cgf = {'path': output_dir,
+                        'train': output_images_train_folder,
+                        'val': output_images_val_folder,
+                        'names': cat_str}
+
+    with open(output_yolo_data_file, 'w') as f:
+        yaml.dump(yolo_dataset_cgf, f, default_flow_style=False, sort_keys=False)
+
+    # #----------------- make output dataset coco yaml file for ultralytics -------------------
+    # cat = []
+    # for i, c in enumerate(coco_dataset.categories):
+    #     if c['id'] != i+1:
+    #         raise Exception('unordered categories')
+    #     cat.append(c['name'])
+    #
+    # data = {'path': output_dir,
+    #         'train': 'images/train',
+    #         'val': 'images/val',
+    #         'test': 'images/test',
+    #         'annotations': {'train': 'annotations/instances_train.json',
+    #                          'val': 'annotations/instances_val.json',
+    #                          'test': 'annotations/instances_test.json'},
+    #         'names': cat
+    #         }
+    # with open(output_dataset_yolo_yaml_file, 'w') as f:
+    #     yaml.dump(data, f, sort_keys=False)
+
+
+def export_coco_to_yolo(coco_dataset_file, output_labels_dir):
+    """
+    export annotations from a coco dataset file to yolo dataset labels format
+
+    :param coco_dataset_file - coco dataset file
+    :param output_labels_dir - labels output dir
+    """
+
+    # Load COCO annotations
+    if not os.path.isfile(coco_dataset_file):
+        raise Exception('coco dataset json file: {}'.format(coco_dataset_file))
+    coco_dataset = coco_dataset_utils.CocoDatasetManager()
+    coco_dataset.load_coco(coco_dataset_file, verify_images = True)
+
+    # Get category ID to name mapping (and reverse)
+    cats = coco_dataset.get_categories()
+    cat_id_to_index = {cat['id']: i for i, cat in enumerate(cats)}
+    cat_id_to_name = {cat['id']: cat['name'] for cat in cats}
+
+    # Convert annotations
+    img_ids = coco_dataset.get_image_ids()
+    for img_id in img_ids:
+        img_info = coco_dataset.get_image(image_id=img_id)
+        file_name = img_info['file_name']
+        width, height = img_info['width'], img_info['height']
+
+        # Get annotations
+        anns = coco_dataset.get_annotations(img_id)
+
+        # Write YOLO labels
+        label_path = os.path.join(output_labels_dir, os.path.splitext(os.path.basename(file_name))[0] + '.txt')
+        label_lines = []
+        if anns is not None:
+            for ann in anns:
+                if ann is not None:
+                    # if ann.get('iscrowd', 0) == 1:
+                    #     continue
+                    x, y, w, h = ann['bbox']
+                    x_center = (x + w / 2) / width
+                    y_center = (y + h / 2) / height
+                    w /= width
+                    h /= height
+                    class_id = cat_id_to_index[ann['category_id']]
+                    label_lines.append(f"{class_id} {x_center:.6f} {y_center:.6f} {w:.6f} {h:.6f}\n")
+
+        with open(label_path, 'w') as f:
+            f.write('\n'.join(label_lines))
+    return
+
 
 
 if __name__ == '__main__':
@@ -225,5 +340,11 @@ if __name__ == '__main__':
     random.seed(seed)
 
     # run
+    print('loading baseline dataset: {}'.format(baseline_dataset_folder))
+    baseline_dataset = coco_dataset_utils.CocoDatasetManager()
+    baseline_dataset.load_coco(baseline_dataset_folder)
+    baseline_dataset.verify()
+
+    print('exporting dataset to yolo format at: {}'.format(res_dataset_folder))
     export_for_training(baseline_dataset_folder, res_dataset_folder,
                         split_ratios=split_ratios, augment_crop_size=(320, 240), augment_crop_number=3)

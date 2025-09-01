@@ -30,11 +30,14 @@ class Annotator:
 
         self.window_name = window_name
 
+        self.model = None
+
     def load(self):
         raise NotImplementedError("Subclasses must implement load()")
 
-    def save_annotations_to_file(self, output_file):
-        raise NotImplementedError("Subclasses must implement save_annotations_to_file()")
+    def save(self, annotations_file):
+        self.dataset.save(annotations_file)
+        return
 
     def load_image(self, idx_offset=1):
         raise NotImplementedError("Subclasses must implement load_image()")
@@ -91,9 +94,11 @@ class Annotator:
             temp_boxes[i] = (int(np.round(tb[0])), int(np.round(tb[1])), int(np.round(tb[2])), int(np.round(tb[3])))
         drawn = self.draw_annotations(img_copy, temp_boxes, temp_classes)
 
+        cv2.putText(drawn, "frame {}".format(self.current_image_id), (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
         if self.removing:
-            cv2.putText(drawn, "REMOVE MODE - Click a box", (10, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            cv2.putText(drawn, "REMOVE MODE - Click a box", (30, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
         cv2.imshow(self.window_name, drawn)
 
@@ -139,7 +144,7 @@ class Annotator:
 
 
 class AnnotatorStandardRecordFolder(Annotator):
-    def __init__(self, image_folder, annotations_file=None, window_name='Annotator'):
+    def __init__(self, record_base_folder, window_name='Annotator'):
         """
         helper class for annotating images
 
@@ -148,86 +153,24 @@ class AnnotatorStandardRecordFolder(Annotator):
         """
         super().__init__(window_name)  # Call base class __init__
 
-        self.images_folder = image_folder
-        if not os.path.isdir(image_folder):
-            raise Exception('images_folder not found: {}'.format(image_folder))
-        self.image_files = sorted([f for f in os.listdir(self.images_folder)
-                                   if f.lower().endswith(('.jpg', '.jpeg', '.png')) ])
-        self.annotations = {}
-        if annotations_file is not None:
-            self.load_annotations(annotations_file)
+        self.base_folder = record_base_folder
+        if not os.path.isdir(record_base_folder):
+            raise Exception('record base folder {} not found'.format(record_base_folder))
 
-    def load_annotations(self, annotations_file):
-        if os.path.isfile(annotations_file):
-            with open(annotations_file, "r") as f:
-                self.annotations = json.load(f)
-        else:
-            raise Exception('annotations_file not found: {}'.format(annotations_file))
-
-    def save_annotations_to_file(self, output_file):
-        with open(output_file, "w") as f:
-            json.dump(self.annotations, f, indent=2)
-
-    def save_current_image_annotations(self):
-        filename = self.image_files[self.current_image_idx]
-        self.annotations[filename] = [{"bbox": list(b), "class": c} for b, c in zip(self.current_annotation_boxes, self.current_annotation_classes)]
-
-    def load_image(self, idx_offset=1):
-        """
-        load image
-
-        :param idx_offset - idx shift from current image idx
-                            e.g.
-                            1 - next image
-                            0 - load current image again
-                            -1 - prev image
-        :return:
-        """
-        if self.current_image_idx is None:
-            self.current_image_idx = 0
-        else:
-            self.current_image_idx = max(min(self.current_image_idx + idx_offset, len(self.image_files)-1), 0)
-
-        filename = self.image_files[self.current_image_idx]
-        path = os.path.join(self.images_folder, filename)
-        self.current_image = cv2.imread(path)
-        self.current_annotation_boxes = []
-        self.current_annotation_classes = []
-        self.current_annotation_ids = []
-        if filename in self.annotations:
-            for ann in self.annotations[filename]:
-                self.current_annotation_boxes.append(tuple(ann["bbox"]))
-                self.current_annotation_classes.append(ann["class"])
-                self.current_annotation_ids.append(ann["id"])
-        # self.current_image_id = None
+        self.images_folder = os.path.join(self.base_folder, 'images')
+        if not os.path.isdir(self.images_folder):
+            raise Exception('images folder {} not found'.format(self.images_folder))
 
 
-class AnnotatorCoco(Annotator):
-    def __init__(self, coco_dataset_file, window_name='Annotator'):
-        """
-        helper class for annotating images
-
-        :param image_folder: images folder
-        :param annotations_file: annotations file
-        """
-        super().__init__(window_name)  # Call base class __init__
-        self.dataset_file = coco_dataset_file
-        if not os.path.isfile(coco_dataset_file):
-            raise Exception('coco dataset file not found: {}'.format(coco_dataset_file))
-
-        import coco_dataset_utils as cdu
+        self.dataset_file = os.path.join(self.base_folder, 'coco_annotations.yaml')
+        import coco_dataset as cdu
         self.dataset = cdu.CocoDatasetManager()
-        self.dataset.load(coco_dataset_file)
+        if os.path.isfile(self.dataset_file):
+            self.dataset.load_coco(coco_dataset_file)
+
         self.current_image_id = None
 
-
-    def save_annotations_to_file(self, annotations_file):
-        self.dataset.save(annotations_file)
-
-
     def save_current_image_annotations(self):
-
-
         ann = self.dataset.get_annotations(self.current_image_id)
         if ann is None:
             ann_ids = []
@@ -252,7 +195,7 @@ class AnnotatorCoco(Annotator):
             if i not in self.current_annotation_ids:
                 self.dataset.remove_annotation(i)
 
-
+        return
 
     def load_image(self, idx_offset=1):
         """
@@ -290,8 +233,133 @@ class AnnotatorCoco(Annotator):
         return
 
 
+class AnnotatorCoco(Annotator):
+    def __init__(self, coco_dataset_file, window_name='Annotator'):
+        """
+        helper class for annotating images
+
+        :param image_folder: images folder
+        :param annotations_file: annotations file
+        """
+        super().__init__(window_name)  # Call base class __init__
+        self.dataset_file = coco_dataset_file
+        if not os.path.isfile(coco_dataset_file):
+            raise Exception('coco dataset file not found: {}'.format(coco_dataset_file))
+
+        import coco_dataset as cdu
+        self.dataset = cdu.CocoDatasetManager()
+        self.dataset.load_coco(coco_dataset_file)
+        self.current_image_id = None
+
+    def save_current_image_annotations(self):
+        ann = self.dataset.get_annotations(self.current_image_id)
+        if ann is None:
+            ann_ids = []
+        else:
+            ann_ids = [x["id"] for x in ann]
+
+        for i in range(len(self.current_annotation_boxes)):
+            ann_id = self.current_annotation_ids[i]
+            if ann_id in ann_ids:
+                # update existing annotation
+                category_id = self.dataset.get_category_id_by_name(self.current_annotation_classes[i])
+                self.dataset.update_annotation(ann_id, category_id, self.current_annotation_boxes[i])
+
+            else:
+                # add new annotation
+                bbox = self.current_annotation_boxes[i]
+                category_id = self.dataset.get_category_id_by_name(self.current_annotation_classes[i])
+                self.dataset.add_annotation(self.current_image_id, category_id, bbox, iscrowd=0)
+
+        # removed annotations
+        for i in ann_ids:
+            if i not in self.current_annotation_ids:
+                self.dataset.remove_annotation(i)
+
+        return
+
+    def load_image(self, idx_offset=1):
+        """
+        load image
+
+        :param idx_offset - idx shift from current image idx
+                            e.g.
+                            1 - next image
+                            0 - load current image again
+                            -1 - prev image
+        :return:
+        """
+        if self.current_image_idx is None:
+            self.current_image_idx = 0
+        else:
+            self.current_image_idx = max(min(self.current_image_idx + idx_offset, len(self.dataset.image_records)-1), 0)
+
+        img_data = self.dataset.get_image(image_index=self.current_image_idx)
+        self.current_image_id = img_data['id']
+
+        img_path = img_data['file_name']
+        self.current_image = cv2.imread(img_path)
+        self.current_annotation_boxes = []
+        self.current_annotation_classes = []
+        self.current_annotation_ids = []
+        annotations = self.dataset.get_annotations(img_data['id'])
+        if annotations is not None:
+            for ann in annotations:
+                # bbox = (ann['bbox'][0], ann['bbox'][1], ann['bbox'][0] + ann['bbox'][2], ann['bbox'][1] + ann['bbox'][3])
+                self.current_annotation_ids.append(ann['id'])
+                self.current_annotation_boxes.append(tuple(ann['bbox']))
+                category_name = self.dataset.get_category_name_by_id(ann["category_id"])
+                self.current_annotation_classes.append(category_name)
+
+        return
+
+
+def automatically_annotate_dataset(coco_dataset_file, model_file, model_image_size=None, confidence_th=0.5):
+    """
+    helper class for adding automatic annotations for a dataset
+
+    :param coco_dataset_file: images folder
+    :param annotations_file: annotations file
+    """
+
+    # load coco dataset
+    if not os.path.isfile(coco_dataset_file):
+        raise Exception('coco dataset file not found: {}'.format(coco_dataset_file))
+    import coco_dataset as cdu
+    dataset = cdu.CocoDatasetManager()
+    dataset.load_coco(coco_dataset_file)
+
+    # load detector model
+    if not os.path.isfile(model_file):
+        raise Exception('model file not found: {}'.format(model_file))
+    import detector_tracker
+    detector_model = detector_tracker.DetectorTracker(model_file, model_image_size,
+                                            bbox_roi_intersection_th=0.1, detector_use_cpu=False, verbose=False)
+    detector = detector_tracker.SingleFrameDetector(model_file, model_image_size,
+                                            bbox_roi_intersection_th=0.1, detector_use_cpu=False, verbose=False)
+
+    # annotate image in dataset
+    image_ids = dataset.get_image_ids()
+    for img_id in image_ids:
+        img_data = dataset.get_image(img_id)
+        ann = dataset.get_annotations(img_id)
+
+        img = cv2.imread(img_data['image_file'])
+
+        detector_model.set_detection_roi_polygon(None)
+        detector_model.step(img, conf_threshold=confidence_th, nms_iou_threshold=0.5, max_num_detections=10)
+        tr = detector_model.get_tracks()
+
+        # see if detections are
+    return
+
+
 # ----------------------------- Main -----------------------------
 if __name__ == "__main__":
+
+    coco_dataset_file =
+    model_file =
+    automatically_annotate_dataset(coco_dataset_file, model_file, model_image_size=None, confidence_th=0.5)
 
     # ----------------------------- Configuration -----------------------------
     # choose data mode:
@@ -313,10 +381,18 @@ if __name__ == "__main__":
 
 
     elif data_format == 'coco_dataset':
-        base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_rcplane_raw/20250402_kfar_galim/20250402_112645'
-        # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_rcplane_raw'
-        # coco_dataset_file = os.path.join(base_folder, 'coco_dataset.json')
-        coco_dataset_file = os.path.join(base_folder, 'annotations_20250708_130628.json')
+        # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_rcplane_raw/20250402_kfar_galim/20250402_112645'
+        # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_rcplane_raw/20250402_kfar_galim/20250402_115652'
+        base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_rcplane_raw/20250402_kfar_galim/20250402_120223'
+        # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_rcplane_raw/20250402_kfar_galim/20250402_124124'
+        # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_rcplane_raw/20250402_kfar_galim/20250402_124905'
+        # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_rcplane_raw/20250402_kfar_galim/20250402_125011'
+        coco_dataset_file = os.path.join(base_folder, 'coco_dataset.json')
+
+
+        base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20250625_coco/annotations'
+        coco_dataset_file = os.path.join(base_folder, 'instances_train.json')
+
         annotator = AnnotatorCoco(coco_dataset_file, window_name="Annotator")
 
     else:
@@ -346,17 +422,17 @@ if __name__ == "__main__":
 
         if key == ord('d') or key == 65363:  # d / right arrow
             annotator.save_current_image_annotations()
-            annotator.save_annotations_to_file(annotations_output_file)
+            annotator.save(annotations_output_file)
             annotator.load_image(1)
 
         elif key == ord('a') or key == 65361:  # a / left arrow
             annotator.save_current_image_annotations()
-            annotator.save_annotations_to_file(annotations_output_file)
+            annotator.save(annotations_output_file)
             annotator.load_image(-1)
 
         elif key == ord('s') or key == 27:  # s/ESC - Save and exit
             annotator.save_current_image_annotations()
-            annotator.save_annotations_to_file(annotations_output_file)
+            annotator.save(annotations_output_file)
             print("Annotations saved.")
             break
 
@@ -378,4 +454,4 @@ if __name__ == "__main__":
 
     cv2.destroyAllWindows()
     annotator.save_current_image_annotations()
-    annotator.save_annotations_to_file(annotations_output_file)
+    annotator.save(annotations_output_file)

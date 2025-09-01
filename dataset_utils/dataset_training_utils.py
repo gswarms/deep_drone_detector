@@ -1,9 +1,11 @@
+import copy
+
 import numpy as np
 import cv2
 from fontTools.ttLib.woff2 import woff2FlagsSize
 
 
-def augment_crop_image(img, crop_size, bboxes=None, resize_to_original=False):
+def augment_crop_image(img, crop_size, bboxes=None, resize_to_original=False, min_valid_bbox_crop_ratio=0.5):
     """
     augment image by cropping a part of it, and resizing to original image size
     adjust bbox coordinates accordingly
@@ -14,6 +16,7 @@ def augment_crop_image(img, crop_size, bboxes=None, resize_to_original=False):
     :param resize_to_original - boolean flag.
                                 True - resize cropped image to original image size.
                                 False - keep cropped image size.
+    :param min_valid_bbox_crop_ratio -
     :return:
     """
     h = img.shape[0]
@@ -24,7 +27,7 @@ def augment_crop_image(img, crop_size, bboxes=None, resize_to_original=False):
 
     if w_cropped >= w or h_cropped >= h:
         raise Exception('invalid augment-crop size! cropped size ({},{}) does not fit in image original size ({},{})'.format(w_cropped, h_cropped, w, h))
-    if not isinstance(bboxes, list):
+    if (bboxes is not None) and (not isinstance(bboxes, list)):
         raise Exception('bbox must be a list of lists/tuples (xtl, ytl, w, h)')
 
     xtl = np.random.randint(0, w - w_cropped)
@@ -38,21 +41,38 @@ def augment_crop_image(img, crop_size, bboxes=None, resize_to_original=False):
         bboxes_cropped = []
         for bbox in bboxes:
             bbox_cropped = intersect_bbox(bbox, cropped_img_borders)
+
+            bbox_cropped_valid = False
             if bbox_cropped is not None:
+                valid_bbox_crop_ratio = (bbox_cropped[2] * bbox_cropped[3]) / (bbox[2] * bbox[3])
+                if valid_bbox_crop_ratio >= min_valid_bbox_crop_ratio:
+                    bbox_cropped_valid = True
+
+            if bbox_cropped_valid:
                 bboxes_cropped.append((bbox_cropped[0] - xtl, bbox_cropped[1] - ytl, bbox_cropped[2], bbox_cropped[3]))
             else:
                 bboxes_cropped.append(None)
+                # if bbox_cropped is not None:
+                #     print(valid_bbox_crop_ratio)
+                #     img_cropped2 = copy.deepcopy(img_cropped)
+                #     img_cropped2 = cv2.rectangle(img_cropped2, (int(bbox_cropped[0]-xtl), int(bbox_cropped[1]-ytl)), (int(bbox_cropped[0]+bbox_cropped[2]-xtl), int(bbox_cropped[1]+bbox_cropped[3]-ytl)), (0, 255, 0), 2)
+                #     cv2.imshow('tmp1', img_cropped2)
+                #     cv2.waitKey(100)
+                #     aa=5
 
     if resize_to_original:
         img_cropped = cv2.resize(img_cropped, (w, h))
         scale_x = w / w_cropped
         scale_y = h / h_cropped
-        for i, bbox in enumerate(bboxes_cropped):
-            if bbox is not None:
-                bboxes_cropped[i] = (int(np.round(bbox[0] * scale_x)),
-                        int(np.round(bbox[1] * scale_y)),
-                        int(np.floor(bbox[2] * scale_x)),
-                        int(np.floor(bbox[3] * scale_y)))
+        if bboxes_cropped is None:
+            bboxes_cropped = None
+        else:
+            for i, bbox in enumerate(bboxes_cropped):
+                if bbox is not None:
+                    bboxes_cropped[i] = (int(np.round(bbox[0] * scale_x)),
+                            int(np.round(bbox[1] * scale_y)),
+                            int(np.floor(bbox[2] * scale_x)),
+                            int(np.floor(bbox[3] * scale_y)))
 
     return img_cropped, bboxes_cropped
 
@@ -103,7 +123,7 @@ if __name__ == '__main__':
     cv2.waitKey(50)
 
     for i in range(20):
-        cropped_img, cropped_bbox = augment_crop_image(img, crop_size, bboxes=[bbox], resize_to_original=True)
+        cropped_img, cropped_bbox = augment_crop_image(img, crop_size, bboxes=[bbox], resize_to_original=True, min_valid_bbox_crop_ratio=0.4)
 
         if cropped_bbox[0] is not None:
             x1 = cropped_bbox[0][0]
