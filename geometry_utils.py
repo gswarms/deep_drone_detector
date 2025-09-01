@@ -43,33 +43,29 @@ class LosPixelConverter:
         self.camera = None
         return
 
-    def set_camera(self, camera_intrinsic_matrix, distortion_coefficients, image_size, camera_extrinsic_matrix):
+    def set_camera(self, camera_params_file):
         """
         set pinhole camera parameters
 
         inputs:
-        param: camera_intrinsic_matrix - pinhole camera intrinsic matrix (opencv format)
-                                        fx, 0, cx
-                                        0, fy, cy
-                                        0,  0,  1
-        param: distortion_coefficients - pinhole camera distortion coefficients (opencv format)
-        param: image_size - (width, height) in pixels
-        param: camera_extrinsic_matrix - camera extrinsic matrix:
-                                          R3x3  t3x1
-                                         0,0,0, 1
-                                         This matrix transforms a point from camera to world!
-                                         so:
-                                          t = camera position in world frame (x, y, z)
-                                          R = camera axes in world frame
-                                             (| | |
-                                              x y z
-                                              | | |)
+        param: camera_params_file - path to camera parameters yaml file
+                                    the YAML file follows the cv_core camera params file format:
+
+                                     id: IDC06
+                                     model: PINHOLE
+                                     focal_length: [571.15, 570.79]
+                                     principal_point: [308.76, 253.59]
+                                     image_size: [640, 480]
+                                     distortion_coefficients: [-0.2216407, 0.0176510, -0.0009292, -0.0011879, 0.0]
+                                     skew: 0
         """
-        self.camera = phc.PinholeCamera()
-        self.camera.set(id='cam0', model=phc.CameraModel.PINHOLE,
-                        intrinsic_matrix=camera_intrinsic_matrix, dist_coeffs=distortion_coefficients,
-                        image_size=image_size, T_cam_to_body=camera_extrinsic_matrix,
-                        skew=0)
+        self.camera = phc.PinholeCamera(camera_params_file)
+
+        # self.camera.set(id='cam0', model=phc.CameraModel.PINHOLE,
+        #                 intrinsic_matrix=camera_intrinsic_matrix, dist_coeffs=distortion_coefficients,
+        #                 image_size=image_size, T_cam_to_body=camera_extrinsic_matrix,
+        #                 skew=0)
+
         return
 
 
@@ -119,8 +115,7 @@ class LosPixelConverter:
         # The desired vector u is a combination of v and w_proj such that the angle between them is theta
         u = np.cos(los_angular_uncertainty) * los_cam + np.sin(los_angular_uncertainty) * w_proj
 
-        # find multiple vectors with the same angle theta from los
-        # rotate u around the los
+        # to find multiple vectors with the same angle theta from los, rotate u around the los
         n = num_points
         a = np.linspace(0, (2 * np.pi) * ((n - 1) / n), n, dtype=np.float32)
         ui = np.zeros((n, 3), dtype=np.float32)
@@ -137,8 +132,37 @@ class LosPixelConverter:
         # project to camera image
         body_pose = g3d.rigid3dtform.Rigid3dTform(np.eye(3), (0, 0, 0))
         image_points, is_in_image = self.camera.project_points(ui, body_pose)
-        is_in_front = ui[:,2] > 0
-        image_points = image_points[is_in_front, :]
+
+        # handle inf cases - when a point is on the camera horizon (z=0), the projection is in infinity.
+        is_projection_inf = np.isinf(image_points).any(axis=1)  # los perpendicular to camera Z gives inf projection
+        if is_projection_inf.any():
+            ui[is_projection_inf, 2] = 1e-5
+            image_points, is_in_image = self.camera.project_points(ui, body_pose)
+
+        # TODO: The projection process is no good. It works strangly inm cases where angle uncertainty is large (80-90 deg)
+        # example - check if the ROI is full ot empty using the original los, and not only the cone.
+        # proper process:
+        # - test if original LOS is in front or behind the camera
+        # - test which cone points are behind the camera
+        #
+        #  if los is behind the camera:
+        #  - if all cone points are behind, ROI is empty.
+        #  - if all cone points are in front - cant be! angle uncertainty must be > 90 deg!!!
+        #  - if some cone points are behind, and some in front: ???
+        #         project point behind to the camera xy plane, and normalize direction vector to 1
+
+        #  if los is in front of the camera:
+        #  - if all cone points are behind the camera - cant be! angle uncertainty must be > 90 deg!!!
+        #  - if all cone points are in front the camera - do the intersection.
+        #  - if some cone points are behind, and some in front: ???
+        #         project point in front to the camera xy plane, and normalize direction vector to 1
+
+
+        is_in_front = ui[:,2] > 1e-9  # in front of the camera
+        is_projection_valid = np.bitwise_not(np.isnan(image_points).any(axis=1))  # otherwise invalid projection
+        valid_image_points = np.bitwise_and(is_in_front, is_projection_valid)
+
+        image_points = image_points[valid_image_points, :]
         # is_in_image = is_in_image[is_in_front]
 
         # we can't intersect a polygon of less than 3 points!
@@ -157,15 +181,11 @@ class LosPixelConverter:
                                   (self.camera.image_size[0], 0),
                                   (self.camera.image_size[0], self.camera.image_size[1]),
                                   (0, self.camera.image_size[1])), dtype=np.float32)
-
-        # img = np.zeros((self.camera.image_size[1], self.camera.image_size[0], 3), dtype=np.uint8) + 255
-        # image_points_int = image_points.astype(int)
-        # img = cv2.polylines(img, [image_points_int], isClosed=True, color=(100, 255, 100), thickness=1)
-
         try:
             valid_polygon_points = g2d.polygon_2D.polygon_intersect(image_points, image_borders, use_shapely=True)
         except:
-            raise Exception('*** polygon_intersect failed! los=({},{},{}), +-{}. projected points:{} '.format(los[0], los[1], los[2], los_angular_uncertainty, image_points))
+            # raise Exception('*** polygon_intersect failed! los=({},{},{}), +-{}. projected points:{} '.format(los[0], los[1], los[2], los_angular_uncertainty, image_points))
+            valid_polygon_points = np.zeros((0, 2))
         if valid_polygon_points.shape[0] == image_points.shape[0] + 1:
             valid_polygon_points = valid_polygon_points[:-1,:2]  # remove last point. It is a duplicate of the first because shapely returns close polygons.
 
@@ -368,17 +388,26 @@ if __name__ == '__main__':
     image_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images/000.png'
     camera_calibration_file = '/home/roee/Projects/datasets/interceptor_drone/20250612_calibration/20250612_pz001_calibration/camera_intrinsics_IDC1.yaml'
 
-    # los = np.array([[0.5,0,1]])
+    # generate los in a circle
+    # n = 200
+    # a = np.linspace(0, np.pi*2, n)
+    # los_z = np.cos(a)
+    # los_y = np.zeros_like(a)
+    # los_x = np.sin(a)
+    # los_angular_uncertainty = 40*np.pi/180 * np.ones(n)  # 20*np.pi/180
 
-    n = 200
-    a = np.linspace(0,np.pi*2,n)
-    los_z = np.cos(a)
-    los_y = np.zeros_like(a)
-    los_x = np.sin(a)
+    # generate random los
+    np.random.seed(7)
+    n=10000
+    los_x = np.random.rand(n) * 2 - 1
+    los_y = np.random.rand(n) * 2 - 1
+    los_z = np.random.rand(n) * 2 - 1
+    a = np.linspace(0,n-1, n) * np.pi/180  # just plot frame id
+    los_angular_uncertainty = np.random.rand(n) * (np.pi/2) + 0.1 # 5-90 deg
 
     los = np.vstack((los_x, los_y, los_z)).T
+    los = los / np.sqrt(np.sum(np.power(los, 2), axis=1)).reshape((n,1))
 
-    los_angular_uncertainty = 0.15  # 20*np.pi/180
 
     # load image
     img = cv2.imread(image_file)
@@ -396,7 +425,7 @@ if __name__ == '__main__':
 
     for i in range(n):
         img_draw = copy.deepcopy(img)
-        roi_polygon =  lpc.image_polygon_from_los(los[i, :], los_angular_uncertainty, num_points=12, int_polygon_coordinates=False, keep_num_points=False, verbose=False)
+        roi_polygon =  lpc.image_polygon_from_los(los[i, :], los_angular_uncertainty[i], num_points=12, int_polygon_coordinates=False, keep_num_points=False, verbose=False)
 
         roi_polygon = np.round(roi_polygon).astype(np.int32)
         points = roi_polygon.reshape((-1, 1, 2))
