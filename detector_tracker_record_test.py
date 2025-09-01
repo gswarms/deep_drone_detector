@@ -81,8 +81,6 @@ if __name__ == '__main__':
     # polygons_file = os.path.join(record_folder, 'kfar_galim_20250605_114739_polygons.yaml')  # ***optional
 
     # ------------------ kfar massarik 08.06.2025 ------------------------------
-
-
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_17-30-42/camera_2025_6_8-14_30_56_extracted'  # bad
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-04-53/camera_2025_6_8-15_4_56_extracted'
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_18-17-57/camera_2025_6_8-15_18_8_extracted'  # bad
@@ -112,11 +110,39 @@ if __name__ == '__main__':
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-03-29/camera_2025_7_1-7_3_32_extracted'
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-04-48/camera_2025_7_1-???_extracted'  # bad
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-47-42/camera_2025_7_1-???_extracted'  # bad
-    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-49-24/camera_2025_7_1-7_49_27_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_10-49-24/camera_2025_7_1-7_49_27_extracted'
+
+    # ------------------ kfar galim 10.07.2025 ------------------------------
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_07-40-11/camera_2025_7_10-4_40_14_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_07-54-07/camera_2025_7_10-4_54_11_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_08-01-21/camera_2025_7_10-5_1_32_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_08-12-42/camera_2025_7_10-5_12_45_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_08-24-03/camera_2025_7_10-5_24_17_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_08-32-49/camera_2025_7_10-5_32_52_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_09-17-03/camera_2025_7_10-6_17_15_extracted'  # bad
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_09-17-03/camera_2025_7_10-6_17_15_extracted'  # bad
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_09-17-49/camera_2025_7_10-6_17_53_extracted'  # bad
+
+
+    # ------------------ kfar galim 16.07.2025 ------------------------------
+
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-14/camera_2025_7_16-6_18_18_extracted'
+    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-58/camera_2025_7_16-6_19_1_extracted'
+
+
+    # ------------------ kfar galim 30.07.2025 ------------------------------
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_07-59-08/camera_2025_7_30-4_59_23_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-13-53/camera_2025_7_30-5_13_58_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-24-20/camera_2025_7_30-5_24_24_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-25-35/camera_2025_7_30-5_25_39_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-42-38/camera_2025_7_30-5_42_41_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-48-07/camera_2025_7_30-5_48_17_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-50-03/camera_2025_7_30-5_50_7_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_09-45-04/camera_2025_7_30-6_45_8_extracted'  # bad bag
 
 
     frame_size = (640, 480)
-    frame_resize = None
+    frame_resize = Noneeee
     start_time = -np.inf
     scen_name = path_to_scenario_name(os.path.join(record_folder,'..'))
     output_video_file = os.path.join(record_folder, scen_name+'_kfar_masarik_results.avi')
@@ -128,6 +154,8 @@ if __name__ == '__main__':
     # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
     yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
     # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_224.onnx'
+
+    # yolo_model_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best_256.onnx'
 
     # set video writer
     if output_video_file is not None:
