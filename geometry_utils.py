@@ -268,6 +268,35 @@ class LosPixelConverter:
         return calc_target_los_angular_uncertainty(prior_angular_uncertainty, relative_position_uncertainty,
                                                    range_to_target, angular_uncertainty_limit)
 
+    def save_camera(self, output_camera_params_file):
+        """
+        save pinhole camera parameters
+        param: output_camera_params_file - output file path
+        """
+        if self.camera is None:
+            raise Exception('camera not set!')
+        self.camera.save(output_camera_params_file)
+        return
+
+    def print_camera(self):
+        """
+        print pinhole camera parameters
+        """
+
+        print('LosPixelConverter - camera params')
+        print('   image size ({},{})   '.format(self.camera.image_size[0],self.camera.image_size[1]))
+        print('   focal length ({},{})   '.format(self.camera.focal_length[0], self.camera.focal_length[1]))
+        print('   principal point ({},{})   '.format(self.camera.principal_point[0], self.camera.principal_point[1]))
+        print('   skew {}   '.format(self.camera.skew))
+        if self.camera.T_cam_to_body is None:
+            print('   T_cam_to_body is None')
+        else:
+            print('   T_cam_to_body ({}, {}, {})   '.format(self.camera.T_cam_to_body[0, 0], self.camera.T_cam_to_body[0, 1], self.camera.T_cam_to_body[0, 2]))
+            print('                 ({}, {}, {})   '.format(self.camera.T_cam_to_body[1, 0], self.camera.T_cam_to_body[1, 1], self.camera.T_cam_to_body[1, 2]))
+            print('                 ({}, {}, {})   '.format(self.camera.T_cam_to_body[2, 0], self.camera.T_cam_to_body[2, 1], self.camera.T_cam_to_body[2, 2]))
+
+        return
+
 
 def polygon_adjust_number_of_points(polygon_points, required_num_points):
     """
@@ -388,22 +417,35 @@ if __name__ == '__main__':
     image_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images/000.png'
     camera_calibration_file = '/home/roee/Projects/datasets/interceptor_drone/20250612_calibration/20250612_pz001_calibration/camera_intrinsics_IDC1.yaml'
 
-    # generate los in a circle
-    # n = 200
-    # a = np.linspace(0, np.pi*2, n)
-    # los_z = np.cos(a)
-    # los_y = np.zeros_like(a)
-    # los_x = np.sin(a)
-    # los_angular_uncertainty = 40*np.pi/180 * np.ones(n)  # 20*np.pi/180
+    test_pattern = 'pitch'  # 'yaw'/ 'pitch' / 'random'
 
-    # generate random los
-    np.random.seed(7)
-    n=10000
-    los_x = np.random.rand(n) * 2 - 1
-    los_y = np.random.rand(n) * 2 - 1
-    los_z = np.random.rand(n) * 2 - 1
-    a = np.linspace(0,n-1, n) * np.pi/180  # just plot frame id
-    los_angular_uncertainty = np.random.rand(n) * (np.pi/2) + 0.1 # 5-90 deg
+    if test_pattern == 'yaw':
+        # generate los in a circle
+        n = 200
+        a = np.linspace(0, np.pi*2, n)
+        los_x = np.cos(a)
+        los_z = np.zeros_like(a)
+        los_y = np.sin(a)
+        los_angular_uncertainty = 40*np.pi/180 * np.ones(n)  # 20*np.pi/180
+
+    if test_pattern == 'pitch':
+        # generate los in a circle
+        n = 200
+        a = np.linspace(0, np.pi*2, n)
+        los_z = np.cos(a)
+        los_y = np.zeros_like(a)
+        los_x = np.sin(a)
+        los_angular_uncertainty = 40*np.pi/180 * np.ones(n)  # 20*np.pi/180
+
+    elif  test_pattern == 'random':
+        # generate random los
+        np.random.seed(7)
+        n=10000
+        los_x = np.random.rand(n) * 2 - 1
+        los_y = np.random.rand(n) * 2 - 1
+        los_z = np.random.rand(n) * 2 - 1
+        a = np.linspace(0,n-1, n) * np.pi/180  # just plot frame id
+        los_angular_uncertainty = np.random.rand(n) * (np.pi/2) + 0.1 # 5-90 deg
 
     los = np.vstack((los_x, los_y, los_z)).T
     los = los / np.sqrt(np.sum(np.power(los, 2), axis=1)).reshape((n,1))
@@ -413,15 +455,16 @@ if __name__ == '__main__':
     img = cv2.imread(image_file)
 
     # load camera
-    cam = cv_core.pinhole_camera.PinholeCamera()
-    cam.load(camera_calibration_file)
-    camera_intrinsic_matrix = cam.K
-    distortion_coefficients = cam.distortion_coefficients
-    image_size = cam.image_size
-    camera_extrinsic_matrix = np.eye(4)  # cam.T_cam_to_body
+    # cam = cv_core.pinhole_camera.PinholeCamera()
+    # cam.load(camera_calibration_file)
+    # camera_intrinsic_matrix = cam.K
+    # distortion_coefficients = cam.distortion_coefficients
+    # image_size = cam.image_size
+    # camera_extrinsic_matrix = np.eye(4)  # cam.T_cam_to_body
 
     lpc =  LosPixelConverter()
-    lpc.set_camera(camera_intrinsic_matrix, distortion_coefficients, image_size, camera_extrinsic_matrix)
+    lpc.set_camera(camera_calibration_file)
+    lpc.print_camera()
 
     for i in range(n):
         img_draw = copy.deepcopy(img)
