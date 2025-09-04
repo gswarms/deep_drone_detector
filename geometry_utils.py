@@ -43,7 +43,36 @@ class LosPixelConverter:
         self.camera = None
         return
 
-    def set_camera(self, camera_params_file):
+    def set_camera(self, camera_intrinsic_matrix, distortion_coefficients, image_size, camera_extrinsic_matrix):
+        """
+        set pinhole camera parameters
+
+        inputs:
+        param: camera_intrinsic_matrix - pinhole camera intrinsic matrix (opencv format)
+                                        fx, 0, cx
+                                        0, fy, cy
+                                        0,  0,  1
+        param: distortion_coefficients - pinhole camera distortion coefficients (opencv format)
+        param: image_size - (width, height) in pixels
+        param: camera_extrinsic_matrix - camera extrinsic matrix:
+                                          R3x3  t3x1
+                                         0,0,0, 1
+                                         This matrix transforms a point from camera to world!
+                                         so:
+                                          t = camera position in world frame (x, y, z)
+                                          R = camera axes in world frame
+                                             (| | |
+                                              x y z
+                                              | | |)
+        """
+        self.camera = phc.PinholeCamera()
+        self.camera.set(id='cam0', model=phc.CameraModel.PINHOLE,
+                        intrinsic_matrix=camera_intrinsic_matrix, dist_coeffs=distortion_coefficients,
+                        image_size=image_size, T_cam_to_body=camera_extrinsic_matrix,
+                        skew=0)
+        return
+
+    def load_camera(self, camera_params_file):
         """
         set pinhole camera parameters
 
@@ -417,7 +446,7 @@ if __name__ == '__main__':
     image_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images/000.png'
     camera_calibration_file = '/home/roee/Projects/datasets/interceptor_drone/20250612_calibration/20250612_pz001_calibration/camera_intrinsics_IDC1.yaml'
 
-    test_pattern = 'pitch'  # 'yaw'/ 'pitch' / 'random'
+    test_pattern = 'yaw'  # 'yaw'/ 'pitch' / 'random'
 
     if test_pattern == 'yaw':
         # generate los in a circle
@@ -455,15 +484,19 @@ if __name__ == '__main__':
     img = cv2.imread(image_file)
 
     # load camera
-    # cam = cv_core.pinhole_camera.PinholeCamera()
-    # cam.load(camera_calibration_file)
-    # camera_intrinsic_matrix = cam.K
-    # distortion_coefficients = cam.distortion_coefficients
-    # image_size = cam.image_size
-    # camera_extrinsic_matrix = np.eye(4)  # cam.T_cam_to_body
+    cam = cv_core.pinhole_camera.PinholeCamera()
+    cam.load(camera_calibration_file)
+    camera_intrinsic_matrix = cam.K
+    distortion_coefficients = cam.distortion_coefficients
+    image_size = cam.image_size
+    camera_extrinsic_matrix = np.eye(4)  # cam.T_cam_to_body
 
     lpc =  LosPixelConverter()
-    lpc.set_camera(camera_calibration_file)
+    print('set camera test:')
+    lpc.set_camera(camera_intrinsic_matrix, distortion_coefficients, image_size, camera_extrinsic_matrix)
+    lpc.print_camera()
+    print('load camera test:')
+    lpc.load_camera(camera_calibration_file)
     lpc.print_camera()
 
     for i in range(n):
