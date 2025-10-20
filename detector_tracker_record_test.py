@@ -140,7 +140,6 @@ if __name__ == '__main__':
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-50-03/camera_2025_7_30-5_50_7_extracted'
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_09-45-04/camera_2025_7_30-6_45_8_extracted'  # bad bag
 
-
     frame_size = (640, 480)
     frame_resize = None
     start_time = -np.inf
@@ -176,8 +175,6 @@ if __name__ == '__main__':
 
     # model_path = "/home/roee/Projects/nanodet/workspace/nanodet-plus-m_320/model_best/nanodet_model_best.pth"
     # config_path = "/home/roee/Projects/nanodet/config/nanodet-plus-m_320_lulav_dit.yml"
-    # image_path = "/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20250625_coco/images/train/20250416_080932_1744790984435034751.jpg"
-    # img_resize_method = 'crop'  # 'resize'=resize, 'crop'=crop center, None=no resize
     # detection_frame_size = (320, 320)  # (w, h)
     # detector_type = 'nanodet-plus-m'  #  'yolov8n' / 'nanodet-plus-m'
 

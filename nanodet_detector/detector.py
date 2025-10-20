@@ -50,7 +50,8 @@ class NanodetDetector:
             # Load pytorch model
             load_config(cfg, config_path)
             self.model = build_model(cfg.model)
-            self.logger = Logger(local_rank=0)
+            # self.logger = Logger(local_rank=0)
+            self.logger = DummyLogger()
             self.ckpt = torch.load(model_file_path, map_location='cpu')
             load_model_weight(self.model, self.ckpt, self.logger)
             self.model.eval()
@@ -493,3 +494,7 @@ def decode_boxes(distribution_preds, center_points, strides, reg_max=8, input_si
 
     return boxes
 
+class DummyLogger:
+    def info(self, *args, **kwargs): pass
+    def warning(self, *args, **kwargs): pass
+    def error(self, *args, **kwargs): pass
