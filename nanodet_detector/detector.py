@@ -70,6 +70,7 @@ class NanodetDetector:
             self.pipeline = Pipeline(cfg.data.val.pipeline, cfg.data.val.keep_ratio)
             self.verbose = verbose
             self.onnx_input_name = None
+            self.onnx_input_size = None
             self.img_resized = np.empty((self.input_size[1], self.input_size[0], 3), dtype=np.uint8)
 
         elif model_file_extension == '.onnx':
@@ -87,6 +88,7 @@ class NanodetDetector:
                 print(input_info)
             self.onnx_input_name = input_info.name
             self.input_size = input_info.shape[2:]
+            self.onnx_input_size = self.input_size
 
             H, W = self.input_size[1], self.input_size[0]
             self.img_resized = np.empty((H, W, 3), dtype=np.uint8)
@@ -101,7 +103,7 @@ class NanodetDetector:
 
         :param image: 3 channel color image
         :param frame_resize: if true: the image will be resized automatically if it does not fit the model input size.
-                              if false: the imagesize will be checked, and raise error if it doesn't fit the model input size.
+                             if false: the imagesize will be checked, and raise error if it doesn't fit the model input size.
         :param conf_threshold: confidence thresholds
         :param nms_iou_threshold: iou threshold for nms
         :param max_num_detections: max number of detections
@@ -109,7 +111,7 @@ class NanodetDetector:
         """
 
         if frame_resize is None:  # comply with general detector interface
-            frame_resize = False
+            frame_resize = True
 
         img_size = image.shape
         if len(img_size) != 3:
@@ -120,14 +122,14 @@ class NanodetDetector:
         resize_scale_y = None
         if img_size[0] != self.input_size[0] or img_size[1] != self.input_size[1]:
             if frame_resize:
-                self.img_resized[:] = cv2.resize(image, (self.input_size[0], self.input_size[1], 3))
+                self.img_resized[:] = cv2.resize(image, (self.input_size[0], self.input_size[1]))
                 img_resized = True
                 resize_scale_x = image.shape[1] / self.img_resized.shape[1]
                 resize_scale_y = image.shape[0] / self.img_resized.shape[0]
             else:
                 raise Exception('invalid image size! image size is: {} does not fit model input size: {}'.format(img_size, self.input_size))
         else:
-            self.img_resized = image
+            self.img_resized[:] = image[:]
 
         if self.model_type == 'pt':
             # Prepare data & meta
@@ -185,10 +187,16 @@ class NanodetDetector:
             raise Exception('invalid model type: {}!'.format(self.model_type))
 
         if img_resized:
-            raise Exception('converting to original frame coordinates not supported yet!')
+            # raise Exception('converting to original frame coordinates not supported yet!')
             # convert result bbox to original image coordinates
             # resize_scale_x = ???
             # resize_scale_y = ???
+
+            for r in nms_results:
+                r['bbox'][0] = r['bbox'][0] * resize_scale_x
+                r['bbox'][1] = r['bbox'][1] * resize_scale_y
+                r['bbox'][2] = r['bbox'][2] * resize_scale_x
+                r['bbox'][3] = r['bbox'][3] * resize_scale_y
 
         return nms_results
 

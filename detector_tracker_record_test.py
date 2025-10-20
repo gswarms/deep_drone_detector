@@ -156,19 +156,23 @@ if __name__ == '__main__':
     # detection_frame_size = (256, 256)
     # detection_frame_size = (224, 224)
     # detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
+    # config_path = None
 
     # model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
     # detection_frame_size = (320, 320)
     # detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
+    # config_path = None
 
-    # model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
-    # model_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best_256.onnx'
-    # detection_frame_size = (256, 256)
-    # detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
-
-    model_path = 'runs/detect/drone_detector_yolov8n/weights/best_224.onnx'
-    detection_frame_size = (224, 224)
+    model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
+    model_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best_256.onnx'
+    detection_frame_size = (256, 256)
     detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
+    config_path = None
+
+    # model_path = 'runs/detect/drone_detector_yolov8n/weights/best_224.onnx'
+    # detection_frame_size = (224, 224)
+    # detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
+    # config_path = None
 
     # model_path = "/home/roee/Projects/nanodet/workspace/nanodet-plus-m_320/model_best/nanodet_model_best.pth"
     # config_path = "/home/roee/Projects/nanodet/config/nanodet-plus-m_320_lulav_dit.yml"
@@ -191,7 +195,9 @@ if __name__ == '__main__':
 
     # setup blob tracker
     dttr = detector_tracker.DetectorTracker(model_path, detection_frame_size, detector_type=detector_type,
-                                            bbox_roi_intersection_th=0.1, detector_use_cpu=False, verbose=False)
+                                            bbox_roi_intersection_th=0.1, detector_use_cpu=False, verbose=False,
+                                            detector_config_path=config_path)
+
 
     # get roi polygons per frame
     if polygons_file is not None:

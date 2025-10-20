@@ -67,7 +67,7 @@ class DetectorTracker:
 
         # infer once for allocating everything - to reduce first step time
         image = np.zeros((self.detection_frame_size[1], self.detection_frame_size[0], 3), dtype=np.uint8)
-        self.detector.detect(image, frame_resize=self.detection_frame_size)
+        self.detector.detect(image, frame_resize=None)
 
         return
 
