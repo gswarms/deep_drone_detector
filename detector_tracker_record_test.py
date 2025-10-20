@@ -142,7 +142,7 @@ if __name__ == '__main__':
 
 
     frame_size = (640, 480)
-    frame_resize = Noneeee
+    frame_resize = None
     start_time = -np.inf
     scen_name = path_to_scenario_name(os.path.join(record_folder,'..'))
     output_video_file = os.path.join(record_folder, scen_name+'_kfar_masarik_results.avi')
@@ -150,12 +150,38 @@ if __name__ == '__main__':
     # polygons_file = os.path.join(record_folder, scen_name+'_manual_detection_roi_polygons.yaml')  # ***optional
 
 
-    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
-    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
-    yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
-    # yolo_model_path = 'runs/detect/drone_detector_yolov8n/weights/best_224.onnx'
+    # model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
+    # detection_frame_size = (640, 480)
+    # detection_frame_size = (320, 320)
+    # detection_frame_size = (256, 256)
+    # detection_frame_size = (224, 224)
+    # detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
 
-    # yolo_model_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best_256.onnx'
+    # model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
+    # detection_frame_size = (320, 320)
+    # detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
+
+    # model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
+    # model_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best_256.onnx'
+    # detection_frame_size = (256, 256)
+    # detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
+
+    model_path = 'runs/detect/drone_detector_yolov8n/weights/best_224.onnx'
+    detection_frame_size = (224, 224)
+    detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
+
+    # model_path = "/home/roee/Projects/nanodet/workspace/nanodet-plus-m_320/model_best/nanodet_model_best.pth"
+    # config_path = "/home/roee/Projects/nanodet/config/nanodet-plus-m_320_lulav_dit.yml"
+    # image_path = "/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20250625_coco/images/train/20250416_080932_1744790984435034751.jpg"
+    # img_resize_method = 'crop'  # 'resize'=resize, 'crop'=crop center, None=no resize
+    # detection_frame_size = (320, 320)  # (w, h)
+    # detector_type = 'nanodet-plus-m'  #  'yolov8n' / 'nanodet-plus-m'
+
+    # model_path = "/home/roee/Projects/nanodet/workspace/nanodet-plus-m_320/model_best/nanodet_plus_m_320_lulav_dit_model_best.onnx"
+    # config_path = "/home/roee/Projects/nanodet/config/nanodet-plus-m_320_lulav_dit.yml"
+    # detection_frame_size = (320, 320)  # (w, h)
+    # detector_type = 'nanodet-plus-m'  #  'yolov8n' / 'nanodet-plus-m'
+
 
     # set video writer
     if output_video_file is not None:
@@ -164,11 +190,7 @@ if __name__ == '__main__':
         out = cv2.VideoWriter(output_video_file, fourcc, 20, (640, 480))
 
     # setup blob tracker
-    # detection_frame_size = (224, 224)
-    detection_frame_size = (256, 256)
-    # detection_frame_size = (320, 320)
-    # detection_frame_size = (640, 480)
-    dttr = detector_tracker.DetectorTracker(yolo_model_path, detection_frame_size,
+    dttr = detector_tracker.DetectorTracker(model_path, detection_frame_size, detector_type=detector_type,
                                             bbox_roi_intersection_th=0.1, detector_use_cpu=False, verbose=False)
 
     # get roi polygons per frame

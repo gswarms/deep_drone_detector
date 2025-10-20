@@ -1,10 +1,9 @@
 opencv-python~=4.10.0.84
+ultralytics~=8.3.141
 numpy~=1.26.4
 pyyaml~=6.0.2
 matplotlib~=3.9.3
 scipy~=1.15.3
 cv_core~=1.1.0
+onnxruntime~=1.23.0
 pillow~=11.3.0
-rosbags~=0.10.10
-charset-normalizer~=3.4.2
-fonttools~=4.55.2

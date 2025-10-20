@@ -7,6 +7,30 @@ This subfiolder helps use nanodet.
 
 ## 🛠️ Nanodet Installation
 
+
+### deep_drone_detector - nanodet instalation
+install nanodet as a part of the "deep drone detector" repo.\
+we made som changes to make it easier, and to be compatible with yolo / cv_core
+
+Create a Python environment:
+        
+    conda create -n deep_drone_detector-nanodet python=3.10 -y
+    conda activate deep_drone_detector-nanodet
+
+Install dependencies:
+
+    # clone nanodet repo
+    git clone https://github.com/RangiLyu/nanodet.git
+    cd <path to deep_drone_detector>/nanodet_detector
+
+    # Install requirements
+    pip install -r requirements.txt
+
+
+
+
+
+### original nanodet instalation
 Create a Python environment:
         
     conda create -n nanodet python=3.8 -y

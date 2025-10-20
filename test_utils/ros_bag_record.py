@@ -577,7 +577,12 @@ def path_to_scenario_name(scenario_folder_path):
 
     base_name = os.path.basename(os.path.abspath(scenario_folder_path))
     sp = re.split('_|-', base_name)
-    scenario_name = '{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}'.format(int(sp[0]), int(sp[1]), int(sp[2]), int(sp[3]), int(sp[4]), int(sp[5]))
+    if len(sp) == 6:  # folder naming format yyyy-mm-dd_HH-MM-SS
+        scenario_name = '{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}'.format(int(sp[0]), int(sp[1]), int(sp[2]), int(sp[3]), int(sp[4]), int(sp[5]))
+    elif len(sp) == 2:  # folder naming format yyyymmdd_HHMMSS
+        scenario_name = '{:08d}_{:06d}'.format(int(sp[0]), int(sp[1]))
+    else:
+        raise Exception('invalid folder naming format: {}'.format(scenario_folder_path))
 
     return scenario_name
 
@@ -711,13 +716,21 @@ if __name__ == '__main__':
 
     # ------------------ kfar galim 30.07.2025 ------------------------------
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_07-59-08/camera_2025_7_30-4_59_23'  # 6 frame missed 0.1sec
-    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-13-53/camera_2025_7_30-5_13_58'  # 4 frame missed 0.1sec
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-13-53/camera_2025_7_30-5_13_58'  # 4 frame missed 0.1sec
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-24-20/camera_2025_7_30-5_24_24'  # 3 frame missed 0.1sec
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-25-35/camera_2025_7_30-5_25_39'  # 2 frame missed 0.1sec
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-42-38/camera_2025_7_30-5_42_41'  # no frame misses
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-48-07/camera_2025_7_30-5_48_17'  # 7 frame missed 0.1sec
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-50-03/camera_2025_7_30-5_50_7'  # 1 frame missed 0.1sec
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_09-45-04/camera_2025_7_30-6_45_8'  # bad bag
+
+    # ------------------ kfar galim 30.07.2025 ------------------------------
+    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_161114/camera_20251005_1611'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_161216/camera_20251005_1612'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_161309/camera_20251005_1613'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_161344/camera_20251005_1613'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_163355/camera_20251005_1633'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_163529/camera_20251005_1635'
 
     valid_record_times = {'start': -np.inf, 'end': np.inf}
     image_topic = '/camera/image_raw'

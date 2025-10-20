@@ -6,9 +6,8 @@ import cv2
 from pathlib import Path
 from typing import List, Dict
 from enum import Enum
-
 from charset_normalizer.md import annotations
-import common_dataset
+from dataset_utils import common_dataset
 
 
 def load_coco_dataset(coco_dataset_json_path, verify_images=True):

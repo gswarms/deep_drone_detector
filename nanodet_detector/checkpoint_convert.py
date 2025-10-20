@@ -1,5 +1,5 @@
 """ convert checkpoint to .pth
-    Used for loading initial parameters for nanodet (and maybe others)
+    Used for loading initial parameters for nanodet_detector (and maybe others)
 """
 import torch
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
@@ -7,7 +7,7 @@ from torch.serialization import safe_globals
 
 
 ckpt_input_file = '/home/roee/Projects/nanodet/models/pretrained/nanodet-plus-m_320_checkpoint.ckpt'
-pth_output_file = '/home/roee/Projects/nanodet/models/pretrained/nanodet-plus-m_320_checkpoint_converted.pth'
+pth_output_file = '/home/roee/Projects/nanodet/models/pretrained/nanodet_detector-plus-m_320_checkpoint_converted.pth'
 
 
 # Allow loading of Lightning's checkpoint class

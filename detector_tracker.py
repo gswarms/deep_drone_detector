@@ -4,21 +4,22 @@ import cv2
 import numpy as np
 import cv_core
 import yolo_detector
+import nanodet_detector
 
 
-if cv_core.__version__ != '0.1.1':
-    raise Exception('invalid cv_core version {}! must be 0.1.1'.format(cv_core.__version__))
+if cv_core.__version__ != '1.1.1':
+    raise Exception('invalid cv_core version {}! must be 1.1.1'.format(cv_core.__version__))
 # import time
-
 
 
 class DetectorTracker:
     """
     detect and track blobs in image
     """
-    def __init__(self, detector_model_file_path, detection_frame_size,
+    def __init__(self, detector_model_file_path, detection_frame_size, detector_type='yolov8n',
                  bbox_roi_intersection_th=0.1,
-                 detector_use_cpu=False, verbose=False):
+                 detector_use_cpu=False, verbose=False,
+                 detector_config_path=None):
         """
         Detect and track fixed wing UAV
 
@@ -32,13 +33,18 @@ class DetectorTracker:
         :param verbose - print log data to screen
         """
         self.detection_frame_size = detection_frame_size
+        self.detector_type = detector_type
         self.bbox_roi_intersection_th = bbox_roi_intersection_th
         self.detector_use_cpu = detector_use_cpu
         self.verbose = verbose
 
         # Setup yolo_detector
-        self.detector = yolo_detector.SingleFrameDetector(detector_model_file_path,
+        if self.detector_type=='yolov8n':
+            self.detector = yolo_detector.SingleFrameDetector(detector_model_file_path,
                                                           use_cpu=self.detector_use_cpu, verbose=self.verbose)
+        elif self.detector_type=='nanodet-plus-m':
+            self.detector = nanodet_detector.NanodetDetector(detector_model_file_path, detector_config_path,
+                                                              use_cpu=self.detector_use_cpu, verbose=self.verbose)
 
         # onnx must work with it's predefined input size!
         # if self.detection_frame_size does not match, there might be unexpected behavior!

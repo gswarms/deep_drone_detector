@@ -38,37 +38,55 @@ aerial-tracking/
 ## 🛠️ Installation
 
 
-### 📦 Dependencies
-
-- [Ultralytics YOLOv8](https://docs.ultralytics.com/)
-- [OpenCV](https://opencv.org/)
-- [NumPy](https://numpy.org/)
-- PyYAML for config loading
-
-All dependencies are listed in \`requirements.txt\`.
-
-
-### Setup
-
 1. Clone the repository:
+    
+    ```bash
+    git clone https://github.com/yourusername/aerial-tracking.git
+    cd aerial-tracking
+    ```
+    
 
-```bash
-git clone https://github.com/yourusername/aerial-tracking.git
-cd aerial-tracking
-```
+2. Clone dependency repos:
+    deep_drone_detector is dependant in `cv_core`\
+    currently cv_core may be installed from source, so we need to clone it.    
+    ```bash
+    git clone git@github.com:lulav/cv_core.git
+    ```
 
-2. Set up a virtual environment (optional but recommended):
 
-```bash
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-```
+3. Set up a virtual environment (optional but recommended):
+    
+    ```bash
+    conda create --name deep_drone_detector_py310 python=3.10
+    conda activate deep_drone_detector_py310
+    ```
+    python 3.10 is needed for nanodet compatibility
 
-3. Install the required packages:
 
-```bash
-pip install -r requirements.txt
-```
+4. Install the required packages:
+    
+    First, install cv_core from source:
+    ```bash
+    pip install <path to local cv_core repo>
+    ```
+
+    Now, install all other python dependencies\
+    To use both nanodet and yolo:
+    ```bash
+    pip install -r requirements_all.txt
+    ```
+    
+    To use only yolo:
+    ```bash
+    pip install -r requirements_yolo.txt
+    ```
+    
+    To use only nanodet:
+    ```bash
+    pip install -r requirements_nanodet.txt
+    ```
+
+
 
 ### 🧠 Neural Network Model Setup
 
@@ -92,7 +110,7 @@ we currently support "simplified=True", and "uint8=False"
 ---
 ## usage
 
-### ▶️ Running the System
+### ▶️ Run
 
 
 Use the ***DetectorTracker*** object.

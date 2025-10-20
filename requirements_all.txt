@@ -1,0 +1,3 @@
+-r requirements.txt
+-r yolo_detector/requirements.txt
+-r nanodet_detector/requirements.txt
