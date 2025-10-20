@@ -148,40 +148,52 @@ if __name__ == '__main__':
     polygons_file = os.path.join(record_folder, scen_name+'_recorded_detection_roi_polygons.yaml')  # ***optional
     # polygons_file = os.path.join(record_folder, scen_name+'_manual_detection_roi_polygons.yaml')  # ***optional
 
-
+    # -------------------- yolov8n -------------
     # model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
     # detection_frame_size = (640, 480)
     # detection_frame_size = (320, 320)
     # detection_frame_size = (256, 256)
     # detection_frame_size = (224, 224)
-    # detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
+    # detector_type = 'yolov8n'  #  'yolov8n' / 'yolov11n' / 'nanodet-plus-m'
     # config_path = None
 
     # model_path = 'runs/detect/drone_detector_yolov8n/weights/best_320.onnx'
     # detection_frame_size = (320, 320)
-    # detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
+    # detector_type = 'yolov8n'  #  'yolov8n' / 'yolov11n' / 'nanodet-plus-m'
     # config_path = None
 
-    model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
-    model_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best_256.onnx'
-    detection_frame_size = (256, 256)
-    detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
-    config_path = None
+    # model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
+    # model_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best_256.onnx'
+    # detection_frame_size = (256, 256)
+    # detector_type = 'yolov8n'  #  'yolov8n' / 'yolov11n' / 'nanodet-plus-m'
+    # config_path = None
 
     # model_path = 'runs/detect/drone_detector_yolov8n/weights/best_224.onnx'
     # detection_frame_size = (224, 224)
-    # detector_type = 'yolov8n'  #  'yolov8n' / 'nanodet-plus-m'
+    # detector_type = 'yolov8n'  #  'yolov8n' / 'yolov11n' / 'nanodet-plus-m'
     # config_path = None
 
+    # -------------------- yolov11n -------------
+    # model_path = 'runs/detect/drone_detector_yolov11n_320x240_20251021/weights/best.pt'
+    # detection_frame_size = (320, 320)
+    # detector_type = 'yolov11n'  #  'yolov8n' / 'yolov11n' / 'nanodet-plus-m'
+    # config_path = None
+
+    model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
+    detection_frame_size = (256, 256)
+    detector_type = 'yolov11n'
+    config_path = None
+
+    # -------------------- nanodet -------------
     # model_path = "/home/roee/Projects/nanodet/workspace/nanodet-plus-m_320/model_best/nanodet_model_best.pth"
     # config_path = "/home/roee/Projects/nanodet/config/nanodet-plus-m_320_lulav_dit.yml"
     # detection_frame_size = (320, 320)  # (w, h)
-    # detector_type = 'nanodet-plus-m'  #  'yolov8n' / 'nanodet-plus-m'
+    # detector_type = 'nanodet-plus-m'  #  'yolov8n' / 'yolov11n' / 'nanodet-plus-m'
 
     # model_path = "/home/roee/Projects/nanodet/workspace/nanodet-plus-m_320/model_best/nanodet_plus_m_320_lulav_dit_model_best.onnx"
     # config_path = "/home/roee/Projects/nanodet/config/nanodet-plus-m_320_lulav_dit.yml"
     # detection_frame_size = (320, 320)  # (w, h)
-    # detector_type = 'nanodet-plus-m'  #  'yolov8n' / 'nanodet-plus-m'
+    # detector_type = 'nanodet-plus-m'  #  'yolov8n' / 'yolov11n' / 'nanodet-plus-m'
 
 
     # set video writer

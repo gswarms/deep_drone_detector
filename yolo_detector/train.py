@@ -6,7 +6,9 @@ from ultralytics.cfg import get_cfg
 from ultralytics.data.utils import check_det_dataset
 
 # Load a YOLOv8n model (nano)
-model = YOLO('../models/yolov8n.pt')
+# model = YOLO('../models/yolov8n.pt')
+model = YOLO('../models/yolo11n.pt')
+
 
 
 
@@ -27,7 +29,8 @@ dataset_yaml_file = '/home/roee/Projects/datasets/interceptor_drone/deep_learnin
 # cfg.data = dataset_yaml_file
 # check_det_dataset(cfg)
 
-output_name = 'drone_detector_yolov8n_20250709'
+# output_name = 'drone_detector_yolov8n_20250709'
+output_name = 'drone_detector_yolov11n_320x240_20251021'
 
 model.train(
     data=dataset_yaml_file,

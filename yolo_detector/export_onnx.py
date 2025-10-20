@@ -5,8 +5,8 @@ import onnxruntime as ort
 
 # Load your saved model
 # pt_model_file_path = '../runs/detect/drone_detector_yolov8n/weights/best.pt'
-pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best.pt'
-
+# pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best.pt'
+pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/detect/drone_detector_yolov11n_320x240_20251021/weights/best.pt'
 
 model = YOLO(pt_model_file_path)
 model.export(format='onnx', simplify=True, device='cpu', imgsz=(256, 256), name='best')   # or 'tflite', 'coreml', etc.

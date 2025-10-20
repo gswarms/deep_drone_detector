@@ -39,7 +39,7 @@ class DetectorTracker:
         self.verbose = verbose
 
         # Setup yolo_detector
-        if self.detector_type=='yolov8n':
+        if self.detector_type in ('yolov8n', 'yolov11n'):
             self.detector = yolo_detector.SingleFrameDetector(detector_model_file_path,
                                                           use_cpu=self.detector_use_cpu, verbose=self.verbose)
         elif self.detector_type=='nanodet-plus-m':
