@@ -179,8 +179,11 @@ if __name__ == '__main__':
     # detector_type = 'yolov11n'  #  'yolov8n' / 'yolov11n' / 'nanodet-plus-m'
     # config_path = None
 
-    model_path = 'runs/detect/drone_detector_yolov8n/weights/best_256.onnx'
+    # model_path = 'runs/detect/drone_detector_yolov11n_320x240_20251021/weights/yolov11n_best_lulav_dit_256x256.onnx'
+    model_path = 'runs/detect/drone_detector_yolov11n_320x240_20251021/weights/yolov11n_best_lulav_dit_256x256.onnx'
     detection_frame_size = (256, 256)
+    # model_path = 'runs/detect/drone_detector_yolov11n_320x240_20251021/weights/yolov11n_best_lulav_dit_320x320.onnx'
+    # detection_frame_size = (320, 320)
     detector_type = 'yolov11n'
     config_path = None
 

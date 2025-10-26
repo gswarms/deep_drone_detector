@@ -7,10 +7,14 @@ import onnxruntime as ort
 # pt_model_file_path = '../runs/detect/drone_detector_yolov8n/weights/best.pt'
 # pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best.pt'
 pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/detect/drone_detector_yolov11n_320x240_20251021/weights/best.pt'
+image_size = (320, 320)
+
+if image_size[0] != image_size[1]:
+    raise Exception('yolo onnx must be square bt default! rectangular image configuration more complex, and is not supported in this script!')
 
 model = YOLO(pt_model_file_path)
-model.export(format='onnx', simplify=True, device='cpu', imgsz=(256, 256), name='best')   # or 'tflite', 'coreml', etc.
-res_file_name = '256'
+model.export(format='onnx', imgsz=image_size, dynamic=False, simplify=True, device='cpu', name='best')   # or 'tflite', 'coreml', etc.
+res_file_name = '{:d}x{:d}'.format(image_size[0], image_size[1])
 
 
 filename, file_extension = os.path.splitext(pt_model_file_path)
@@ -66,3 +70,9 @@ shutil.copyfile(onnx_model_file_path, onnx_model_file_path2)
 #            If not specified with INT8 enabled, the full dataset will be used.
 
 model.export(format='onnx')   # or 'tflite', 'coreml', etc.
+
+print('onnx model exported to: {}'.format(onnx_model_file_path))
+print('onnx model exported to: {}'.format(onnx_model_file_path2))
+
+onnx_model = ort.InferenceSession(onnx_model_file_path)
+print('onnx model image size: {}'.format(onnx_model.get_inputs()[0]))
