@@ -11,7 +11,7 @@ class SingleFrameDetector:
     """
     This object finds circular blobs in stereo images, and triangulates the 3D position of the correspnding landmarks
     """
-    def __init__(self, model_file_path, use_cpu=False, verbose=False):
+    def __init__(self, model_file_path, use_cpu=False, verbose=False, openvino_model_bin_file_path=None):
         """
         setup yolo_detector
 
@@ -42,13 +42,31 @@ class SingleFrameDetector:
                     print('using pt model:')
                     self.model.info(verbose=True)
 
-            elif model_file_extension == '.onnx':
-                # Load ONNX model
-                self.model = ort.InferenceSession(model_file_path)
-                self.model_type = 'onnx'
-                input_info = self.model.get_inputs()[0]
-                self.onnx_input_name = input_info.name
-                self.onnx_input_size = input_info.shape[2:]
+            elif model_file_extension in ['.onnx', '.xml']:  # run with onnx runtime
+                if model_file_extension == '.onnx':  # run with onnx runtime
+                    # Load ONNX model
+                    self.model = ort.InferenceSession(model_file_path)
+                    self.model_type = 'onnx'
+                    input_info = self.model.get_inputs()[0]
+                    self.onnx_input_name = input_info.name
+                    self.onnx_input_size = input_info.shape[2:]
+
+                elif model_file_extension == '.xml':  # run with openvino
+                    from openvino.runtime import Core
+                    # Load ONNX-openvino model
+                    ie = Core()
+                    model = ie.read_model(model=model_file_path, weights=openvino_model_bin_file_path)
+                    self.model = ie.compile_model(model=model, device_name="CPU")
+
+                    # Get input/output layers
+                    self.input_layer = self.model.input(0)
+                    self.output_layer = self.model.output(0)
+                    self.model_type = 'openvino'  # same pre process and post process as onnxruntime
+
+                    input_info = self.model.inputs[0]
+                    self.onnx_input_name = None
+                    self.onnx_input_size = input_info.shape[2:]
+
                 if self.verbose:
                     print('using onnx model:')
                     print(input_info)
@@ -127,6 +145,15 @@ class SingleFrameDetector:
             outputs = self.model.run(None, {self.onnx_input_name: self.onnx_img})
             # onnx post processing
             results = self._onnx_postprocess(outputs, conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold,
+                                             max_num_detections=max_num_detections)
+
+        elif self.model_type == 'openvino':
+            # onnx preprocessing (same as onnx)
+            self._onnx_preprocess(image)
+            # onnx inference
+            outputs = self.model([self.onnx_img])[self.output_layer]
+            # onnx post processing (same as onnx)
+            results = self._onnx_postprocess([outputs], conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold,
                                              max_num_detections=max_num_detections)
 
         else:
@@ -248,7 +275,7 @@ class SingleFrameDetector:
                     class_ids.append(class_id)
 
                 else:
-                    raise Exception('invalod onnx output size!')
+                    raise Exception('invalid onnx output size!')
 
         # Apply Non-Maximum Suppression (NMS)
         indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, nms_iou_threshold, top_k=max_num_detections)

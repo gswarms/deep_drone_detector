@@ -41,7 +41,8 @@ class DetectorTracker:
         # Setup yolo_detector
         if self.detector_type in ('yolov8n', 'yolov11n'):
             self.detector = yolo_detector.SingleFrameDetector(detector_model_file_path,
-                                                          use_cpu=self.detector_use_cpu, verbose=self.verbose)
+                                                          use_cpu=self.detector_use_cpu, verbose=self.verbose,
+                                                              openvino_model_bin_file_path=detector_config_path)
         elif self.detector_type=='nanodet-plus-m':
             self.detector = nanodet_detector.NanodetDetector(detector_model_file_path, detector_config_path,
                                                               use_cpu=self.detector_use_cpu, verbose=self.verbose)
