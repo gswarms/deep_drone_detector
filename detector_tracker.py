@@ -3,9 +3,6 @@
 import cv2
 import numpy as np
 import cv_core
-import yolo_detector
-import nanodet_detector
-
 
 if cv_core.__version__ != '1.1.1':
     raise Exception('invalid cv_core version {}! must be 1.1.1'.format(cv_core.__version__))
@@ -40,10 +37,12 @@ class DetectorTracker:
 
         # Setup yolo_detector
         if self.detector_type in ('yolov8n', 'yolov11n'):
+            import yolo_detector
             self.detector = yolo_detector.SingleFrameDetector(detector_model_file_path,
                                                           use_cpu=self.detector_use_cpu, verbose=self.verbose,
                                                               openvino_model_bin_file_path=detector_config_path)
         elif self.detector_type=='nanodet-plus-m':
+            import nanodet_detector
             self.detector = nanodet_detector.NanodetDetector(detector_model_file_path, detector_config_path,
                                                               use_cpu=self.detector_use_cpu, verbose=self.verbose)
 
