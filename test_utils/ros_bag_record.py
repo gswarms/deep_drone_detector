@@ -725,12 +725,16 @@ if __name__ == '__main__':
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_09-45-04/camera_2025_7_30-6_45_8'  # bad bag
 
     # ------------------ kfar galim 30.07.2025 ------------------------------
-    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_161114/camera_20251005_1611'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_161114/camera_20251005_1611'
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_161216/camera_20251005_1612'
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_161309/camera_20251005_1613'
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_161344/camera_20251005_1613'
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_163355/camera_20251005_1633'
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_163529/camera_20251005_1635'
+
+    # ------------------ kfar galim 27.10.2025 ------------------------------
+    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251027_kfar_galim/20251027_123000/camera_20251027_1230'
+
 
     valid_record_times = {'start': -np.inf, 'end': np.inf}
     image_topic = '/camera/image_raw'

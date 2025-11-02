@@ -15,7 +15,7 @@ import detector_tracker
 def path_to_scenario_name(scenario_folder_path):
     """
     reformat a file / folder name to a scenario name.
-    path format:  <path>/year_month_day-hour_min_sec_<any suffix>
+    path format:  <path>/year_month_day-hour_min_sec_<any suffix>  or <path>/yyymmdd_HHMMSS_<any suffix>
     scenario name: yyyymmdd_HHMMSS
 
     :param scenario_folder_path:
@@ -23,7 +23,12 @@ def path_to_scenario_name(scenario_folder_path):
     """
     base_name = os.path.basename(os.path.abspath(scenario_folder_path))
     sp = re.split('_|-', base_name)
-    scenario_name = '{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}'.format(int(sp[0]), int(sp[1]), int(sp[2]), int(sp[3]), int(sp[4]), int(sp[5]))
+    if len(sp) == 6:
+        scenario_name = '{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}'.format(int(sp[0]), int(sp[1]), int(sp[2]), int(sp[3]), int(sp[4]), int(sp[5]))
+    elif len(sp) == 2:
+        scenario_name = '{:08d}_{:06d}'.format(int(sp[0]), int(sp[1]))
+    else:
+        raise Exception('invalid naming convention for scenario folder: {}'.format(scenario_folder_path))
 
     return scenario_name
 
@@ -127,7 +132,7 @@ if __name__ == '__main__':
     # ------------------ kfar galim 16.07.2025 ------------------------------
 
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-14/camera_2025_7_16-6_18_18_extracted'
-    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-58/camera_2025_7_16-6_19_1_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-58/camera_2025_7_16-6_19_1_extracted'
 
 
     # ------------------ kfar galim 30.07.2025 ------------------------------
@@ -139,6 +144,9 @@ if __name__ == '__main__':
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-48-07/camera_2025_7_30-5_48_17_extracted'
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-50-03/camera_2025_7_30-5_50_7_extracted'
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_09-45-04/camera_2025_7_30-6_45_8_extracted'  # bad bag
+
+    # ------------------ kfar galim 27.10.2025 ------------------------------
+    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20251027_kfar_galim/20251027_123000/camera_20251027_1230_extracted'
 
     frame_size = (640, 480)
     frame_resize = None
@@ -247,7 +255,8 @@ if __name__ == '__main__':
             if polygons_per_frame is not None:
                 roi_polygon = polygons_per_frame.get(frame_id)
                 if roi_polygon is not None:
-                    dttr.set_detection_roi_polygon(roi_polygon, method='crop')
+                    # dttr.set_detection_roi_polygon(roi_polygon, method='crop')
+                    dttr.set_detection_roi_polygon(roi_polygon, method='hybrid')
 
             # test - tmp
             # if frame_id > 50:
@@ -261,8 +270,6 @@ if __name__ == '__main__':
                 video_initialized = True
 
             # detect and track
-            if frame_id == 41:
-                aa=5
             tr = dttr.step(img, conf_threshold=0.5, nms_iou_threshold=0.4, max_num_detections=10)
             img_to_draw = dttr.draw(img)
             img_to_draw = cv2.putText(img_to_draw, '{:d}'.format(frame_id), (20, 20),
@@ -277,8 +284,6 @@ if __name__ == '__main__':
             if output_video_file is not None:
                 out.write(img_to_draw)
 
-            if len(tr)>0:  # debug - find first yolo_detector
-                aa=5
             frame_id = frame_id+1
 
 
