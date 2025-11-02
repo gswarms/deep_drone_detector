@@ -335,6 +335,9 @@ class DetectorTracker:
         if polygon_points.shape[1] != 2:
             raise Exception('invalid polygon_points shape! should be (nx2)')
 
+        if image_size is not None and (required_roi_size[0] > image_size[0] or required_roi_size[1] > image_size[1]):
+            raise Exception('required ROI size is larger than the image size!')
+
         p_xmn = np.min(polygon_points[:, 0])
         p_xmx = np.max(polygon_points[:, 0])
         p_ymn = np.min(polygon_points[:, 1])
@@ -354,7 +357,7 @@ class DetectorTracker:
 
         if image_size is not None:
             xtl = min(max(xtl, 0), image_size[0] - required_roi_size[0])
-            ytl = min(max(ytl, 0), image_size[1]-required_roi_size[1])
+            ytl = min(max(ytl, 0), image_size[1] - required_roi_size[1])
 
         roi_bbox = (xtl, ytl, required_roi_size[0], required_roi_size[1])
 

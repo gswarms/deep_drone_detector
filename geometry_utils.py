@@ -179,225 +179,224 @@ class LosPixelConverter:
                 print('convert to int')
             valid_polygon_points = np.round(valid_polygon_points).astype(np.int32)
 
-
         return valid_polygon_points
 
-    def image_polygon_from_los_orig(self, los, los_angular_uncertainty, num_points=12, int_polygon_coordinates=False, keep_num_points=False, verbose=False):
-        """
-        project target position uncertainty to camera image polygon
-
-        Note: we ignore camera-body position offset (approximate it to be much smaller than range to target).
-
-        Algorithm:
-        1. Uniformly sample N 3D points on los uncertainty cone
-        2. Project 3D cone points to camera image pixels
-           - ignore points behind the camera
-        3. Convex hull
-        3. Intersect projected polygon with image borders
-
-        param: target_position - 3D target mean position in body frame (x, y, z)
-        param: target_position_covariance - 3D target position covariance [3x3] in body frame
-        param: num_polygon_points - number of polygon_points
-        param: num_sample_points - number of sample points
-        """
-
-        # TODO: there is a problem with this function! rmoving back points is wrong! we need to find the proper solution!
-
-        # check inputs
-        if verbose:
-            print('check inputs')
-
-        if self.camera is None:
-            raise Exception('camera not set!')
-        if num_points <= 6:
-            raise Exception('number of points must e >= 6!')
-
-        los = np.array(los, dtype=np.float32)
-        if los.size != 3:
-            raise Exception('invalid los input!')
-        los = los.reshape(3,1)
-        los_norm = np.linalg.norm(los)
-        if los_norm <= 0:
-            raise Exception('invalid los input!')
-
-        # ------------- rotate line of sight to camera coordinates -------------
-        R = self.camera.T_cam_to_body[:3,:3]
-        los_cam = np.matmul(R.T, los).flatten()
-        los_cam = los_cam / np.linalg.norm(los_cam)
-        # TODO: we use the approximation that target range is much larger than camera-body position offset! We can do better if we calculate cone points in body frame, and then project them to the image. What range should we use in this case?
-
-
-        if verbose:
-            print('find los vectors')
-
-        # ------------- find cone vectors -------------
-        # Choose a random vector w that is not parallel to los
-        w = np.array([1, 0, 0]) if np.dot(los_cam, [1, 0, 0]) <= 0.707 else np.array([0, 1, 0])
-        # Project w onto the plane perpendicular to v
-        w_proj = w - np.dot(w, los_cam) * los_cam
-        # Normalize the projection of w
-        w_proj = w_proj / np.linalg.norm(w_proj)
-        # Now we have a vector perpendicular to v (w_proj)
-        # The desired vector u is a combination of v and w_proj such that the angle between them is theta
-        u = np.cos(los_angular_uncertainty) * los_cam + np.sin(los_angular_uncertainty) * w_proj
-
-        # to find multiple vectors with the same angle theta from los, rotate u around the los
-        n = num_points
-        a = np.linspace(0, (2 * np.pi) * ((n - 1) / n), n, dtype=np.float32)
-        ui = np.zeros((n, 3), dtype=np.float32)
-        for i in range(n):
-            rot_vec = los_cam * a[i]
-            R, _ = cv2.Rodrigues(rot_vec)
-            ui[i, :] = np.matmul(R, u)
-            # print('ui angle to los: {}'.format(np.arccos(np.dot(los, ui[i, :]))*180/np.pi))
-
-        # ------------- project cone points to camera image -------------
-        # handle special hard cases
-        los_is_close_to_z = los_cam[2] > los_cam[0] * 1e6 and los_cam[2] > los_cam[1] * 1e6
-        if los_angular_uncertainty > np.pi * 0.9:
-            # in this case los uncertainty is almost 360 deg, so roi is the full image
-            if verbose:
-                print('special case - los uncertainty is more than 162deg. ROI is full image!')
-            # make sure ROi is full
-            image_points = np.array(((-1, -1),
-                                     (self.camera.image_size[0] + 1, -1),
-                                     (self.camera.image_size[0] + 1, self.camera.image_size[1] + 1),
-                                     (-1, self.camera.image_size[1] + 1)), dtype=np.float32)
-
-        elif los_is_close_to_z and np.abs(los_angular_uncertainty - np.pi/2) < 1e-6:
-            if los_cam[2] > 0:
-                # in this case all cone points will have invalid projection to camera image!
-                if verbose:
-                    print('special case - los is camera z and los uncertainty is 90deg! ROI is full image!')
-                # make sure ROi is full
-                image_points = np.array(((-1, -1),
-                                          (self.camera.image_size[0]+1, -1),
-                                          (self.camera.image_size[0]+1, self.camera.image_size[1]+1),
-                                          (-1, self.camera.image_size[1]+1)), dtype=np.float32)
-            if los_cam[2] < 0:
-                # in this case all cone points will have invalid projection to camera image!
-                if verbose:
-                    print('special case - los is camera -z and los uncertainty is 90deg! ROI is empty!')
-                # make sure ROI is empty
-                image_points = np.array(((-10, -1),
-                                          (-10, -10),
-                                          (-1, -10),
-                                          (-1, -1)), dtype=np.float32)
-
-        elif los_cam[ 2] > 0 and np.all( ui[:, 2] < 1e-6):
-            # in this case all cone points are behind camera, but the ROI is the full image!
-            if verbose:
-                print('special case - los is FW and all cone points are back')
-            # make sure ROi is full
-            image_points = np.array(((-1, -1),
-                                      (self.camera.image_size[0]+1, -1),
-                                      (self.camera.image_size[0]+1, self.camera.image_size[1]+1),
-                                      (-1, self.camera.image_size[1]+1)), dtype=np.float32)
-
-        elif los_cam[ 2] < 0 and np.all( ui[:, 2] > -1e-6):
-            """
-            in this case los is behind the camera, but los uncertainty is very large.
-            The correct handling of this case is complicated!
-               - if all cone points are outside the image, ROI should be empty  
-               - if all cone points are inside the image, the correct ROI is everything outside the projected polygon
-               - if some cone points are inside the image, the correct ROI might be made of patches   
-            For now, we set ROI to be the full image         
-            """
-            # TODO: implement this better!
-            if verbose:
-                print('special case - los is back and all cone points are FW!')
-            # make sure ROi is full
-            image_points = np.array(((-1, -1),
-                                      (self.camera.image_size[0]+1, -1),
-                                      (self.camera.image_size[0]+1, self.camera.image_size[1]+1),
-                                      (-1, self.camera.image_size[1]+1)), dtype=np.float32)
-
-        # handle a normal case
-        else:
-
-            if verbose:
-                print('project to image')
-
-            # project to camera image
-            body_pose = g3d.rigid3dtform.Rigid3dTform(np.eye(3), (0, 0, 0))
-            image_points, is_in_image = self.camera.project_points(ui, body_pose)
-
-            # handle inf cases - when a point is on the camera horizon (z=0), the projection is in infinity.
-            is_projection_inf = np.isinf(image_points).any(axis=1)  # los perpendicular to camera Z gives inf projection
-            if is_projection_inf.any():
-                ui[is_projection_inf, 2] = 1e-5
-                image_points, is_in_image = self.camera.project_points(ui, body_pose)
-
-            # TODO: The projection process is no good. It works strangely inm cases where angle uncertainty is large (80-90 deg)
-            # example - check if the ROI is full ot empty using the original los, and not only the cone.
-            # proper process:
-            # - test if original LOS is in front or behind the camera
-            # - test which cone points are behind the camera
-            #
-            #  if los is behind the camera:
-            #  - if all cone points are behind, ROI is empty.
-            #  - if all cone points are in front - cant be! angle uncertainty must be > 90 deg!!!
-            #  - if some cone points are behind, and some in front: ???
-            #         project point behind to the camera xy plane, and normalize direction vector to 1
-
-            #  if los is in front of the camera:
-            #  - if all cone points are behind the camera - cant be! angle uncertainty must be > 90 deg!!!
-            #  - if all cone points are in front the camera - do the intersection.
-            #  - if some cone points are behind, and some in front: ???
-            #         project point in front to the camera xy plane, and normalize direction vector to 1
-
-            is_in_front = ui[:,2] > 1e-9  # in front of the camera
-            is_projection_valid = np.bitwise_not(np.isnan(image_points).any(axis=1))  # otherwise invalid projection
-            valid_image_points = np.bitwise_and(is_in_front, is_projection_valid)
-
-            image_points = image_points[valid_image_points, :]
-            # is_in_image = is_in_image[is_in_front]
-
-            # we can't intersect a polygon of less than 3 points!
-            # TODO: try to find a solution to this case - maybe project the rest of the points to the plane perpendicular to camera z...
-            if 0 < image_points.shape[0] < 3:
-                image_points = np.zeros((0,2))
-
-            # if not np.any(is_in_image):  # this is a bug if polygon is bigger than the image
-            #     valid_polygon_points = np.zeros((0, 2))
-            #     return valid_polygon_points
-
-        if verbose:
-            print('projected to image')
-            print('intersect with image borders')
-        image_borders = np.array(((0, 0),
-                                  (self.camera.image_size[0], 0),
-                                  (self.camera.image_size[0], self.camera.image_size[1]),
-                                  (0, self.camera.image_size[1])), dtype=np.float32)
-        try:
-            valid_polygon_points = g2d.polygon_2D.polygon_intersect(image_points, image_borders, use_shapely=True)
-        except:
-            # raise Exception('*** polygon_intersect failed! los=({},{},{}), +-{}. projected points:{} '.format(los[0], los[1], los[2], los_angular_uncertainty, image_points))
-            valid_polygon_points = np.zeros((0, 2))
-        if valid_polygon_points.shape[0] == image_points.shape[0] + 1:
-            valid_polygon_points = valid_polygon_points[:-1,:2]  # remove last point. It is a duplicate of the first because shapely returns close polygons.
-
-        if verbose:
-            print('intersected with image borders')
-            print('check validity')
-
-        if valid_polygon_points.shape[0] < 3:
-            if verbose:
-                print('outside of image borders or <3 points - return empty')
-            valid_polygon_points = np.zeros((0, 2))
-
-        else:
-            if keep_num_points:
-                if verbose:
-                    print('adjust number of polygon points {}-{}'.format(valid_polygon_points.shape[0], num_points))
-                valid_polygon_points = polygon_adjust_number_of_points(valid_polygon_points, num_points)
-
-        if int_polygon_coordinates:
-            if verbose:
-                print('convert to int')
-            valid_polygon_points = np.round(valid_polygon_points).astype(np.int32)
-
-        return valid_polygon_points
+    # def image_polygon_from_los_orig(self, los, los_angular_uncertainty, num_points=12, int_polygon_coordinates=False, keep_num_points=False, verbose=False):
+    #     """
+    #     project target position uncertainty to camera image polygon
+    #
+    #     Note: we ignore camera-body position offset (approximate it to be much smaller than range to target).
+    #
+    #     Algorithm:
+    #     1. Uniformly sample N 3D points on los uncertainty cone
+    #     2. Project 3D cone points to camera image pixels
+    #        - ignore points behind the camera
+    #     3. Convex hull
+    #     3. Intersect projected polygon with image borders
+    #
+    #     param: target_position - 3D target mean position in body frame (x, y, z)
+    #     param: target_position_covariance - 3D target position covariance [3x3] in body frame
+    #     param: num_polygon_points - number of polygon_points
+    #     param: num_sample_points - number of sample points
+    #     """
+    #
+    #     # TODO: there is a problem with this function! rmoving back points is wrong! we need to find the proper solution!
+    #
+    #     # check inputs
+    #     if verbose:
+    #         print('check inputs')
+    #
+    #     if self.camera is None:
+    #         raise Exception('camera not set!')
+    #     if num_points <= 6:
+    #         raise Exception('number of points must e >= 6!')
+    #
+    #     los = np.array(los, dtype=np.float32)
+    #     if los.size != 3:
+    #         raise Exception('invalid los input!')
+    #     los = los.reshape(3,1)
+    #     los_norm = np.linalg.norm(los)
+    #     if los_norm <= 0:
+    #         raise Exception('invalid los input!')
+    #
+    #     # ------------- rotate line of sight to camera coordinates -------------
+    #     R = self.camera.T_cam_to_body[:3,:3]
+    #     los_cam = np.matmul(R.T, los).flatten()
+    #     los_cam = los_cam / np.linalg.norm(los_cam)
+    #     # TODO: we use the approximation that target range is much larger than camera-body position offset! We can do better if we calculate cone points in body frame, and then project them to the image. What range should we use in this case?
+    #
+    #
+    #     if verbose:
+    #         print('find los vectors')
+    #
+    #     # ------------- find cone vectors -------------
+    #     # Choose a random vector w that is not parallel to los
+    #     w = np.array([1, 0, 0]) if np.dot(los_cam, [1, 0, 0]) <= 0.707 else np.array([0, 1, 0])
+    #     # Project w onto the plane perpendicular to v
+    #     w_proj = w - np.dot(w, los_cam) * los_cam
+    #     # Normalize the projection of w
+    #     w_proj = w_proj / np.linalg.norm(w_proj)
+    #     # Now we have a vector perpendicular to v (w_proj)
+    #     # The desired vector u is a combination of v and w_proj such that the angle between them is theta
+    #     u = np.cos(los_angular_uncertainty) * los_cam + np.sin(los_angular_uncertainty) * w_proj
+    #
+    #     # to find multiple vectors with the same angle theta from los, rotate u around the los
+    #     n = num_points
+    #     a = np.linspace(0, (2 * np.pi) * ((n - 1) / n), n, dtype=np.float32)
+    #     ui = np.zeros((n, 3), dtype=np.float32)
+    #     for i in range(n):
+    #         rot_vec = los_cam * a[i]
+    #         R, _ = cv2.Rodrigues(rot_vec)
+    #         ui[i, :] = np.matmul(R, u)
+    #         # print('ui angle to los: {}'.format(np.arccos(np.dot(los, ui[i, :]))*180/np.pi))
+    #
+    #     # ------------- project cone points to camera image -------------
+    #     # handle special hard cases
+    #     los_is_close_to_z = los_cam[2] > los_cam[0] * 1e6 and los_cam[2] > los_cam[1] * 1e6
+    #     if los_angular_uncertainty > np.pi * 0.9:
+    #         # in this case los uncertainty is almost 360 deg, so roi is the full image
+    #         if verbose:
+    #             print('special case - los uncertainty is more than 162deg. ROI is full image!')
+    #         # make sure ROi is full
+    #         image_points = np.array(((-1, -1),
+    #                                  (self.camera.image_size[0] + 1, -1),
+    #                                  (self.camera.image_size[0] + 1, self.camera.image_size[1] + 1),
+    #                                  (-1, self.camera.image_size[1] + 1)), dtype=np.float32)
+    #
+    #     elif los_is_close_to_z and np.abs(los_angular_uncertainty - np.pi/2) < 1e-6:
+    #         if los_cam[2] > 0:
+    #             # in this case all cone points will have invalid projection to camera image!
+    #             if verbose:
+    #                 print('special case - los is camera z and los uncertainty is 90deg! ROI is full image!')
+    #             # make sure ROi is full
+    #             image_points = np.array(((-1, -1),
+    #                                       (self.camera.image_size[0]+1, -1),
+    #                                       (self.camera.image_size[0]+1, self.camera.image_size[1]+1),
+    #                                       (-1, self.camera.image_size[1]+1)), dtype=np.float32)
+    #         if los_cam[2] < 0:
+    #             # in this case all cone points will have invalid projection to camera image!
+    #             if verbose:
+    #                 print('special case - los is camera -z and los uncertainty is 90deg! ROI is empty!')
+    #             # make sure ROI is empty
+    #             image_points = np.array(((-10, -1),
+    #                                       (-10, -10),
+    #                                       (-1, -10),
+    #                                       (-1, -1)), dtype=np.float32)
+    #
+    #     elif los_cam[ 2] > 0 and np.all( ui[:, 2] < 1e-6):
+    #         # in this case all cone points are behind camera, but the ROI is the full image!
+    #         if verbose:
+    #             print('special case - los is FW and all cone points are back')
+    #         # make sure ROi is full
+    #         image_points = np.array(((-1, -1),
+    #                                   (self.camera.image_size[0]+1, -1),
+    #                                   (self.camera.image_size[0]+1, self.camera.image_size[1]+1),
+    #                                   (-1, self.camera.image_size[1]+1)), dtype=np.float32)
+    #
+    #     elif los_cam[ 2] < 0 and np.all( ui[:, 2] > -1e-6):
+    #         """
+    #         in this case los is behind the camera, but los uncertainty is very large.
+    #         The correct handling of this case is complicated!
+    #            - if all cone points are outside the image, ROI should be empty
+    #            - if all cone points are inside the image, the correct ROI is everything outside the projected polygon
+    #            - if some cone points are inside the image, the correct ROI might be made of patches
+    #         For now, we set ROI to be the full image
+    #         """
+    #         # TODO: implement this better!
+    #         if verbose:
+    #             print('special case - los is back and all cone points are FW!')
+    #         # make sure ROi is full
+    #         image_points = np.array(((-1, -1),
+    #                                   (self.camera.image_size[0]+1, -1),
+    #                                   (self.camera.image_size[0]+1, self.camera.image_size[1]+1),
+    #                                   (-1, self.camera.image_size[1]+1)), dtype=np.float32)
+    #
+    #     # handle a normal case
+    #     else:
+    #
+    #         if verbose:
+    #             print('project to image')
+    #
+    #         # project to camera image
+    #         body_pose = g3d.rigid3dtform.Rigid3dTform(np.eye(3), (0, 0, 0))
+    #         image_points, is_in_image = self.camera.project_points(ui, body_pose)
+    #
+    #         # handle inf cases - when a point is on the camera horizon (z=0), the projection is in infinity.
+    #         is_projection_inf = np.isinf(image_points).any(axis=1)  # los perpendicular to camera Z gives inf projection
+    #         if is_projection_inf.any():
+    #             ui[is_projection_inf, 2] = 1e-5
+    #             image_points, is_in_image = self.camera.project_points(ui, body_pose)
+    #
+    #         # TODO: The projection process is no good. It works strangely inm cases where angle uncertainty is large (80-90 deg)
+    #         # example - check if the ROI is full ot empty using the original los, and not only the cone.
+    #         # proper process:
+    #         # - test if original LOS is in front or behind the camera
+    #         # - test which cone points are behind the camera
+    #         #
+    #         #  if los is behind the camera:
+    #         #  - if all cone points are behind, ROI is empty.
+    #         #  - if all cone points are in front - cant be! angle uncertainty must be > 90 deg!!!
+    #         #  - if some cone points are behind, and some in front: ???
+    #         #         project point behind to the camera xy plane, and normalize direction vector to 1
+    #
+    #         #  if los is in front of the camera:
+    #         #  - if all cone points are behind the camera - cant be! angle uncertainty must be > 90 deg!!!
+    #         #  - if all cone points are in front the camera - do the intersection.
+    #         #  - if some cone points are behind, and some in front: ???
+    #         #         project point in front to the camera xy plane, and normalize direction vector to 1
+    #
+    #         is_in_front = ui[:,2] > 1e-9  # in front of the camera
+    #         is_projection_valid = np.bitwise_not(np.isnan(image_points).any(axis=1))  # otherwise invalid projection
+    #         valid_image_points = np.bitwise_and(is_in_front, is_projection_valid)
+    #
+    #         image_points = image_points[valid_image_points, :]
+    #         # is_in_image = is_in_image[is_in_front]
+    #
+    #         # we can't intersect a polygon of less than 3 points!
+    #         # TODO: try to find a solution to this case - maybe project the rest of the points to the plane perpendicular to camera z...
+    #         if 0 < image_points.shape[0] < 3:
+    #             image_points = np.zeros((0,2))
+    #
+    #         # if not np.any(is_in_image):  # this is a bug if polygon is bigger than the image
+    #         #     valid_polygon_points = np.zeros((0, 2))
+    #         #     return valid_polygon_points
+    #
+    #     if verbose:
+    #         print('projected to image')
+    #         print('intersect with image borders')
+    #     image_borders = np.array(((0, 0),
+    #                               (self.camera.image_size[0], 0),
+    #                               (self.camera.image_size[0], self.camera.image_size[1]),
+    #                               (0, self.camera.image_size[1])), dtype=np.float32)
+    #     try:
+    #         valid_polygon_points = g2d.polygon_2D.polygon_intersect(image_points, image_borders, use_shapely=True)
+    #     except:
+    #         # raise Exception('*** polygon_intersect failed! los=({},{},{}), +-{}. projected points:{} '.format(los[0], los[1], los[2], los_angular_uncertainty, image_points))
+    #         valid_polygon_points = np.zeros((0, 2))
+    #     if valid_polygon_points.shape[0] == image_points.shape[0] + 1:
+    #         valid_polygon_points = valid_polygon_points[:-1,:2]  # remove last point. It is a duplicate of the first because shapely returns close polygons.
+    #
+    #     if verbose:
+    #         print('intersected with image borders')
+    #         print('check validity')
+    #
+    #     if valid_polygon_points.shape[0] < 3:
+    #         if verbose:
+    #             print('outside of image borders or <3 points - return empty')
+    #         valid_polygon_points = np.zeros((0, 2))
+    #
+    #     else:
+    #         if keep_num_points:
+    #             if verbose:
+    #                 print('adjust number of polygon points {}-{}'.format(valid_polygon_points.shape[0], num_points))
+    #             valid_polygon_points = polygon_adjust_number_of_points(valid_polygon_points, num_points)
+    #
+    #     if int_polygon_coordinates:
+    #         if verbose:
+    #             print('convert to int')
+    #         valid_polygon_points = np.round(valid_polygon_points).astype(np.int32)
+    #
+    #     return valid_polygon_points
 
     def pixel_to_los(self, image_points):
         """
@@ -737,6 +736,15 @@ def calc_target_los_angular_uncertainty(prior_angular_uncertainty=0, relative_po
 
 if __name__ == '__main__':
 
+    # print('calc_target_los_angular_uncertainty test:')
+    # prior_angular_uncertainty = np.pi/9
+    # relative_position_uncertainty = 10
+    # for i in range(50,-50,-1):
+    #     angular_uncertainty = calc_target_los_angular_uncertainty(prior_angular_uncertainty=prior_angular_uncertainty,
+    #                             relative_position_uncertainty=relative_position_uncertainty,
+    #                                                               range_to_target=np.abs(i), angular_uncertainty_limit=np.pi)
+    #     print('range: {} - {}'.format(i, angular_uncertainty*180/np.pi))
+
     image_file = '/home/roee/Projects/datasets/interceptor_drone/20250701_kfar_galim/2025-07-01_09-35-10/camera_2025_7_1-6_35_13_extracted/images/000.png'
     camera_calibration_file = '/home/roee/Projects/datasets/interceptor_drone/20250612_calibration/20250612_pz001_calibration/camera_intrinsics_IDC1.yaml'
 
@@ -749,7 +757,7 @@ if __name__ == '__main__':
         los_x = np.cos(a)
         los_z = np.zeros_like(a)
         los_y = np.sin(a)
-        los_angular_uncertainty = 20*np.pi/180 * np.ones(n)  # 20*np.pi/180
+        los_angular_uncertainty = 180*np.pi/180 * np.ones(n)  # 20*np.pi/180
 
     if test_pattern == 'pitch':
         # generate los in a circle
