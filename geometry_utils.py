@@ -455,6 +455,63 @@ class LosPixelConverter:
         return calc_target_los_angular_uncertainty(prior_angular_uncertainty, relative_position_uncertainty,
                                                    range_to_target, angular_uncertainty_limit)
 
+    def image_bbox_to_3D_los_cov(self, bbox):
+        """
+        convert image bbox in pixels to 3D los and uncertainty in body frame
+
+        Specific geometric meaning:
+        los - 3D line of sight vector (x, y, z) in body frame normalized to length=1
+        cov - 3x3 3D covariance matrix.
+              this is calcultaed as follows:
+              v1 - 3D vector = the difference between bbox center top los to bbox center los (where z=1)
+              v2 - 3D vector = the difference between bbox center right los to bbox center los (where z=1)
+              refer to v1, v2 as the semi major axes of the covariance matrix. Take third semi major axis as 0)
+              calculate covariance matrix from these semi major axis vectors.
+
+        :param bbox - (xtl, ytl, w, h)
+
+        :return cov_matrix - 3x3 covariance matrix
+        """
+
+        # calc semiaxis vectors
+        (xtl, ytl, w, h) = bbox
+        xc = np.round(float(xtl) + float(w) / 2)
+        yc = np.round(float(ytl) + float(h) / 2)
+        image_points = np.array([(xc, yc),        # bbox center
+                                 (xc, ytl),       # bbox up
+                                 (xtl + w, yc)])  # bbox right
+        los, is_in_image= self.pixel_to_los(image_points)
+
+        # normalize z to be 1
+        los[0, :] = los[0, :] / los[0, 2]
+        los[1, :] = los[1, :] / los[1, 2]
+        los[2, :] = los[2, :] / los[2, 2]
+
+        # calc bbox up and right vectors
+        v1 = los[1, :] - los[0, :]
+        v2 = los[2, :] - los[0, :]
+        v3 = los[0, :]
+
+        # make sure the vectors are perpendicular
+        # there is a small approximation here if v1, v2, v3 are not perfectly perpendicular
+        s1 = np.linalg.norm(v1)
+        n1 = v1 / s1
+        s2 = np.linalg.norm(v2)
+        n2 = v2 / s2
+        n3 = v3 / np.linalg.norm(v3)
+
+        n2_p = np.cross(n3, n1)
+        v2_p = n2_p * s2  # bbox right vector (perpendicular part)
+        v1_p = np.cross(n2_p, n3) * s1   # bbox up vector (perpendicular part)
+        v3 = np.array((0, 0, 0))   # los vector size 0 - we have no depth perception
+
+        # calc covariance matrix
+        cov_matrix = cov_from_semiaxes(v1_p, v2_p, v3)
+        central_los = los[0, :]
+
+        return {'los': central_los, 'cov': cov_matrix}
+
+
     def save_camera(self, output_camera_params_file):
         """
         save pinhole camera parameters
@@ -692,8 +749,6 @@ def add_collinear_vertices(points, m):
 
     return res_polygon
 
-
-
 def calc_target_los_angular_uncertainty(prior_angular_uncertainty=0, relative_position_uncertainty=None,
                                         range_to_target=None, angular_uncertainty_limit=np.pi):
     """
@@ -733,6 +788,48 @@ def calc_target_los_angular_uncertainty(prior_angular_uncertainty=0, relative_po
 
     return angular_cone_radius
 
+
+
+def cov_from_semiaxes(a1, a2, a3, return_eigs=False):
+    """
+    Compute 3×3 covariance matrix from three semimajor axis vectors (each = direction * std).
+    The norm of ai is the standard deviation along that direction.
+
+    Parameters
+    ----------
+    a1, a2, a3 : array-like, shape (3,)
+        Semi-major axis vectors.
+    return_eigs : bool, optional
+        If True, also return eigenvalues, eigenvectors, and std deviations.
+
+    Returns
+    -------
+    Sigma : ndarray, shape (3, 3)
+        Covariance matrix.
+    eigvals : ndarray, shape (3,), optional
+        Eigenvalues (variances, sorted descending).
+    eigvecs : ndarray, shape (3, 3), optional
+        Corresponding orthonormal eigenvectors (columns).
+    stds : ndarray, shape (3,), optional
+        Standard deviations along the principal axes = sqrt(eigvals).
+    """
+    A = [np.asarray(a, float) for a in (a1, a2, a3)]
+    Sigma = np.zeros((3, 3))
+    for a in A:
+        Sigma += np.outer(a, a)
+    Sigma = 0.5 * (Sigma + Sigma.T)  # ensure symmetry
+
+    if not return_eigs:
+        return Sigma
+
+    # eigen-decomposition (ascending order → reverse to descending)
+    eigvals, eigvecs = np.linalg.eigh(Sigma)
+    idx = np.argsort(eigvals)[::-1]
+    eigvals = eigvals[idx]
+    eigvecs = eigvecs[:, idx]
+    stds = np.sqrt(np.maximum(eigvals, 0))  # guard against tiny negative due to rounding
+
+    return Sigma, eigvals, eigvecs, stds
 
 if __name__ == '__main__':
 
