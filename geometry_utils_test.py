@@ -18,11 +18,15 @@ def lospixelconverter_image_bbox_to_3D_los_cov_test(verbose=True, draw=False):
                                  [0, 580, 240],
                                  [0, 0, 1]])
     dist_coeffs = np.array([0,0,0,0,0])
-    # T_c2b = np.array([[0.0, 0.0, 1.0, 0.0],
+    T_c2b = np.array([[0.0, 0.5,                 0.8660254037844386, 0.0],    # body FRD, camera fw and 30 deg up
+                      [1.0, 0.0,                 0.0,                0.0],
+                      [0.0, 0.8660254037844386, -0.5,                0.0],
+                      [0.0, 0.0,                 0.0,                1.0]])
+    # T_c2b = np.array([[0.0, 0.0, 1.0, 0.0],  # body FRD, camera fw
     #                   [1.0, 0.0, 0.0, 0.0],
     #                   [0.0, 1.0, 0.0, 0.0],
     #                   [0.0, 0.0, 0.0, 1.0]])
-    T_c2b = np.eye(4)
+    # T_c2b = np.eye(4)  # body frame is the same as camera frame
 
     cam.set('cam0', cv_core.pinhole_camera.CameraModel.PINHOLE, intrinsic_matrix, dist_coeffs, image_size, T_cam_to_body=T_c2b)
 
@@ -164,4 +168,4 @@ def set_axes_equal(ax, X, Y, Z, padding=0.1):
 
 if __name__ == '__main__':
 
-    assert lospixelconverter_image_bbox_to_3D_los_cov_test(verbose=True, draw=False), "lospixelconverter_image_bbox_to_3D_los_cov_test Failed!"
+    assert lospixelconverter_image_bbox_to_3D_los_cov_test(verbose=True, draw=True), "lospixelconverter_image_bbox_to_3D_los_cov_test Failed!"

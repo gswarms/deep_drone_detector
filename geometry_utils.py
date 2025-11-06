@@ -480,12 +480,21 @@ class LosPixelConverter:
         image_points = np.array([(xc, yc),        # bbox center
                                  (xc, ytl),       # bbox up
                                  (xtl + w, yc)])  # bbox right
-        los, is_in_image= self.pixel_to_los(image_points)
 
-        # normalize z to be 1
-        los[0, :] = los[0, :] / los[0, 2]
-        los[1, :] = los[1, :] / los[1, 2]
-        los[2, :] = los[2, :] / los[2, 2]
+        R = self.camera.T_cam_to_body[:3,:3]
+        los, is_in_image = self.camera.pixel_to_los(image_points, R)
+        # los, is_in_image= self.pixel_to_los(image_points)
+
+        # normalize central los to be size 1
+        # normalize all other los vectors so that their projection on the central los is 1
+        los[0, :] = los[0, :] / np.linalg.norm(los[0, :])
+        los[1, :] = los[1, :] / np.dot(los[0, :], los[1, :])
+        los[2, :] = los[2, :] / np.dot(los[0, :], los[2, :])
+
+        # print('test los normalization:')
+        # print('los norm {}'.format(np.linalg.norm(los[0, :])))
+        # print('los 1 projection {}'.format(np.dot(los[0, :], los[1, :])))
+        # print('los 2 projection {}'.format(np.dot(los[0, :], los[2, :])))
 
         # calc bbox up and right vectors
         v1 = los[1, :] - los[0, :]
@@ -830,6 +839,82 @@ def cov_from_semiaxes(a1, a2, a3, return_eigs=False):
     stds = np.sqrt(np.maximum(eigvals, 0))  # guard against tiny negative due to rounding
 
     return Sigma, eigvals, eigvecs, stds
+
+
+
+
+def closest_distance_between_trajectories(traj1, traj2):
+    """
+    Compute the minimum distance between two piecewise-linear trajectories
+    parameterized by time.
+
+    Each trajectory is a list of (t, x, y, [z]) points.
+    Motion between points is linear interpolation.
+
+    Returns:
+        t_min : float - global time of closest approach
+        d_min : float - minimal distance
+        p1_min, p2_min : np.ndarray - positions of each trajectory at that time
+    """
+
+    traj1 = np.array(traj1, dtype=float)
+    traj2 = np.array(traj2, dtype=float)
+
+    t1, p1 = traj1[:, 0], traj1[:, 1:]
+    t2, p2 = traj2[:, 0], traj2[:, 1:]
+
+    d_min = np.inf
+    t_min = None
+    p1_min = None
+    p2_min = None
+
+    t2s = t2[:-1]
+    t2f = t2[1:]
+    for i in range(len(t1) - 1):
+        idx2 = t2s <= t1[i] and t2s <= t1[i]
+        for j in range(len(t2) - 1):
+
+            # Overlap in time
+            t_start = max(t1[i], t2[j])
+            t_end   = min(t1[i+1], t2[j+1])
+            if t_end <= t_start:
+                continue  # segments don't overlap in time
+
+            # Segment definitions
+            v1 = (p1[i+1] - p1[i]) / (t1[i+1] - t1[i])
+            v2 = (p2[j+1] - p2[j]) / (t2[j+1] - t2[j])
+
+            # Positions at t_start
+            p1s = p1[i] + v1 * (t_start - t1[i])
+            p2s = p2[j] + v2 * (t_start - t2[j])
+
+            # Relative motion: p_rel(t) = (p1s - p2s) + (v1 - v2)*(t - t_start)
+            dp0 = p1s - p2s
+            dv = v1 - v2
+
+            # Minimize |dp0 + dv*(t - t_start)|^2 over [t_start, t_end]
+            a = np.dot(dv, dv)
+            b = np.dot(dp0, dv)
+
+            if a == 0:  # no relative velocity, constant distance
+                t_candidate = t_start
+            else:
+                t_candidate = t_start - b / a
+                # clamp to valid time range
+                t_candidate = np.clip(t_candidate, t_start, t_end)
+
+            # Evaluate positions at this time
+            p1_c = p1[i] + v1 * (t_candidate - t1[i])
+            p2_c = p2[j] + v2 * (t_candidate - t2[j])
+            d = np.linalg.norm(p1_c - p2_c)
+
+            if d < d_min:
+                d_min = d
+                t_min = t_candidate
+                p1_min = p1_c
+                p2_min = p2_c
+
+    return t_min, d_min, p1_min, p2_min
 
 if __name__ == '__main__':
 
