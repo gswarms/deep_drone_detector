@@ -106,8 +106,8 @@ def bbox_overlap_score(bbox1, bbox2, score_type=BboxOverlapScoreType.IOU):
     """
     if is_bbox_overlap(bbox1, bbox2):
 
-        a1 = bbox1[2] * bbox1[3]
-        a2 = bbox2[2] * bbox2[3]
+        a1 = float(bbox1[2]) * float(bbox1[3])
+        a2 = float(bbox2[2]) * float(bbox2[3])
         a_intersection = bbox_overlap_area(bbox1, bbox2)
 
         if score_type == BboxOverlapScoreType.IOU:
@@ -215,3 +215,88 @@ def points_to_bbox(points):
     ymx = max(points[1, :])
     bbox = (xmn, ymn, xmx-xmn, ymx-ymn)
     return bbox
+
+
+def match_bbox_sets(bbox1, bbox2, match_iou_th, nms_iou_th=None):
+    """
+    match bboxs from two sets only by overlap!
+
+    Algorithm:
+    1) calc IOU score matrix for each set1-set2 bbox pair
+    2) loop over:
+       - select best score pair as match (if > iou_match_th)
+       - remove the selected pair score list
+
+    None-Maximal Suppression:
+        after matches are found, unmatched bboxs with high overlap to matched bboxes are considered invalid
+        The list of invalid bboxes1 and invalid bboxes2 is outputed to be used by the user
+
+    params: bbox1 list of n bboxs: [(x1, y1, w1, h1), ... , (xn, yn, wn, hn)]
+    params: bbox2 list of m bboxs: [(x1, y1, w1, h1), ... , (xm, ym, wm, hm)]
+    params: iou_match_th minimum iou score to be considered a match
+    params: nms_iou_match_th minimum iou score to be taken into account in NMS
+                             None - don't perform NMS
+                             Note: iou_match_th <= nms_iou_match_th
+
+    :return matched_pairs - kx2 array with match indexes (for each match)
+    :return bbox1_status, bbox2_status - nx1 and mx1 arrays that stats bbx status
+                                         0 - not matched
+                                         1 - matched
+                                        -1 - filtered by nms
+    """
+
+    n1 = len(bbox1)
+    n2 = len(bbox2)
+    matched_pairs = []
+    bbox1_status = np.zeros((n1, 1), dtype=np.int8)
+    bbox2_status = np.zeros((n2, 1), dtype=np.int8)
+    if n1 == 0 or n2 == 0:
+        return matched_pairs, bbox1_status, bbox2_status
+
+    # score matrix
+    score_matrix = np.zeros((n1, n2), dtype=np.float32)
+    for i in range(n1):
+        for j in range(n2):
+            score_matrix[i, j] = bbox_overlap_score(bbox1[i], bbox2[j], score_type=BboxOverlapScoreType.IOU)
+            # score_matrix[i, j] = bbu.bbox_overlap_score(bbox1[i], bbox2[j], score_type=bbu.BboxOverlapScoreType.MinOU)
+    score_matrix[np.where(score_matrix < match_iou_th)] = 0
+
+    # find the best matches
+    score_matrix_tmp = score_matrix.copy()
+    if n1 > 0 and n2 > 0 and not(np.all(score_matrix_tmp == 0)):
+        # print('num detections: {} num tracks: {}'.format(n1, n2))
+        matched_bbox1 = np.zeros((n1), dtype=bool)
+        matched_bbox2 = np.zeros((n2), dtype=bool)
+        while (not np.all(matched_bbox1)) and (not np.all(matched_bbox2)) and (not np.all(score_matrix_tmp == 0)):
+            idx = np.argmax(score_matrix_tmp)
+            ii, jj = np.unravel_index(idx, (n1, n2), order='C')
+            matched_pairs.append({'idx1': ii, 'idx2': jj, 'score': score_matrix_tmp[ii, jj]})
+            score_matrix_tmp[ii, :] = 0
+            score_matrix_tmp[:, jj] = 0
+            matched_bbox1[ii] = True
+            matched_bbox2[jj] = True
+
+    for m in matched_pairs:
+        bbox1_status[m['idx1']] = 1
+        bbox2_status[m['idx2']] = 1
+
+    # non maximal suppression
+    if nms_iou_th is not None:
+
+        if nms_iou_th < match_iou_th:
+            raise Exception('match_nms_nms_iou_th must be smaller or equal to match_iou_th')
+
+        # find all overlapping bbox pairs
+        overlap_matrix = score_matrix >= nms_iou_th
+        # remove all actual matches
+        for m in matched_pairs:
+            overlap_matrix[m['idx1'], m['idx2']] = False
+
+        # get all nms bboxs
+        nms_invalid_idx1 = np.any(overlap_matrix, axis=1)
+        nms_invalid_idx2 = np.any(overlap_matrix, axis=0)
+
+        bbox1_status[nms_invalid_idx1] = -1
+        bbox2_status[nms_invalid_idx2] = -1
+
+    return matched_pairs, bbox1_status, bbox2_status

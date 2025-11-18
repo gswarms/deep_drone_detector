@@ -473,7 +473,7 @@ class LosPixelConverter:
         :return cov_matrix - 3x3 covariance matrix
         """
 
-        # calc semiaxis vectors
+        # calc semiaxis vectors in body frame
         (xtl, ytl, w, h) = bbox
         xc = np.round(float(xtl) + float(w) / 2)
         yc = np.round(float(ytl) + float(h) / 2)

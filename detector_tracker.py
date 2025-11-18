@@ -5,8 +5,9 @@ import numpy as np
 import cv_core
 if cv_core.__version__ != '1.1.1':
     raise Exception('invalid cv_core version {}! must be 1.1.1'.format(cv_core.__version__))
-# import time
-# import opencv_tracker
+import time
+import opencv_tracker as cvt
+import bbox_utils as bbu
 
 
 class DetectorTracker:
@@ -36,7 +37,10 @@ class DetectorTracker:
         self.bbox_roi_intersection_th = bbox_roi_intersection_th
         self.detector_use_cpu = detector_use_cpu
         self.verbose = verbose
-        self.tracks = []  # [{'id': <>, 'bbox': (xtl,ytl,w,h), 'score':, <0-100>}, ...]
+        self.tracks = []  # [{'id': <>,
+                          #   'bbox': (xtl,ytl,w,h),
+                          #   'tracking_score':, <0-100>},
+                          #   'detection_score':, <0-1>}...]
 
         #------------------ Setup yolo_detector --------------------
         if self.detector_type in ('yolov8n', 'yolov11n'):
@@ -73,32 +77,42 @@ class DetectorTracker:
 
         #------------------ Setup tracker --------------------
 
-        # # Setup trackers
-        # self.max_num_targets = max_num_targets
-        # if isinstance(tracker_type, mot.TrackerType):
-        #     pass
-        # elif isinstance(tracker_type, str) and tracker_type.upper() in mot.TrackerType.__members__:
-        #     tracker_type = mot.TrackerType[tracker_type.upper()]
-        # else:
-        #     raise Exception('invalid tracker_type input type!')
-        # if tracker_type == mot.TrackerType.CV2_KLT:
-        #     self.trackers = mot.MultiObjectTrackerKLT(self.max_num_targets)
-        # else:
-        #     self.trackers = mot.MultiObjectTrackerOpencv(self.max_num_targets, tracker_type)
-        #
-        # # Setup tracks
+        # Setup trackers
+        max_num_targets = 3
+        tracker_type = cvt.TrackerType.CV2_KLT
+        tracking_reinit_iou_range = (0.5, 1)
+        overlap_score_threshold = 0.1
+        max_score = 100
+        image_size = (640, 480)
+
+        self.max_num_targets = max_num_targets
+        if isinstance(tracker_type, cvt.TrackerType):
+            pass
+        elif isinstance(tracker_type, str) and tracker_type.upper() in cvt.TrackerType.__members__:
+            tracker_type = cvt.TrackerType[tracker_type.upper()]
+        else:
+            raise Exception('invalid tracker_type input type!')
+        if tracker_type == cvt.TrackerType.CV2_KLT:
+            self.trackers = cvt.MultiObjectTrackerKLT(self.max_num_targets)
+        else:
+            self.trackers = cvt.MultiObjectTrackerOpencv(self.max_num_targets, tracker_type)
+
+        # Setup tracks
         # self.track_ids = []
         # self.track_scores = []
-        # self.track_count = 0
-        # self._max_id = -1
-        #
-        # other parameters
-        # self._tracking_reinit_iou_range = tracking_reinit_iou_range
-        # self.overlap_score_threshold = overlap_score_threshold
-        # self.max_score = max_score
-        # self.blob_center_prediction = None
-        # self.detection_valid_mask = np.ones((self.frame_size[1], self.frame_size[0]), dtype=np.uint8)
+        self.track_count = 0
+        self._max_id = -1
 
+        # other parameters
+        self._tracking_reinit_iou_range = tracking_reinit_iou_range
+        self.overlap_score_threshold = overlap_score_threshold
+        self.tracking_detection_match_iou_th_nms = 0.3
+        self.max_score = max_score
+        self.blob_center_prediction = None
+        self.detection_valid_mask = np.ones((image_size[1], image_size[0]), dtype=np.uint8)
+
+        self.active_target_image_margins = 20
+        self.image_size = image_size
 
         return
 
@@ -199,18 +213,22 @@ class DetectorTracker:
                 else:
                     raise Exception('invalid roi method {}!'.format(self.detection_roi_method))
 
+        # set roi center point
+        if self.detection_roi_polygon is not None:
+            self.blob_center_prediction = np.mean(self.detection_roi_polygon, axis=0)
+
         return True
 
     def get_tracks(self):
         """
         get all current tracks
         """
-        tracks = []
-        for i, tr in enumerate(self.trackers.tracks):
-            tracks.append({'id': self.track_ids[i], 'score': self.track_scores[i], 'bbox': tr['bbox']})
-        return tracks
+        # tracks = []
+        # for i, tr in enumerate(self.trackers.tracks):
+        #     tracks.append({'id': self.track_ids[i], 'score': self.track_scores[i], 'bbox': tr['bbox']})
+        return self.tracks
 
-    def step(self, image, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10):
+    def step(self, image, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10, operation_mode='detect_track'):
         """
         prepare frame for yolo_detector and detect
         1. crop / resize required image ROI
@@ -227,11 +245,162 @@ class DetectorTracker:
                                   Intersection over Union (IoU). If the IoU is greater than this value,
                                   the box with the lower score is suppressed.
         :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
+        :param operation_mode: 'detect_only' - only detect, don't use trackers
+                               'track_only' - only track, don't use detection
+                               'detect_track' - track and detect
+                               NOTE: If you want to track only, you must do detect-track at least once to start tracks!
+        """
+
+        if operation_mode == 'track_only':
+            use_detector = False
+            use_tracker = True
+            if len(self.tracks) == 0:
+                raise Exception('trying to track only without initalized tracks!')
+        elif operation_mode == 'detect_only':
+            use_detector = True
+            use_tracker = False
+        elif operation_mode == 'detect_track':
+            use_detector = True
+            use_tracker = True
+        else:
+            raise Exception('invalid operation mode')
+
+        # ----------- detection step ------------
+        detection_results = []
+        if use_detector:
+            detection_results = self._detect(image, conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold)
+
+        # ----------- trackers step ------------
+        tracking_results = []
+        if use_tracker:
+            # trackers update step
+            t1 = time.monotonic()
+            tracking_results = self.trackers.update(image)  # this updates the frame even if no tracks
+            t2 = time.monotonic()
+            print('step-tracking runtime: {:.3f}'.format(t2-t1))
+
+            # update tracks
+            for i in range(self.track_count):
+                self.tracks[i]['bbox'] = tracking_results[i]['bbox']
+                self.tracks[i]['tracking_score'] = max(0, self.tracks[i]['tracking_score'] - 1)
+            self.remove_lost_tracks()
+
+        else:
+            self.tracks = []
+            self.track_count = 0
+
+        # ----------- match detections to existing tracks ------------
+        detection_bbox = [dt['bbox'] for dt in detection_results]
+        detection_scores = [dt['score'] for dt in detection_results]
+        tracking_bboxs = [tr['bbox'] for tr in tracking_results]
+        if use_detector and use_tracker:
+
+            # only by bbox overlap score
+            matches, detection_bbox_status, tracking_bbox_status = bbu.match_bbox_sets(detection_bbox, tracking_bboxs,
+                                                                                       match_iou_th=self.overlap_score_threshold,
+                                                                                       nms_iou_th=self.tracking_detection_match_iou_th_nms)
+            print('detection-tracking matches: {}'.format(len(matches)))
+
+            # update track bbox by matched detection
+            for mp in matches:
+                # update score
+                track_idx = mp['idx2']  # at this point tracker index is the same as track index!
+                detection_idx = mp['idx1']
+                self.tracks[track_idx]['detection_score'] = detection_results[detection_idx]['score']
+                self.tracks[track_idx]['tracking_score'] = min(self.tracks[track_idx]['tracking_score'] + 2, self.max_score)
+
+                # update tracking bbox by best matching detection
+                # note that refining tracking bbox with detection helps reduce tracking drift
+                # on the other hand, reinitializing the tracker seems to loose history, and make it less robust (at least for CSRT)
+                # therefore we should reinit only if detection overlaps with tracking bbox, but is significantly different!
+                # TODO: do this better, without releasing target history
+                # if (best_detection_bbox is not None) and (best_overlap_score > self._tracking_match_min_iou):
+                if self._tracking_reinit_iou_range[0] <= mp['score'] <= self._tracking_reinit_iou_range[1]:
+                    self.trackers.reinit_track(image, track_idx, detection_bbox[mp['idx1']])
+                    self.tracks[track_idx]['bbox'] = detection_bbox[mp['idx1']]
+
+            if len(matches) > 0:
+                unmatched_valid_detection_bboxs = [ai for ai, ci in zip(detection_bbox, detection_bbox_status) if ci == 0]
+                unmatched_valid_detection_scores = [bi for bi, ci in zip(detection_scores, detection_bbox_status) if ci == 0]
+                # unmatched_valid_tracking_bboxs = [ai for ai, ci in zip(tracking_bboxs, tracking_bbox_status) if ci == 0]
+
+            else:
+                unmatched_valid_detection_bboxs = detection_bbox
+                unmatched_valid_detection_scores = detection_scores
+                # unmatched_valid_tracking_bboxs = tracking_bboxs
+        else:
+            unmatched_valid_detection_bboxs = detection_bbox
+            unmatched_valid_detection_scores = detection_scores
+            # unmatched_valid_tracking_bboxs = tracking_bboxs
+
+        # if len(unmatched_valid_tracking_bboxs) > 0 and len(unmatched_valid_detection_bboxs)>0:
+        #     aa=5
+
+        # --------------- new tracks ----------------
+        # open new tracks
+        if len(unmatched_valid_detection_bboxs) > 0:
+            # sort by closest to middle (in case we reach track limit)
+            bbox_centers = [(x[0] + x[2]/2, x[1] + x[3]/2) for x in unmatched_valid_detection_bboxs]
+
+            if self.blob_center_prediction is None:
+                self.blob_center_prediction = np.array((image.shape[0], image.shape[1])) / 2
+
+            idx = _sort_closest_keypoint(bbox_centers, self.blob_center_prediction)
+            for i in idx:
+                if self.track_count < self.max_num_targets:
+                    if use_tracker:
+                        self.trackers.initialize(image, [unmatched_valid_detection_bboxs[i]], init_frame=False)
+                    self._max_id = self._max_id + 1
+                    self.tracks.append({'id': self._max_id,
+                                                'bbox': unmatched_valid_detection_bboxs[i],
+                                                'tracking_score': 0,
+                                                'detection_score': unmatched_valid_detection_scores[i]})
+                    self.track_count = self.track_count + 1
+
+        # discard tracks outside active_target_margins
+        if use_tracker:
+            for i in range(self.track_count-1,-1,-1):
+                bbox = self.tracks[i]['bbox']
+                xc = bbox[0] + bbox[2] / 2
+                yc = bbox[1] + bbox[3] / 2
+                bbox_center_outside_margins = xc <= self.active_target_image_margins or \
+                    self.image_size[0] - xc <= self.active_target_image_margins or \
+                    yc <= self.active_target_image_margins or \
+                    self.image_size[1] - yc <= self.active_target_image_margins
+
+                if bbox_center_outside_margins:
+                    self.trackers.remove_track(i)
+                    self.tracks.pop(i)
+                    # self.track_ids.pop(i)
+                    # self.track_scores.pop(i)
+                    self.track_count = self.track_count - 1
+
+        return self.tracks
+
+
+    def _detect(self, image, conf_threshold=0.4, nms_iou_threshold=0.5):
+        """
+        detect and prepare frame for yolo_detector
+        1. crop / resize required image ROI
+        2. detect
+        3. convert results back to full image coordinates
+
+        :param: image - (mxn) or (mxnx3) image.
+                       * run-time relate Note:
+                         if the image is (mxnx3), it will be converted to BGR->HSV->V for the yolo_detector, and passed as is to tracker.
+                         if the image is (mxn), it will be passed as is to both yolo_detector and tracker, and avoid any copy.
+                         specificly, in the case of KCF tracker, it must use a color image, and therefore will convert the image to BGR
+        :param conf_threshold: detections with confidence scores lower than this threshold are discarded.
+        :param nms_iou_threshold: The threshold used in NMS to decide whether boxes overlap too much with respect to
+                                  Intersection over Union (IoU). If the IoU is greater than this value,
+                                  the box with the lower score is suppressed.
+        :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
+
         """
 
         if self.detection_roi_method is None:
             # no ROI - use the entire frame
-            self.detector.detect(image, frame_resize=None)
+            valid_results = self.detector.detect(image, frame_resize=None)
 
         else:
             # make sure roi is in the image
@@ -294,12 +463,13 @@ class DetectorTracker:
                 if bbox_intersects:
                     valid_results.append(r)
 
-            # update self.tracks
-            self.tracks = []
-            for i, bbox in enumerate(valid_results):
-                self.tracks.append({'id': i, 'score': bbox['confidence'], 'bbox': bbox['bbox']})
+        # reformat output
+        detection_results = []
+        for i, bbox in enumerate(valid_results):
+            detection_results.append({'id': i, 'score': bbox['confidence'], 'bbox': bbox['bbox']})
 
-        return self.tracks
+        return detection_results
+
 
     def _bbox_in_detection_polygon(self, bbox):
 
@@ -416,6 +586,21 @@ class DetectorTracker:
 
         return roi_bbox, (x_scale, y_scale)
 
+    def remove_lost_tracks(self):
+        """
+        remove lost tracks
+        :param img:
+        :return:
+        """
+        removed_indices = self.trackers.clear_lost_tracks()
+        removed_indices.sort()
+        if len(removed_indices) > 0:
+            for i in range(len(removed_indices) - 1, -1, -1):
+                self.tracks.pop(removed_indices[i])
+                # self.track_ids.pop(removed_indices[i])
+                # self.track_scores.pop(removed_indices[i])
+                self.track_count = self.track_count - 1
+        return
 
     def draw(self, img):
         """
@@ -428,7 +613,7 @@ class DetectorTracker:
             img = cv2.rectangle(img, (x, y), (x+w, y+h), color=(100, 255, 255), thickness=1)
 
             track_id = tr['id']
-            track_score = tr['score']
+            track_score = tr['tracking_score'] + tr['detection_score']
             img = cv2.putText(img, '{}:{:.2f}'.format(track_id, track_score),
                         (x + w, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=(100, 255, 255),
                         thickness=1)
@@ -443,3 +628,18 @@ class DetectorTracker:
             img = cv2.rectangle(img, start_point, end_point, color=(255, 50, 50), thickness=1)
 
         return img
+
+
+def _sort_closest_keypoint(keypoints, ref_point):
+    """
+    find keypoint closest to reference point
+    params: keypoints - list of opencv keypoints
+    params: ref_point - [1x2] np.array reference pixels
+    params: find n closest
+    """
+
+    pt = np.array(keypoints)
+    d = np.linalg.norm(pt - ref_point)
+    idx = np.argsort(d)
+
+    return idx

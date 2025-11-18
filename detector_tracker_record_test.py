@@ -213,6 +213,7 @@ if __name__ == '__main__':
     # detection_frame_size = (320, 320)  # (w, h)
     # detector_type = 'nanodet-plus-m'  #  'yolov8n' / 'yolov11n' / 'nanodet-plus-m'
 
+    step_mode = 'track_only'  # 'detect_only' / 'detect_track' / 'track_only'
 
     # set video writer
     if output_video_file is not None:
@@ -245,6 +246,7 @@ if __name__ == '__main__':
     max_track_id = 0
     video_initialized = False
     frame_id = 0
+    tr = []
     for frame in record.frames:
         if frame['time'] >= start_time:
             img = cv2.imread(frame['image_file'])
@@ -270,7 +272,20 @@ if __name__ == '__main__':
                 video_initialized = True
 
             # detect and track
-            tr = dttr.step(img, conf_threshold=0.5, nms_iou_threshold=0.4, max_num_detections=10)
+            if step_mode == 'detect_only':
+                tr = dttr.step(img, conf_threshold=0.5, nms_iou_threshold=0.4, max_num_detections=10,
+                               operation_mode='detect_only')
+            elif step_mode == 'detect_track':
+                tr = dttr.step(img, conf_threshold=0.5, nms_iou_threshold=0.4, max_num_detections=10,
+                               operation_mode='detect_track')
+            elif step_mode == 'track_only':
+                # detect once, and then track only
+                if len(tr)>0:
+                    tr = dttr.step(img, conf_threshold=0.5, nms_iou_threshold=0.4, max_num_detections=10, operation_mode='track_only')
+                else:
+                    tr = dttr.step(img, conf_threshold=0.5, nms_iou_threshold=0.4, max_num_detections=10,
+                               operation_mode='detect_track')
+
             img_to_draw = dttr.draw(img)
             img_to_draw = cv2.putText(img_to_draw, '{:d}'.format(frame_id), (20, 20),
                                       fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=(50, 100,200), thickness=2)
