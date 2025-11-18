@@ -213,7 +213,7 @@ if __name__ == '__main__':
     # detection_frame_size = (320, 320)  # (w, h)
     # detector_type = 'nanodet-plus-m'  #  'yolov8n' / 'yolov11n' / 'nanodet-plus-m'
 
-    step_mode = 'track_only'  # 'detect_only' / 'detect_track' / 'track_only'
+    step_mode = 'detect_only'  # 'detect_only' / 'detect_track' / 'track_only'
 
     # set video writer
     if output_video_file is not None:
