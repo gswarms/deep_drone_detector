@@ -916,6 +916,58 @@ def closest_distance_between_trajectories(traj1, traj2):
 
     return t_min, d_min, p1_min, p2_min
 
+
+
+def random_vector_with_angle_std(v, theta_std):
+    """
+    Generate a random 3D vector at a an angle `theta` (in radians) to vector `v`,
+    where 'theta' is sampled from a normal distribution=N(0, theta_std)
+
+    Parameters:
+    - v: (3x1) vector
+    - theta_std: float → std for angle in radians
+
+    Returns:
+    - u: np.array of shape (3,) → random vector at angle `theta` to v
+    """
+    theta = np.random.normal(0.0, theta_std)
+    return _random_vector_at_angle(v, theta)
+
+
+def _random_vector_at_angle(v, theta):
+    """
+    Generate a random 3D vector at a fixed angle `theta` (in radians) to vector `v`.
+
+    Parameters:
+    - v: (3x1) vector
+    - theta: float → desired angle in radians
+
+    Returns:
+    - u: np.array of shape (3,) → random vector at angle `theta` to v
+    """
+    v = np.asarray(v, dtype=float)
+    v_norm = np.linalg.norm(v)
+    if v_norm == 0:
+        raise ValueError("Input vector v must be non-zero.")
+    v_hat = v / v_norm
+
+    # Step 1: Find a vector perpendicular to v
+    if np.allclose(v_hat, [1, 0, 0]):
+        # If v is along x-axis, pick y-axis for cross
+        va = np.cross(v_hat, [0, 1, 0])
+    else:
+        va = np.cross(v_hat, [1, 0, 0])
+    va /= np.linalg.norm(va)
+
+    # Step 2: Find another perpendicular vector
+    vb = np.cross(v_hat, va)
+
+    # Step 3: Random rotation around v
+    phi = np.random.uniform(0, 2 * np.pi)
+    u = np.cos(theta) * v_hat + np.sin(theta) * (np.cos(phi) * va + np.sin(phi) * vb)
+
+    return u
+
 if __name__ == '__main__':
 
     # print('calc_target_los_angular_uncertainty test:')
