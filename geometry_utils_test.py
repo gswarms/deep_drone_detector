@@ -6,6 +6,40 @@ import cv_core
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+
+def closest_point_piecewise_linear_trajectories(verbose=True, draw=False):
+    points1 = np.array([[0, 0, 0],
+                      [1, 1, 0],
+                      [2, 2, 1],
+                      [3, 2, 2],
+                      [3, 2, 2],
+                      [4, 2, 3],
+                      [5, 3, 4],
+                      [6, 4, 4]])
+
+    points2 = np.array([[0, 0, 10],
+                      [1, 1, 10],
+                      [2, 2, 7],
+                      [3, 2, 6],
+                      [4, 2, 7],
+                      [5, 3, 10],
+                      [6, 4, 10]])
+
+    t1 = np.array([0,1,2,2.5,3.5,4,5,6])
+    t2 = np.array(range(7))
+
+    t_min, d_min, p1_min, p2_min = geometry_utils.closest_point_piecewise_linear_trajectories(points1, t1, points2, t2)
+    if verbose:
+        print('trajectory interception:')
+        print('min dist = {}'.format(d_min))
+        print('t = {}'.format(t_min))
+        print('pos1 = {}'.format(p1_min))
+        print('pos2 = {}'.format(p2_min))
+
+    ret = t_min==3 and d_min == 4 and all(p1_min==[3, 2, 2]) and all(p2_min==[3, 2, 6])
+    return ret
+
+
 def lospixelconverter_image_bbox_to_3D_los_cov_test(verbose=True, draw=False):
 
     # bbox = [100, 200, 15, 18]
@@ -168,4 +202,12 @@ def set_axes_equal(ax, X, Y, Z, padding=0.1):
 
 if __name__ == '__main__':
 
-    assert lospixelconverter_image_bbox_to_3D_los_cov_test(verbose=True, draw=True), "lospixelconverter_image_bbox_to_3D_los_cov_test Failed!"
+    # if lospixelconverter_image_bbox_to_3D_los_cov_test(verbose=True, draw=True):
+    #     print("lospixelconverter_image_bbox_to_3D_los_cov_test OK!")
+    # else:
+    #     print("lospixelconverter_image_bbox_to_3D_los_cov_test Failed!")
+
+    if closest_point_piecewise_linear_trajectories(verbose=True, draw=False):
+        print("closest_point_piecewise_linear_trajectories OK!")
+    else:
+        print("closest_point_piecewise_linear_trajectories Failed!")

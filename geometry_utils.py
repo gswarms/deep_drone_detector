@@ -841,15 +841,17 @@ def cov_from_semiaxes(a1, a2, a3, return_eigs=False):
     return Sigma, eigvals, eigvecs, stds
 
 
-
-
-def closest_distance_between_trajectories(traj1, traj2):
+def closest_point_piecewise_linear_trajectories(points1, t1, points2, t2):
     """
     Compute the minimum distance between two piecewise-linear trajectories
     parameterized by time.
 
-    Each trajectory is a list of (t, x, y, [z]) points.
-    Motion between points is linear interpolation.
+    Note: we assume the arrays are ordered by ascending time
+
+    param: points1 (nx3) array of 3D points
+    param: t1 (nx1) array of times corresponding to points1
+    param: points2 (mx3) array of 3D points
+    param: t2 (mx1) array of times corresponding to points2
 
     Returns:
         t_min : float - global time of closest approach
@@ -857,66 +859,160 @@ def closest_distance_between_trajectories(traj1, traj2):
         p1_min, p2_min : np.ndarray - positions of each trajectory at that time
     """
 
-    traj1 = np.array(traj1, dtype=float)
-    traj2 = np.array(traj2, dtype=float)
-
-    t1, p1 = traj1[:, 0], traj1[:, 1:]
-    t2, p2 = traj2[:, 0], traj2[:, 1:]
+    points1 = np.array(points1, dtype=float).reshape((-1,3))
+    t1 = np.array(t1, dtype=float)
+    points2 = np.array(points2, dtype=float).reshape((-1,3))
+    t2 = np.array(t2, dtype=float)
 
     d_min = np.inf
     t_min = None
     p1_min = None
     p2_min = None
 
-    t2s = t2[:-1]
-    t2f = t2[1:]
-    for i in range(len(t1) - 1):
-        idx2 = t2s <= t1[i] and t2s <= t1[i]
-        for j in range(len(t2) - 1):
+    # make sure the time overlaps
+    t_start = max(t1[0], t2[0])
+    t_end = min(t1[-1], t2[-1])
+    if t_end <= t_start:
+        return d_min, t_min, p1_min, p2_min
 
-            # Overlap in time
-            t_start = max(t1[i], t2[j])
-            t_end   = min(t1[i+1], t2[j+1])
-            if t_end <= t_start:
-                continue  # segments don't overlap in time
 
-            # Segment definitions
-            v1 = (p1[i+1] - p1[i]) / (t1[i+1] - t1[i])
-            v2 = (p2[j+1] - p2[j]) / (t2[j+1] - t2[j])
+    # find the collection of both trajectory times
+    idx1 = np.bitwise_and(t1 >= t_start, t1 <= t_end)
+    idx2 = np.bitwise_and(t2 >= t_start, t2 <= t_end)
+    t = np.unique(np.concat((t1[idx1], t2[idx2])))  # unique and sorted
 
-            # Positions at t_start
-            p1s = p1[i] + v1 * (t_start - t1[i])
-            p2s = p2[j] + v2 * (t_start - t2[j])
+    # interpolate to common time
+    points1_interp = _interp_3D_piecewise_linear(t, t1, points1, allow_exrtrap=True)
+    points2_interp = _interp_3D_piecewise_linear(t, t2, points2, allow_exrtrap=True)
 
-            # Relative motion: p_rel(t) = (p1s - p2s) + (v1 - v2)*(t - t_start)
-            dp0 = p1s - p2s
-            dv = v1 - v2
+    # find min dist for each seg,ent
+    t0 = t[:-1]
+    tf = t[1:]
+    p10 = points1_interp[:-1,:]
+    p1f = points1_interp[1:, :]
+    p20 = points2_interp[:-1,:]
+    p2f = points2_interp[1:, :]
+    t_closest, pos_a, pos_b, dist, status = _closest_point_on_linear_segments(t0, tf, p10, p1f, p20, p2f, eps=1e-12)
 
-            # Minimize |dp0 + dv*(t - t_start)|^2 over [t_start, t_end]
-            a = np.dot(dv, dv)
-            b = np.dot(dp0, dv)
-
-            if a == 0:  # no relative velocity, constant distance
-                t_candidate = t_start
-            else:
-                t_candidate = t_start - b / a
-                # clamp to valid time range
-                t_candidate = np.clip(t_candidate, t_start, t_end)
-
-            # Evaluate positions at this time
-            p1_c = p1[i] + v1 * (t_candidate - t1[i])
-            p2_c = p2[j] + v2 * (t_candidate - t2[j])
-            d = np.linalg.norm(p1_c - p2_c)
-
-            if d < d_min:
-                d_min = d
-                t_min = t_candidate
-                p1_min = p1_c
-                p2_min = p2_c
+    min_idx =  np.argmin(dist)
+    t_min = t_closest[min_idx]
+    d_min = dist[min_idx]
+    p1_min = pos_a[min_idx]
+    p2_min = pos_b[min_idx]
 
     return t_min, d_min, p1_min, p2_min
 
+def _closest_point_on_linear_segments(t0, tf, a0, af, b0, bf, eps=1e-12):
+    """
 
+    Finds time in [t0, tf] when two objects (moving linearly from a0->af and b0->bf)
+    are closest. Returns (t_closest, pos_a, pos_b, distance).
+
+    Algorithm:
+    v1 = (af-a0) / (tf-t0)
+    v2 = (bf-b0) / (tf-t0)
+    v = v1-v2 - relative velocity
+    d0 = a0-b0 - relative start position
+    d = d0+v(t-t0) - relatove position between the object over time
+
+    Minimizing the relative position norm:
+    |d| = d(t)*d(t) = dot(v,v)(t-t0)^2 + 2*v(t-t0)*d0 + d0^2
+
+    d/dt = 0 : 2*dot(v,v)(t-t0) + 2*v*d0 = 0
+    ------------------------
+    t = t0 - v*d0 / dot(v,v)
+    ------------------------
+
+    v=0 <=> dot(v,v)=0 means relative velocity is 0, so distance doesn't change!
+
+
+    This is a vectorized implementation, so
+
+    :param t0, tf - start / end times (nx1)
+    :param a0, af - start / end points for object 1 (nx3)
+    :param b0, bf - start / end points for object 2 (nx3)
+
+    :return
+        t_closest - time when objects are closest
+        pos_a, pos_b - position of both object when closest
+        distance - mionimal distance between the to objects
+        status - 0 - minimal distance found inside the segments
+                 1 - minimal distance found outside the segments
+                 2 - no minimal distance. relative velocity is 0
+    """
+
+    a0 = np.asarray(a0, float).reshape((-1,3))
+    af = np.asarray(af, float).reshape((-1,3))
+    b0 = np.asarray(b0, float).reshape((-1,3))
+    bf = np.asarray(bf, float).reshape((-1,3))
+    t0 = np.asarray(t0, float).flatten()
+    tf = np.asarray(tf, float).flatten()
+    n = a0.shape[0]
+    if af.shape[0] != n or b0.shape[0] != n or bf.shape[0] != n or t0.shape[0] != n or tf.shape[0] != n:
+        raise Exception('inconsistent input size!')
+    if any(tf<=t0):
+        raise Exception('tf must e > t0')
+    dt = tf - t0
+
+    # velocities (N,3)
+    v1 = (af - a0) / dt[:, None]
+    v2 = (bf - b0) / dt[:, None]
+    v  = v1 - v2            # relative velocity (N,3)
+    d0 = a0 - b0            # initial relative pos
+
+    # dot products (N,)
+    vv = (v * v).sum(axis=1)
+    dv = (d0 * v).sum(axis=1)
+
+    # initialize t_star with t-middle (fallback)
+    t_star = (t0 + tf) / 2
+
+    # where vv != 0, compute analytic minimizer
+    mask = vv > eps
+    t_star[mask] = t0[mask] - dv[mask] / vv[mask]
+
+    # clamp to interval
+    idx = np.bitwise_and(t_star >= t0, t_star <= t0)
+    t_closest = np.clip(t_star, t0, tf)
+
+    # compute positions at closest time
+    tau = (t_closest - t0)[:, None]   # (N,1)
+    pos_a = a0 + v1 * tau
+    pos_b = b0 + v2 * tau
+
+    dist = np.linalg.norm(pos_a - pos_b, axis=1)
+
+    status = np.zeros(n)
+    status[idx] = 1
+    status[mask] = 2
+
+    return t_closest, pos_a, pos_b, dist, status
+
+def _interp_3D_piecewise_linear(t_query, t_traj, p_traj, allow_exrtrap=True):
+    """
+    interpolate 3D points out of a piecewise-linear trajectory at specific times
+
+    :param t_query: n-length array of query times
+    :param t_traj: n-length array of query times
+    :param p_traj: n-length array of query times
+    :param allow_exrtrap:
+    :return:
+    """
+    t_query = np.array(t_query, dtype=float)
+    t_traj = np.array(t_traj, dtype=float)
+    p_traj = np.array(p_traj, dtype=float)
+
+    x = np.interp(t_query, t_traj, p_traj[:, 0])
+    y = np.interp(t_query, t_traj, p_traj[:, 1])
+    z = np.interp(t_query, t_traj, p_traj[:, 2])
+
+    if not allow_exrtrap:
+        idx = np.bitwise_or(t_query < t_traj[0], t_query > t_traj[-1])
+        x[idx] = np.nan
+        y[idx] = np.nan
+        z[idx] = np.nan
+    
+    return np.column_stack([x, y, z])
 
 def random_vector_with_angle_std(v, theta_std):
     """
