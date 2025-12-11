@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import  numpy as np
 from PIL import Image
-from dataset_manager import CocoDatasetManager  # replace with your module name
+from coco_dataset_manager import CocoDatasetManager  # replace with your module name
 
 
 # -----------------------------
@@ -328,6 +328,27 @@ def test_remap_category_name(empty_manager):
     cat = empty_manager.get_categories()
     assert cat == {1: {'name': 'cat', 'supercategory': 'animal'},
                    2: {'name': 'lavrador', 'supercategory': 'animal'}}
+
+
+def test_get_category_name(empty_manager):
+    cat_id1 = empty_manager.add_category("cat", "animal")
+    cat_id2 = empty_manager.add_category("dog", "animal")
+
+
+    c1 = empty_manager.get_category_name(cat_id1)
+    assert c1=="cat"
+    c2 = empty_manager.get_category_name(cat_id2)
+    assert c2=="dog"
+    c3 = empty_manager.get_category_name(7)
+    assert c3 is None
+
+    id1 = empty_manager.get_category_id("cat")
+    assert id1 == cat_id1
+    id2 = empty_manager.get_category_id("dog")
+    assert id2 == cat_id2
+    id3 = empty_manager.get_category_name("camel")
+    assert id3 is None
+
 
 # -----------------------------
 # Tests: Annotations

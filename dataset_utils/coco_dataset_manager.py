@@ -83,6 +83,15 @@ class CocoDatasetManager:
         else:
             self.images_folder = Path(images_folder)
 
+    def set_json_file(self, json_file_name):
+        """
+        set json file name
+        this is use full for:
+            1. starting a new dataset
+            2. loading one json file, and saving to another
+        :return:
+        """
+        self.json_path = self.root_folder / 'annotations' / json_file_name
 
     # --------------------
     # Load / Save
@@ -123,7 +132,11 @@ class CocoDatasetManager:
 
         # Load images
         self.images_folder = self.root_folder / 'images'
-        self.df_images = pd.DataFrame(data.get("images", []))
+
+        data_images = data.get("images", [])
+        if len(data_images) > 0:
+            self.df_images = pd.DataFrame(data_images)
+
         if not self.df_images.empty and "metadata" not in self.df_images.columns:
             self.df_images["metadata"] = [{} for _ in range(len(self.df_images))]
 
@@ -137,17 +150,22 @@ class CocoDatasetManager:
         self._next_image_id = self.df_images["id"].max() + 1 if not self.df_images.empty else 1
 
         # Load annotations
-        self.df_annotations = pd.DataFrame(data.get("annotations", []))
+        data_annotations = data.get("annotations", [])
+        if len(data_annotations) > 0:
+            self.df_annotations = pd.DataFrame(data_annotations)
+
         if not self.df_annotations.empty and "metadata" not in self.df_annotations.columns:
             self.df_annotations["metadata"] = [{} for _ in range(len(self.df_annotations))]
         self._next_annotation_id = self.df_annotations["id"].max() + 1 if not self.df_annotations.empty else 1
 
         # Load categories
-        self.df_categories = pd.DataFrame(data.get("categories", []))
+        data_categories = data.get("categories", [])
+        if len(data_categories) > 0:
+            self.df_categories = pd.DataFrame(data_categories)
         self._next_category_id = self.df_categories["id"].max() + 1 if not self.df_categories.empty else 1
 
 
-    def save_coco(self, dataset_root_folder=None, json_file_name=None, copy_images: bool = True):
+    def save_coco(self, dataset_root_folder=None, json_file_name=None, copy_images: bool = True, overwrite=False):
         """
         Save the COCO dataset to a JSON file.
 
@@ -162,6 +180,8 @@ class CocoDatasetManager:
                                     All images will be copied relative to the new images folder.
                             False - keep all images in place
                                     Image paths in the new json will be their current location, but relative to the new images folder.
+        :param overwrite: True - overwrite existing json file
+                          False - make a backup copy of the json file is it already exists
         """
 
         if dataset_root_folder is not None:
@@ -185,7 +205,7 @@ class CocoDatasetManager:
         json_file_path = annotation_folder / json_file_name
 
         # backup json file if we want to rewrite over it
-        if json_file_path == self.json_path:
+        if json_file_path == self.json_path and self.json_path.exists() and overwrite==False:
             date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_json = self.json_path.with_name(self.json_path.stem + "_backup_" + date_str + self.json_path.suffix)
             shutil.copy2(self.json_path, backup_json)
@@ -487,7 +507,7 @@ class CocoDatasetManager:
         self.df_annotations = self.df_annotations[self.df_annotations["id"] != annotation_id]
 
     def update_annotation(self, annotation_id: int, **kwargs):
-        if annotation_id in self.df_annotations["id"]:
+        if annotation_id in self.df_annotations["id"].values:
             idx = self.df_annotations.index[self.df_annotations["id"] == annotation_id][0]
             for key, value in kwargs.items():
                     if key in self.df_annotations.columns:
@@ -541,6 +561,22 @@ class CocoDatasetManager:
 
     def get_categories(self):
         return self.df_categories.set_index("id").to_dict("index")
+
+    def get_category_name(self, category_id):
+        row = self.df_categories.loc[self.df_categories["id"] == category_id, "name"]
+        if row.size>0:
+            category_name = row.iloc[0]
+        else:
+            category_name = None
+        return category_name
+
+    def get_category_id(self, category_name):
+        row = self.df_categories.loc[self.df_categories["name"] == category_name, "id"]
+        if row.size>0:
+            category_id = row.iloc[0]
+        else:
+            category_id = None
+        return category_id
 
     # --------------------
     # Metadata
