@@ -20,7 +20,7 @@ class Annotator:
         self.current_annotation_boxes = []
         self.current_annotation_classes = []
         self.current_annotation_ids = []
-        self.current_class = "object"
+        self.current_class = categories[0]
         self.current_image = None
         self.current_image_id = None
 
@@ -40,7 +40,7 @@ class Annotator:
     def save(self):
         raise NotImplementedError("Subclasses must implement save()")
 
-    def load_image(self, idx_offset=1):
+    def load_image(self, idx_offset=1, color_space='BGR'):
         raise NotImplementedError("Subclasses must implement load_image()")
 
     def update_current_category(self):
@@ -159,7 +159,11 @@ class Annotator:
         elif event == cv2.EVENT_MBUTTONUP and self.drawing:
             self.drawing = False
             x1, y1 = self.start_point
+            x1 = min(max(x1, 0), self.current_image.shape[1]-1)
+            y1 = min(max(y1, 0), self.current_image.shape[0]-1)
             x2, y2 = x, y
+            x2 = min(max(x2, 0), self.current_image.shape[1]-1)
+            y2 = min(max(y2, 0), self.current_image.shape[0]-1)
             if abs(x2 - x1) >= 3 and abs(y2 - y1) >= 3:
                 self.current_annotation_ids.append(None)
                 self.current_annotation_boxes.append((min(x1, x2), min(y1, y2), int(np.round(np.abs(x1 -x2))), int(np.round(np.abs(y1 - y2)))))
@@ -364,7 +368,7 @@ class AnnotatorCoco(Annotator):
 
         return
 
-    def load_image(self, idx_offset=1):
+    def load_image(self, idx_offset=1, color_space='RGB'):
         """
         load image
 
@@ -386,6 +390,8 @@ class AnnotatorCoco(Annotator):
         img_data = self.dataset.get_image(self.current_image_id)
         img_path = self.dataset.images_folder / img_data['file_name']
         self.current_image = cv2.imread(img_path)
+        if color_space == 'RGB':
+            self.current_image = cv2.cvtColor(self.current_image, cv2.COLOR_RGB2BGR)
 
         self.current_annotation_boxes = []
         self.current_annotation_classes = []
@@ -463,17 +469,118 @@ if __name__ == "__main__":
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_rcplane_raw/20250421_hadera/20250421_082642'
     # annotations_file_name = "annotations.json"
 
-    data_format = 'coco_dataset'
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251027_kfar_galim/20251027_123000'
-    annotations_file_name = "annotations.json"
-    categories = ['rc-plane','bird']
+
+
+    # ------------------ 20251214_reshafim ------------------------------ (BGR)
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251214_reshafim'
+    # base_folder = os.path.join(exp_folder, '20251214_1322_23/20251214_1327_07/camera_20251214_1427_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '20251214_1232_41/20251214_1233_08/camera_20251214_1333_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '20251214_1232_41/20251214_1235_55/camera_20251214_1336_extracted')  # OK
+
+
+    # ------------------ 20251208_reshafim ------------------------------ (BGR)
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251208_reshafim'
+    # base_folder = os.path.join(exp_folder, '20251208_1235_31/20251208_1239_35/camera_20251208_1339_extracted')  # no target
+    # base_folder = os.path.join(exp_folder, '20251208_1246_16/20251208_1247_59/camera_20251208_1348_extracted')  # ends early - OK
+    # base_folder = os.path.join(exp_folder, '20251208_1256_17/20251208_1301_26/camera_20251208_1401_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '20251208_1256_17/20251208_1303_25/camera_20251208_1403_extracted')  # ends early - OK
+    # base_folder = os.path.join(exp_folder, '20251208_1327_30/20251208_1332_56/camera_20251208_1433_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '20251208_1454_32/20251208_1458_20/camera_20251208_1558_extracted')  # ends early - OK
+    # base_folder = os.path.join(exp_folder, '20251208_1454_32/20251208_1500_28/camera_20251208_1600_extracted')  # ends early - OK
+    # base_folder = os.path.join(exp_folder, '20251208_1509_37/20251208_1513_17/camera_20251208_1613_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '20251208_1509_37/20251208_1515_50/camera_20251208_1615_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '20251208_1521_09/20251208_1523_58/camera_20251208_1624_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '20251208_1521_09/20251208_1526_27/camera_20251208_1626_extracted')  # OK
+
+
+    # ------------------ kfar_galim 04.12.2025 ------------------------------ (BGR)
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251204_kfar_galim'
+    # base_folder = os.path.join(exp_folder, '20251204_1453_40/20251204_1454_07/camera_20251204_1554_extracted')  # no target
+    # base_folder = os.path.join(exp_folder, '20251204_1511_13/20251204_1511_34/camera_20251204_1611_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '20251204_1511_13/20251204_1515_28/camera_20251204_1615_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '20251204_1526_11/20251204_1527_23/camera_20251204_1627_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '20251204_1526_11/20251204_1532_30/camera_20251204_1632_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '20251204_1550_34/20251204_1550_54/camera_20251204_1650_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '20251204_1600_55/20251204_1601_20/camera_20251204_1701_extracted')  # ends early - OK
+    # base_folder = os.path.join(exp_folder, '20251204_1600_55/20251204_1603_11/camera_20251204_1703_extracted')  # OK
+
+
+    # ------------------ kfar_galim 26.11.2025 ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251126_kfar_galim'
+    # base_folder = os.path.join(exp_folder, '20251126_1507_31/20251126_1510_20/camera_20251126_1610_extracted')  # no target
+    # base_folder = os.path.join(exp_folder, '20251126_1507_31/20251126_1511_16/camera_20251126_1611_extracted')  # no target
+    # base_folder = os.path.join(exp_folder, '20251126_1507_31/20251126_1513_05/camera_20251126_1613_extracted')  # no target
+    # base_folder = os.path.join(exp_folder, '20251126_1523_01/20251126_1526_12/camera_20251126_1626_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '20251126_1536_04/20251126_1536_50/camera_20251126_1636_extracted')  # ends early - OK
+    # base_folder = os.path.join(exp_folder, '20251126_1558_12/20251126_1600_23/camera_20251126_1700_extracted')  # no target
+    # base_folder = os.path.join(exp_folder, '20251126_1603_18/20251126_1604_48/camera_20251126_1704_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '20251126_1603_18/20251126_1608_34/camera_20251126_1708_extracted')  # OK
+
+
+    # ------------------ kfar_galim 27.10.2025 ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251027_kfar_galim'
+    # base_folder = os.path.join(exp_folder, '20251027_123000/camera_20251027_1230_extracted')  # OK
+
+
+    # ------------------ lehavim 17.09.2025 ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250917_lehavim'
+    # base_folder = os.path.join(exp_folder, 'hb003/20250915_1028_24/camera_20250915_1028_extracted')  # no target
+    # base_folder = os.path.join(exp_folder, 'hb003/20250917_1747_34/camera_20250917_1747_extracted')  # OK
+
+
+    # ------------------ lehavim 18.09.2025 ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250918_lehavim'
+    # base_folder = os.path.join(exp_folder, 'hb002/20250915_1019_36/camera_20250915_1019_extracted')  # no target
+    # base_folder = os.path.join(exp_folder, 'hb002/20250918_1040_02/camera_20250918_1040_extracted')  # no target
+    # base_folder = os.path.join(exp_folder, 'hb002/20250918_1041_26/camera_20250918_1041_extracted')  # no target
+    # base_folder = os.path.join(exp_folder, 'hb002/20250918_1044_49/camera_20250918_1044_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, 'hb004/20250918_1451_40/camera_20250918_1451_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, 'hb004/20250918_1453_47/camera_20250918_1453_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, 'hb004/20250918_1456_00/camera_20250918_1456_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, 'pz004/20250918_1154_08/camera_20250918_1154_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, 'pz004/20250918_1156_18/camera_20250918_1156_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, 'pz004/20250918_1249_56/camera_20250918_1249_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, 'pz004/20250918_1252_07/camera_20250918_1252_extracted')  # OK
+
+
+    # ------------------ kfar_masarik 08.06.2025 ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250608_kfar_masarik'
+    # base_folder = os.path.join(exp_folder, '2025-06-08_18-04-53/camera_2025_6_8-15_4_56_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '2025-06-08_18-29-51/camera_2025_6_8-15_29_54_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '2025-06-08_18-51-15/camera_2025_6_8-15_51_18_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '2025-06-08_18-52-56/camera_2025_6_8-15_52_58_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '2025-06-08_18-53-46/camera_2025_6_8-15_53_49_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '2025-06-08_18-59-46/camera_2025_6_8-15_59_49_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '2025-06-08_19-00-25/camera_2025_6_8-16_0_28_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '2025-06-08_19-08-34/camera_2025_6_8-16_8_48_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '2025-06-08_19-09-33/camera_2025_6_8-16_9_38_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '2025-06-08_19-25-35/camera_2025_6_8-16_25_38_extracted')  # passes far - OK
+
+
+    # ------------------ hadera 21.04.2025 ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250421_hadera'
+    # base_folder = os.path.join(exp_folder, '2025-04-21_10-57-38/camera_2025_4_21-7_59_8_extracted')  # no target (almost)
+    # base_folder = os.path.join(exp_folder, '2025-04-21_10-59-30/camera_2025_4_21-7_59_41_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '2025-04-21_11-11-25/camera_2025_4_21-8_12_28_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '2025-04-21_11-13-03/camera_2025_4_21-8_13_40_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '2025-04-21_11-24-25/camera_2025_4_21-8_25_32_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '2025-04-21_11-26-29/camera_2025_4_21-8_26_42_extracted')  # passes far - OK
+
+    # TODO: add  20251005_kfar_galim
+    # TODO: add  20250730_kfar_galim
+
+
+    # data_format = 'coco_dataset'
+    # annotations_file_name = "coco_dataset.json"
+    # categories = ['rc-plane']
+    # color_space = 'BGR'
 
 
     print("Controls:")
     print("  D / right arrow: Next image")
     print("  A / left arrow : Prev image")
     print("  C              : Change class name")
-    print("  R              : Remove box (click)")
+    print("  R / del        : Remove box (click)")
     print("  Z              : Clear all boxes")
     print("  S / ESC        : Save and exit")
     print("  mouse MB       : mark / remove bbox")
@@ -490,7 +597,7 @@ if __name__ == "__main__":
     else:
         raise Exception('invalid dataset format!')
 
-    annotator.load_image()
+    annotator.load_image(1, color_space=color_space)
 
     now = datetime.now()
     datetime_str = now.strftime("%Y%m%d_%H%M%S")
@@ -504,30 +611,30 @@ if __name__ == "__main__":
         key = cv2.waitKeyEx(0)
         char = chr(key).lower()
 
-        if key == ord('d') or key == 65363:  # d / right arrow
+        if key == ord('d') or key == ord('D') or key == 65363:  # d / D / right arrow
             annotator.update_current_image_annotations()
             annotator.save()
-            annotator.load_image(1)
+            annotator.load_image(1, color_space=color_space)
 
-        elif key == ord('a') or key == 65361:  # a / left arrow
+        elif key == ord('a') or key == ord('A') or key == 65361:  # a / A / left arrow
             annotator.update_current_image_annotations()
             annotator.save()
-            annotator.load_image(-1)
+            annotator.load_image(-1, color_space=color_space)
 
-        elif key == ord('s') or key == 27:  # s/ESC - Save and exit
+        elif key == ord('s') or key == ord('S') or key == 27:  # s/ESC - Save and exit
             annotator.update_current_image_annotations()
             annotator.save()
             print("Annotations saved.")
             break
 
-        elif key == ord('c'):
+        elif key == ord('c') or key == ord('C'):
             annotator.update_current_category()
 
-        elif key == ord('r'):
+        elif key == ord('r') or key == ord('R') or key == 65535:   # r / R / del - delete mode
             print("Click inside a box to remove it...")
             annotator.set_remove_state()
 
-        elif key == ord('z'):
+        elif key == ord('z') or key == ord('Z'):
             annotator.clear_current_annotations()
             print("Cleared all annotations.")
 
