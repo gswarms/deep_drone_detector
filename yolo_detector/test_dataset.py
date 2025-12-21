@@ -4,7 +4,6 @@ import os
 import cv2
 import numpy as np
 import glob
-from dataset_utils import coco_dataset
 
 
 if __name__ == '__main__':
