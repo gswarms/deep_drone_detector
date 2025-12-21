@@ -6,7 +6,7 @@ import random
 import cv2
 import numpy as np
 import yaml
-import coco_dataset
+import coco_dataset_manager
 import dataset_training_utils
 
 
