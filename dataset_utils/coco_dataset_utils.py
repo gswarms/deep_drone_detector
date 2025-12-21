@@ -95,8 +95,95 @@ def images_bgr2rgb(dataset):
         count = count + 1
     print('converted {} images'.format(count))
 
-if __name__ == '__main__':
 
+def merge_dataset():
+    """
+    merge single experiment scenario datasets to one big dataset
+    """
+
+
+
+    base_folder = Path('/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211')
+
+    merged_dataset_root_folder = base_folder / 'merged_dataset_raw'
+
+
+    exp_folders = []
+    exp_folders.append(base_folder / '20251214_reshafim')
+    exp_folders.append(base_folder / '20251208_reshafim')
+    exp_folders.append(base_folder / '20251204_kfar_galim')
+    exp_folders.append(base_folder / '20251126_kfar_galim')
+    exp_folders.append(base_folder / '20251027_kfar_galim')
+    exp_folders.append(base_folder / '20250917_lehavim')
+    exp_folders.append(base_folder / '20250918_lehavim')
+    exp_folders.append(base_folder / '20250608_kfar_masarik')
+    exp_folders.append(base_folder / '20250421_hadera')
+    # TODO: add  20251005_kfar_galim
+    # TODO: add  20250730_kfar_galim
+
+    discard_exp = ['camera_20251126_1611_extracted','camera_20251126_1613_extracted']
+
+    # init merged dataset
+    print('merging dataset to: {}'.format(merged_dataset_root_folder))
+    if (merged_dataset_root_folder/'images').exists() or (merged_dataset_root_folder/'annotations').exists():
+        raise Exception('merged folder already exists: {}'.format(merged_dataset_root_folder))
+    dataset = coco_dataset_manager.CocoDatasetManager()
+    dataset.set_root(merged_dataset_root_folder)
+
+    scen_count = 0
+    n_images = []
+    n_annotations = []
+    for exp_folder in exp_folders:
+        for scene_folder in exp_folder.glob("**/annotations"):
+            if scene_folder.parent.name in discard_exp:
+                continue
+            rel = scene_folder.parent.relative_to(base_folder)
+            print('adding dataset: {}'.format(rel))
+
+            # load scene dataset
+            scene_json = scene_folder/'coco_dataset.json'
+            scene_dataset = coco_dataset_manager.CocoDatasetManager()
+            scene_dataset.load_coco(scene_json, verify_image_files=False)
+
+            # removed_image_ids = scene_dataset.remove_missing_images()
+            # print('removed {} missing images!'.format(len(removed_image_ids)))
+            # scene_dataset.save_coco(overwrite=True)
+
+            n_images.append(scene_dataset.df_images.shape[0])
+            n_annotations.append(scene_dataset.df_annotations.shape[0])
+            print('{} images, {} annotations'.format(n_images[-1], n_annotations[-1]))
+
+            # merge to big dataset
+            dataset.merge_dataset(scene_dataset, merge_hash_duplicates=False,
+                      merge_overlapping_bbox_annotations=True, verify_other_images=False, bbox_overlap_iou_th = 0.2,
+                      verbose=False)
+            scen_count = scen_count + 1
+
+    # save dataset
+    dataset.save_coco(dataset_root_folder=None, json_file_name='coco_dataset.json', copy_images=True, overwrite=False)
+
+    img_ids = dataset.get_image_ids()
+    print('merged_dataset:')
+    print('{} scenarios'.format(scen_count))
+    print('{} images'.format(len(img_ids)))
+    print('{} annotations'.format(dataset.df_annotations.shape[0]))
+    aa=5
+
+
+
+
+
+if __name__ == '__main__':
+    merge_dataset()
+    print('Done')
+
+    # --------------------------- remove missing images ------------------------------
+    # scene_json = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250608_kfar_masarik/2025-06-08_19-25-35/camera_2025_6_8-16_25_38_extracted/annotations/coco_dataset.json'
+    # scene_dataset = coco_dataset_manager.CocoDatasetManager()
+    # scene_dataset.load_coco(scene_json, verify_image_files=False)
+    # removed_image_ids = scene_dataset.remove_missing_images()
+    # print('removed {} missing images!'.format(len(removed_image_ids)))
+    # scene_dataset.save_coco(overwrite=True)
 
     # ------------------ 20251214_reshafim ------------------------------
     # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251214_reshafim'
