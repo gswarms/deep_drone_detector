@@ -224,15 +224,21 @@ class CocoDatasetManager:
             else:
                 new_path = orig_path.relative_to(images_folder)
 
-            coco_dict["images"].append({
+            tmp_dict = {
                 "id": row["id"],
                 "file_name": str(new_path),
                 "width": row["width"],
                 "height": row["height"]
-            })
+            }
+            if len(row["metadata"]) > 0:
+                tmp_dict["metadata"] = row["metadata"]
+            coco_dict["images"].append(tmp_dict)
 
         # Annotations
-        coco_dict["annotations"] = self.df_annotations.drop(columns="metadata").to_dict(orient="records")
+        coco_dict["annotations"] = self.df_annotations.to_dict(orient="records")
+        for ann in coco_dict["annotations"]:
+            if not ann.get("metadata"):  # empty dict, None, or missing
+                ann.pop("metadata", None)
 
         # Categories
         coco_dict["categories"] = self.df_categories.to_dict(orient="records")
