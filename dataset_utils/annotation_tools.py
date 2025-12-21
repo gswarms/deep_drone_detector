@@ -192,7 +192,7 @@ class AnnotatorStandardRecordFolder(Annotator):
 
 
         self.dataset_file = os.path.join(self.base_folder, 'coco_annotations.yaml')
-        import coco_dataset_tmp as cdu
+        import coco_dataset_manager as cdu
         self.dataset = cdu.CocoDatasetManager()
         if os.path.isfile(self.dataset_file):
             self.dataset.load_coco(coco_dataset_file)
@@ -418,7 +418,7 @@ def automatically_annotate_dataset(coco_dataset_file, model_file, model_image_si
     # load coco dataset
     if not os.path.isfile(coco_dataset_file):
         raise Exception('coco dataset file not found: {}'.format(coco_dataset_file))
-    import coco_dataset_tmp as cdu
+    import coco_dataset_manager as cdu
     dataset = cdu.CocoDatasetManager()
     dataset.load_coco(coco_dataset_file)
 
