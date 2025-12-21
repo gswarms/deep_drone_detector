@@ -143,9 +143,9 @@ class CocoDatasetManager:
         if verify_image_files:
             for i, row in self.df_images.iterrows():
                 relative_img_file_path = Path(row["file_name"])
-                img_file_path = self.images_folder / relative_img_file_path
-                if not os.path.isfile(img_file_path):
-                    raise Exception('image file: {} not found!'.format(img_file_path))
+                img_file_path = (self.images_folder / relative_img_file_path).resolve()
+                if not img_file_path.exists():
+                    raise Exception('image file: {} not found!'.format(str(img_file_path)))
 
         self._next_image_id = self.df_images["id"].max() + 1 if not self.df_images.empty else 1
 
@@ -348,10 +348,17 @@ class CocoDatasetManager:
                 image_map[row["id"]] = new_id
 
                 # Transform path relative to self
-                new_path_abs = (self.images_folder / other_abs_img_path.name).resolve()
+                # TODO: handle different images with the same name
+                rename_by_image_id = True
+                if rename_by_image_id:
+                    if new_id > 10**7:
+                        raise Exception('image id > 10**7 - naming problem!')
+                    new_path_abs = (self.images_folder / (str(new_id).zfill(7)  + other_abs_img_path.suffix)).resolve()
+                else:
+                    new_path_abs = (self.images_folder / other_abs_img_path.name).resolve()
 
                 if new_path_abs in self.df_images['file_name'].values:
-                    new_name = other_abs_img_path.name.stem + '_' + other_abs_img_path.name.suffix
+                    new_name = other_abs_img_path.stem + '_' + other_abs_img_path.suffix
                     new_path_abs = (self.images_folder / new_name).resolve()
 
                 # copy image
@@ -491,6 +498,17 @@ class CocoDatasetManager:
             if i > current_image_id:
                 return i
         return None
+
+    def remove_missing_images(self) -> List[dict]:
+        removed_image_ids = []
+        for i, row in self.df_images.iterrows():
+            relative_img_file_path = Path(row["file_name"])
+            img_file_path = (self.images_folder / relative_img_file_path).resolve()
+            if not img_file_path.exists():
+                removed_image_ids.append(row["id"])
+                self.remove_image(row["id"])
+
+        return removed_image_ids
 
     # --------------------
     # Annotations

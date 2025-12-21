@@ -203,6 +203,33 @@ def test_remove_image(empty_manager, random_image_factory, tmp_path):
     res = empty_manager.remove_image(42)
     assert res is False
 
+def test_remove_missing_images(empty_manager, random_image_factory, tmp_path):
+    img1_path = random_image_factory(tmp_path, 200, 100, "tmp_img1.png")
+    img2_path = random_image_factory(tmp_path, 200, 100, "tmp_img2.png")
+    img3_path = random_image_factory(tmp_path, 200, 100, "tmp_img3.png")
+    img4_path = random_image_factory(tmp_path, 200, 100, "tmp_img4.png")
+    img5_path = random_image_factory(tmp_path, 200, 100, "tmp_img5.png")
+
+    # set root
+    empty_manager.set_root(str(Path(img1_path).parent.parent))
+
+    # add images
+    img_id1 = empty_manager.add_image(str(img1_path))
+    img_id2 = empty_manager.add_image(str(img2_path))
+    img_id3 = empty_manager.add_image(str(img3_path))
+    img_id4 = empty_manager.add_image(str(img4_path))
+    img_id5 = empty_manager.add_image(str(img5_path))
+
+    # delete some image files
+    img2_path.unlink()
+    img4_path.unlink()
+    img5_path.unlink()
+
+    # remove missing images
+    res = empty_manager.remove_missing_images()
+    assert res == [img_id2, img_id4, img_id5]
+    assert empty_manager.get_image_ids() == [img_id1, img_id3]
+
 
 def test_next_image_id(empty_manager, random_image_factory, tmp_path):
 
