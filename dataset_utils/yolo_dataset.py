@@ -3,7 +3,7 @@ import yaml
 import cv2
 from pathlib import Path
 import shutil
-import common_dataset
+import coco_dataset_manager
 
 
 def load_yolo_dataset(yolo_dir: str, verify_images=True):
