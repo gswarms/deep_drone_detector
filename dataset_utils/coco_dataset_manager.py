@@ -712,6 +712,13 @@ class CocoDatasetManager:
         hist, bin_edges = np.histogram(data, bins=nbins, range=(0, max(data)))
         return hist, bin_edges
 
+    def get_annotations_area(self):
+        """
+        get annotation area over all annotations
+        :return: np.array
+        """
+        return np.array(self.df_annotations['area'])
+
     # ------------------- YOLO Import/Export -------------------
     def export_yolo(self, output_dir: str):
         os.makedirs(output_dir, exist_ok=True)
