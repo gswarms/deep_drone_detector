@@ -533,16 +533,11 @@ def test_save_load_coco(sample_dataset_with_annotations, tmp_path):
 # -----------------------------
 def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, tmp_path):
 
-    # TODO: merge datasets with no duplicates
-    # TODO: merge datasets with image path duplicates
-    # TODO: merge datasets with image hash duplicates
-    # TODO: merge datasets with image path and hash duplicates
-
-    # TODO: merge datasets with annotatino duplicates - with / without overlaps
-
-    # TODO: test category remap
+    # TODO: merge datasets with annotation duplicates - with / without overlaps
 
     # ----------------------- test category renaming --------------------------
+    # no image duplicates
+
     # create manager
     dataset_manager = sample_dataset_with_annotations['dataset']
     img_ref = sample_dataset_with_annotations['images']
@@ -577,13 +572,15 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
     ann_id4 = other_manager.add_annotation(img_id2, cat_id3, bbox4, area=84, iscrowd=1, metadata={'a':1002, 'b':2002})
 
     # merge
-    dataset_manager.merge_dataset(other_manager)
+    dataset_manager.merge_dataset(other_manager, merge_hash_duplicates=False,
+            merge_overlapping_bbox_annotations=True, verify_other_images=True, bbox_overlap_iou_th=0.2,
+            rename_images_by_id=False, max_num_images=10**7, verbose=True)
 
     # test results
-    img_ref[4] = {'file_path': str(Path(img1_path_relative).name),  # after this image is copied to images
+    img_ref[4] = {'file_path': Path(img1_path_relative).name,  # after this image is copied to images
                   'size': (200, 100),
                   'metadata': {'ia':211, 'ib':212}}
-    img_ref[5] = {'file_path': str(Path(img2_path_relative).name),  # after this image is copied to images
+    img_ref[5] = {'file_path': Path(img2_path_relative).name,  # after this image is copied to images
                   'size': (200, 100),
                   'metadata': {'ia':221, 'ib':222}}
     for img_id in img_ref.keys():
@@ -609,6 +606,8 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
                             'iscrowd': ann_data_ref['iscrowd'], 'metadata': ann_data_ref['metadata']}
 
     # ----------------------- test duplicate images --------------------------
+    # both path and hash dupkicates
+
     other_manager = CocoDatasetManager()
     # set root
     other_manager.set_root(tmp_path / 'other2')
@@ -642,11 +641,12 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
     ann_id4 = other_manager.add_annotation(img_id3, cat_id2, bbox4, area=94, iscrowd=1, metadata={})
 
     # merge
-    dataset_manager.merge_dataset(other_manager, merge_hash_duplicates=True)
+    dataset_manager.merge_dataset(other_manager, merge_hash_duplicates=True,
+            merge_overlapping_bbox_annotations=True, verify_other_images=True, bbox_overlap_iou_th=0.2,
+            rename_images_by_id=False, max_num_images=10**7, verbose=True)
 
     # test results
-
-    img_ref[6] = {'file_path': str(Path(img1_path_relative).name),  # after this image is copied to images
+    img_ref[6] = {'file_path': Path(img1_path_relative).name,  # after this image is copied to images
                   'size': (200, 100),
                   'metadata': {'ia':311, 'ib':312}}
     assert len(dataset_manager.df_images)==6
@@ -660,6 +660,129 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
     ann_ref[9] = {'img_id': 6, 'cat_id': 1, 'bbox': bbox1, 'area': 91, 'iscrowd': 0, 'metadata': {'a': 345, 'b': 2123}}
     ann_ref[10] = {'img_id': 1, 'cat_id': 2, 'bbox': bbox3, 'area': 93, 'iscrowd': 1, 'metadata': {}}
     ann_ref[11] = {'img_id': 2, 'cat_id': 2, 'bbox': bbox4, 'area': 94, 'iscrowd': 1, 'metadata': {}}
+    for ann_id in ann_ref.keys():
+        ann_data_ref = ann_ref[ann_id]
+        ann_data = dataset_manager.get_annotation(ann_id)
+        assert ann_data == {'id': ann_id, 'image_id': ann_data_ref['img_id'], 'category_id': ann_data_ref['cat_id'],
+                            'bbox': ann_data_ref['bbox'], 'area': ann_data_ref['area'], 'segmentation': [],
+                            'iscrowd': ann_data_ref['iscrowd'], 'metadata': ann_data_ref['metadata']}
+
+    # ----------------------- test images with same names --------------------------
+    other_manager = CocoDatasetManager()
+    # set root
+    other_manager.set_root(tmp_path / 'other3')
+    # add images
+    other_images_folder = tmp_path / 'other3' / 'images'
+    os.makedirs(other_images_folder)
+    img1_path = random_image_factory(other_images_folder , 200, 100, "tmp_img21.png")  # duplicate image name (not duplicate path)
+    img1_path_relative = os.path.relpath(img1_path, other_manager.images_folder)
+    img2_path = random_image_factory(other_images_folder , 200, 100, "tmp_img22.png")  # duplicate image name (not duplicate path)
+    img2_path_relative = os.path.relpath(img2_path, other_manager.images_folder)
+    img3_path = random_image_factory(other_images_folder , 200, 100, "tmp_img33.png")
+    img3_path_relative = os.path.relpath(img3_path, other_manager.images_folder)
+
+    img_id1 = other_manager.add_image(str(img1_path), metadata={'ia':311, 'ib':312})
+    img_id2 = other_manager.add_image(str(img2_path), metadata={'ia':321, 'ib':322})
+    img_id3 = other_manager.add_image(str(img3_path), metadata={'ia':331, 'ib':332})
+    # add categories
+    cat_id1 = other_manager.add_category("cat", "animal")
+    cat_id2 = other_manager.add_category("dog", "animal")
+    # add annotations
+    bbox1 = [222,333,13,14]
+    ann_id1 = other_manager.add_annotation(img_id1, cat_id1, bbox1, area=101, iscrowd=0, metadata={'a':345, 'b':2123})
+    bbox2 = [11,21,30,40]  # annotation on an existing image id. this overlaps with an existing annotation bbox! Therefore should be discarded in merge.
+    ann_id2 = other_manager.add_annotation(img_id2, cat_id2, bbox2, area=102, iscrowd=1, metadata={})
+    bbox3 = [100,90,10,20] # annotation on an existing image id.
+    ann_id3 = other_manager.add_annotation(img_id2, cat_id2, bbox3, area=103, iscrowd=1, metadata={})
+    bbox4 = [1,2,10,20] # annotation on an existing image id.
+    ann_id4 = other_manager.add_annotation(img_id3, cat_id2, bbox4, area=104, iscrowd=1, metadata={})
+
+    # merge
+    dataset_manager.merge_dataset(other_manager, merge_hash_duplicates=True,
+            merge_overlapping_bbox_annotations=True, verify_other_images=True, bbox_overlap_iou_th=0.2,
+            rename_images_by_id=False, max_num_images=10**7, verbose=True)
+
+    # test results
+    img_ref[7] = {'file_path': Path(img1_path_relative).stem + '_' + Path(img1_path_relative).suffix,  # renamed because of duplicate image name
+                  'size': (200, 100),
+                  'metadata': {'ia':311, 'ib':312}}
+    img_ref[8] = {'file_path': Path(img2_path_relative).stem + '_' + Path(img2_path_relative).suffix,  # renamed because of duplicate image name
+                  'size': (200, 100),
+                  'metadata': {'ia':321, 'ib':322}}
+    img_ref[9] = {'file_path': Path(img3_path_relative).name,
+                  'size': (200, 100),
+                  'metadata': {'ia':331, 'ib':332}}
+    assert len(dataset_manager.df_images)==9
+    for img_id in img_ref.keys():
+        img_data_ref = img_ref[img_id]
+        img_data = dataset_manager.get_image(img_id)
+        assert img_data == {'id': img_id, 'file_name': img_data_ref['file_path'],
+                            'width': img_data_ref['size'][0], 'height': img_data_ref['size'][1],
+                            'metadata': img_data_ref['metadata']}
+
+    ann_ref[12] = {'img_id': 7, 'cat_id': 1, 'bbox': bbox1, 'area': 101, 'iscrowd': 0, 'metadata': {'a': 345, 'b': 2123}}
+    ann_ref[13] = {'img_id': 8, 'cat_id': 2, 'bbox': bbox2, 'area': 102, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[14] = {'img_id': 8, 'cat_id': 2, 'bbox': bbox3, 'area': 103, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[15] = {'img_id': 9, 'cat_id': 2, 'bbox': bbox4, 'area': 104, 'iscrowd': 1, 'metadata': {}}
+    for ann_id in ann_ref.keys():
+        ann_data_ref = ann_ref[ann_id]
+        ann_data = dataset_manager.get_annotation(ann_id)
+        assert ann_data == {'id': ann_id, 'image_id': ann_data_ref['img_id'], 'category_id': ann_data_ref['cat_id'],
+                            'bbox': ann_data_ref['bbox'], 'area': ann_data_ref['area'], 'segmentation': [],
+                            'iscrowd': ann_data_ref['iscrowd'], 'metadata': ann_data_ref['metadata']}
+
+
+    # ----------------------- test renaming images by id --------------------------
+    # TODO: test renaming images by id
+
+    other_manager = CocoDatasetManager()
+    # set root
+    other_manager.set_root(tmp_path / 'other4')
+    # add images
+    other_images_folder = tmp_path / 'other4' / 'images'
+    os.makedirs(other_images_folder)
+    img1_path = random_image_factory(other_images_folder , 200, 100, "tmp_img41.png")  # duplicate image name (not duplicate path)
+    img1_path_relative = os.path.relpath(img1_path, other_manager.images_folder)
+    img2_path = random_image_factory(other_images_folder , 200, 100, "tmp_img42.png")  # duplicate image name (not duplicate path)
+
+    img_id1 = other_manager.add_image(str(img1_path), metadata={'ia':411, 'ib':412})
+    img_id2 = other_manager.add_image(str(img2_path), metadata={'ia':421, 'ib':422})
+
+    # add categories
+    cat_id1 = other_manager.add_category("cat", "animal")
+    cat_id2 = other_manager.add_category("dog", "animal")
+
+    # add annotations
+    bbox1 = [222,333,13,14]
+    ann_id1 = other_manager.add_annotation(img_id1, cat_id1, bbox1, area=111, iscrowd=0, metadata={'a':345, 'b':2123})
+    bbox2 = [11,21,30,40]  # annotation on an existing image id. this overlaps with an existing annotation bbox! Therefore should be discarded in merge.
+    ann_id2 = other_manager.add_annotation(img_id2, cat_id2, bbox2, area=112, iscrowd=1, metadata={})
+    bbox3 = [100,90,10,20] # annotation on an existing image id.
+    ann_id3 = other_manager.add_annotation(img_id2, cat_id2, bbox3, area=113, iscrowd=1, metadata={})
+
+    # merge
+    dataset_manager.merge_dataset(other_manager, merge_hash_duplicates=True,
+            merge_overlapping_bbox_annotations=True, verify_other_images=True, bbox_overlap_iou_th=0.2,
+            rename_images_by_id=True, max_num_images=10**7, verbose=True)
+
+    # test results
+    img_ref[10] = {'file_path': '0000010' + Path(img1_path_relative).suffix,  # renamed because of duplicate image name
+                  'size': (200, 100),
+                  'metadata': {'ia':411, 'ib':412}}
+    img_ref[11] = {'file_path': '0000011' + Path(img2_path_relative).suffix,  # renamed because of duplicate image name
+                  'size': (200, 100),
+                  'metadata': {'ia':421, 'ib':422}}
+    assert len(dataset_manager.df_images)==11
+    for img_id in img_ref.keys():
+        img_data_ref = img_ref[img_id]
+        img_data = dataset_manager.get_image(img_id)
+        assert img_data == {'id': img_id, 'file_name': img_data_ref['file_path'],
+                            'width': img_data_ref['size'][0], 'height': img_data_ref['size'][1],
+                            'metadata': img_data_ref['metadata']}
+
+    ann_ref[16] = {'img_id': 10, 'cat_id': 1, 'bbox': bbox1, 'area': 111, 'iscrowd': 0, 'metadata': {'a': 345, 'b': 2123}}
+    ann_ref[17] = {'img_id': 11, 'cat_id': 2, 'bbox': bbox2, 'area': 112, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[18] = {'img_id': 11, 'cat_id': 2, 'bbox': bbox3, 'area': 113, 'iscrowd': 1, 'metadata': {}}
     for ann_id in ann_ref.keys():
         ann_data_ref = ann_ref[ann_id]
         ann_data = dataset_manager.get_annotation(ann_id)
@@ -731,7 +854,7 @@ def test_analyze_metadata(random_image_factory, tmp_path):
     ann_id11 = dataset_manager.add_annotation(img_id3, cat_id1, bbox11, area=None, iscrowd=1, metadata={'a3':100, 'b7':200})
 
     cat_count = dataset_manager.get_category_histogram()
-    assert cat_count == {cat_id1: 8, cat_id2: 3}
+    assert cat_count == {cat_id1: {'count': 8, 'name': "cat"}, cat_id2: {'count': 3, 'name': "dog"}}
 
     mkeys = dataset_manager.get_images_metadata_keys()
     assert sorted(mkeys) == sorted(['a1', 'a2', 'a3', 'b1', 'c6'])

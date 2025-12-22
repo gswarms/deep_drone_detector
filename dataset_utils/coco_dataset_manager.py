@@ -252,21 +252,27 @@ class CocoDatasetManager:
     # --------------------
     def merge_dataset(self, other: "CocoDatasetManager", merge_hash_duplicates=False,
                       merge_overlapping_bbox_annotations=True, verify_other_images=True, bbox_overlap_iou_th = 0.2,
-                      verbose=True):
+                      rename_images_by_id=True, max_num_images=10**7, verbose=True):
         """
         Merge another CocoDatasetManager into self.
 
         :param other - other CocoDatasetManager to merge
         :param merge_hash_duplicates - bool. Merge duplicate images by hash
-                    True - use image hash to find and merge duplicate images
-                           may be time-consuming!
+                    True - use image hash to find and merge duplicate images may be time-consuming!
                     False - don't merge duplicate images
-
-        :param merge_overlapping_bbox_annotations - bool. Merge annotations from different datasets
-                                                         on the same image and with overlapping bboxs
+        :param merge_overlapping_bbox_annotations - bool. Merge annotations from different datasets on the same image and with overlapping bboxs
+                    True - keep self dataset annotation
+                    False - keep annotations from both datasets
         :param verify_other_images - bool. except if other image files do not exist
         :param bbox_overlap_iou_th -[0,1] threshold for merging overlapping annotations on trhe same image.
+        :param rename_images_by_id -bool.
+                    True - rename other dataset images by new image id
+                    False - keep original image names. if duplicate image relative paths - add '_'.
+        :param max_num_images - max number of images - for padding with zeros on idx based naming
         """
+
+        if rename_images_by_id:
+            image_name_num_digits = int(np.ceil(np.log10(max_num_images)))
 
         if verbose:
             print('merging datasets:')
@@ -348,16 +354,15 @@ class CocoDatasetManager:
                 image_map[row["id"]] = new_id
 
                 # Transform path relative to self
-                # TODO: handle different images with the same name
-                rename_by_image_id = True
-                if rename_by_image_id:
-                    if new_id > 10**7:
+                if rename_images_by_id:
+                    if new_id > max_num_images:
                         raise Exception('image id > 10**7 - naming problem!')
-                    new_path_abs = (self.images_folder / (str(new_id).zfill(7)  + other_abs_img_path.suffix)).resolve()
+                    new_path_abs = (self.images_folder / (str(new_id).zfill(image_name_num_digits)  + other_abs_img_path.suffix)).resolve()
                 else:
                     new_path_abs = (self.images_folder / other_abs_img_path.name).resolve()
 
-                if new_path_abs in self.df_images['file_name'].values:
+                new_rel_path = new_path_abs.relative_to(self.images_folder)
+                if str(new_rel_path) in self.df_images['file_name'].values:
                     new_name = other_abs_img_path.stem + '_' + other_abs_img_path.suffix
                     new_path_abs = (self.images_folder / new_name).resolve()
 
@@ -383,7 +388,7 @@ class CocoDatasetManager:
 
             # resolve duplicate image annotations
             duplicate_annotation = False
-            if other_img_id in duplicate_image_ids:
+            if other_img_id in duplicate_image_ids and merge_overlapping_bbox_annotations:
                 self_img_id = image_map[row["image_id"]]
                 # get all annotations from self
                 self_anns = self.get_image_annotations(self_img_id)
@@ -673,7 +678,11 @@ class CocoDatasetManager:
         """
         # merged = self.df_annotations.merge(self.df_categories, left_on="category_id", right_on="id", suffixes=("", "_cat"))
         annotation_cat_hist = self.df_annotations['category_id'].value_counts()
-        return annotation_cat_hist.to_dict()
+        cat_id_to_name = self.df_categories.set_index("id")['name'].to_dict()
+        res = {}
+        for cat_id in annotation_cat_hist.keys():
+            res[cat_id] = {'name': cat_id_to_name[cat_id], 'count':int(annotation_cat_hist[cat_id])}
+        return res
 
     def get_images_metadata_histogram(self, metadata_key: str) -> dict:
         """
