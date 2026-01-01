@@ -491,6 +491,9 @@ def test_save_load_coco(sample_dataset_with_annotations, tmp_path):
     # Save dataset
     json_path = tmp_path / "annotations" / "dataset.json"
     dataset_manager.save_coco(dataset_root_folder=tmp_path, json_file_name="dataset.json", copy_images=True)
+    for im_id in img_ref:
+        img_ref[im_id]['file_path'] = Path(img_ref[im_id]['file_path']).name  # adjustment to save-copy_images=True
+
 
     # Load into a new manager
     new_manager = CocoDatasetManager()

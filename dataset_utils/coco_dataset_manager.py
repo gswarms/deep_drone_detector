@@ -213,14 +213,15 @@ class CocoDatasetManager:
         coco_dict = {"images": [], "annotations": [], "categories": []}
 
         # Images
-        for _, row in self.df_images.iterrows():
+        for i, row in self.df_images.iterrows():
             orig_path = self.images_folder / Path(row["file_name"])
 
             if copy_images:
-                new_path = images_folder / Path(row["file_name"])
+                new_path = images_folder / Path(row["file_name"]).name
                 if not new_path.exists():
                     new_path.parent.mkdir(parents=True, exist_ok=True)  # make new subfolders if needed
                     shutil.copy2(orig_path, new_path)
+                self.df_images.at[i, 'file_name'] = str(Path(row["file_name"]).name)  # change path in the images dataframe
             else:
                 new_path = orig_path.relative_to(images_folder)
 
