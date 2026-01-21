@@ -577,12 +577,30 @@ class RosBagRecord:
 if __name__ == '__main__':
 
 
-    # ------------------ kfar_masarik 08.06.2025 ------------------------------
-
+    # ------------------ 20260107_reshafim ------------------------------
     base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260107_reshafim'
     # bag_folder = os.path.join(base_folder, '20260107_1311_46/20260107_1312_48/drone_20260107_1413')  # short scenario
     bag_folder = os.path.join(base_folder, '20260107_1311_46/20260107_1313_58/drone_20260107_1414')  # good scenario
     # bag_folder = os.path.join(base_folder, '20260107_1311_46/20260107_1314_52/drone_20260107_1415')  # crash scenario (ends early)
+
+    # ------------------ 20260115_reshafim ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260107_reshafim'
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+    # bag_folder = os.path.join(base_folder, '')
+
+
+
     kmd7_raw_topic = '/kmd7_node/raw_detections'
     kmd7_track_topic = '/kmd7_node/tracked_detections'
     valid_record_times = {'start': -np.inf, 'end': np.inf}
