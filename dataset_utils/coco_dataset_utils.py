@@ -167,15 +167,65 @@ def merge_dataset():
     print('{} scenarios'.format(scen_count))
     print('{} images'.format(len(img_ids)))
     print('{} annotations'.format(dataset.df_annotations.shape[0]))
-    aa=5
 
 
 
+def _dataset_cat_ids_remap():
+    """
+    remap category / images / annotations ids to 0,1,2,...
+    """
+
+    base_folder = Path('/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211')
+
+    exp_folders = []
+    # exp_folders.append(base_folder / '20251214_reshafim')
+    # exp_folders.append(base_folder / '20251208_reshafim')
+    # exp_folders.append(base_folder / '20251204_kfar_galim')
+    # exp_folders.append(base_folder / '20251126_kfar_galim')
+    # exp_folders.append(base_folder / '20251027_kfar_galim')
+    # exp_folders.append(base_folder / '20250917_lehavim')
+    # exp_folders.append(base_folder / '20250918_lehavim')
+    # exp_folders.append(base_folder / '20250608_kfar_masarik')
+    # exp_folders.append(base_folder / '20250421_hadera')
+    exp_folders.append(base_folder / 'merged_dataset_raw')
+
+
+    discard_exp = []
+
+    for exp_folder in exp_folders:
+        for scene_folder in exp_folder.glob("**/annotations"):
+            if scene_folder.parent.name in discard_exp:
+                continue
+
+            # init dataset
+            scene_json = scene_folder/'coco_dataset.json'
+            dataset = coco_dataset_manager.CocoDatasetManager()
+            dataset.load_coco(scene_json)
+
+            # remap ids to 0...n-1
+            cat = dataset.get_categories()
+            cat_ids = cat.keys()
+            cat_ids_remap = {}
+            for i, cid in enumerate(cat_ids):
+                cat_ids_remap[cid] = i
+                dataset.df_annotations["category_id"] = dataset.df_annotations["category_id"].replace(cid, i)
+                dataset.df_categories["id"] = dataset.df_categories["id"].replace(cid, i)
+
+            dataset.save_coco(dataset_root_folder=None, json_file_name=None, copy_images=False, overwrite=True)
+
+            print('scenario: {}'.format(scene_folder))
+            print('replace cat id: {}'.format(cat_ids_remap))
 
 
 if __name__ == '__main__':
-    merge_dataset()
-    print('Done')
+
+    # --------------------------- merge datasets ------------------------------
+    # _dataset_cat_ids_remap()
+    # print('Done')
+
+    # --------------------------- merge datasets ------------------------------
+    # merge_dataset()
+    # print('Done')
 
     # --------------------------- remove missing images ------------------------------
     # scene_json = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250608_kfar_masarik/2025-06-08_19-25-35/camera_2025_6_8-16_25_38_extracted/annotations/coco_dataset.json'
