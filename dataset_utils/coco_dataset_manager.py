@@ -63,9 +63,9 @@ class CocoDatasetManager:
         })
 
         # For tracking next IDs
-        self._next_image_id = 1
-        self._next_annotation_id = 1
-        self._next_category_id = 1
+        self._next_image_id = 0
+        self._next_annotation_id = 0
+        self._next_category_id = 0
 
         self._image_get_id = 0
 
@@ -227,7 +227,7 @@ class CocoDatasetManager:
 
             tmp_dict = {
                 "id": row["id"],
-                "file_name": str(new_path),
+                "file_name": self.df_images.at[i, 'file_name'],
                 "width": row["width"],
                 "height": row["height"]
             }
