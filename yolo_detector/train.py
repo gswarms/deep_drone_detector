@@ -2,12 +2,13 @@ import os.path
 
 from ultralytics import YOLO
 # from ultralytics.data.loaders import build_dataloader
-from ultralytics.cfg import get_cfg
-from ultralytics.data.utils import check_det_dataset
+# from ultralytics.cfg import get_cfg
+# from ultralytics.data.utils import check_det_dataset
 
 # Load a YOLOv8n model (nano)
 # model = YOLO('../models/yolov8n.pt')
-model = YOLO('../models/yolo11n.pt')
+# model = YOLO('../models/yolo11n.pt')
+model = YOLO('../models/yolo26n.pt')
 
 
 
@@ -23,24 +24,73 @@ print('--------------------------- model train ----------------------')
 # )
 
 
-dataset_yaml_file = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20250625_coco/yolo_dataset.yaml'
+# dataset_yaml_file = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20250625_coco/yolo_dataset.yaml'
+# dataset_yaml_file = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20250625_coco/yolo_dataset.yaml'
+dataset_yaml_file = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/ultalytics_yolo_20260104/ultralytics_dataset_data.yaml'
 
 # cfg = get_cfg()
 # cfg.data = dataset_yaml_file
 # check_det_dataset(cfg)
 
+
 # output_name = 'drone_detector_yolov8n_20250709'
-output_name = 'drone_detector_yolov11n_320x240_20251021'
+# output_name = 'drone_detector_yolov11n_320x240_20251021'
+# output_name = 'drone_detector_yolov11n_256x256_20260104'
+output_name = 'drone_detector_yolov26n_256x256_20260119'
 
 model.train(
     data=dataset_yaml_file,
-    epochs=100,
-    imgsz=(320, 240),
+    imgsz=256,
+    epochs=150,
     batch=16,
-    freeze=10,
+    freeze=5,
+    optimizer="AdamW",
+    augment=True,
+    mosaic=0.5,        # Lowered to keep focus on centered targets
+    close_mosaic=15,
+    multi_scale=False,  # If inference is strictly 256, keep training strictly 256
+    scale=0.5,         # 0.0-0.3 Allows the model to see very small distant drones
     fliplr=0.5,
-    name=output_name
+    flipud=0.2,        # Drones can be seen from below/above in dogfights
+    project="runs/train",
+    name=output_name,
+    cache=True,
+    device=0
 )
+# model.train(
+#     data=dataset_yaml_file,
+#     imgsz=256,
+#     epochs=150,
+#     batch=16,           # auto
+#     freeze=5,  # freeze first 10 layers (rough example)
+#     rect=False,  # Use rect=True to reduce padding and preserve aspect ratio. (not good for small objects)
+#     optimizer="AdamW", # "AdamW" for small dataset. "" for large dataset
+#     augment=True,
+#     mosaic=1.0,  # default ON
+#     close_mosaic=10, # disable last 10 epochs
+#     multi_scale=True,  # critical for small objects
+#     scale=0.7,  # scale < 1 allows UPSCALING small drones
+#     # translate=0.1,
+#     cache=True,
+#     workers=8,
+#     device=0,  # GPU
+#     project="runs/train",
+#     name=output_name
+#     )
+
+# model.train(
+#     data=dataset_yaml_file,
+#     epochs=100,
+#     imgsz=(256, 256),
+#     batch=16,
+#     freeze=10,
+#     augment=True,
+#     fliplr=0.5,
+#     name=output_name,
+#     device=0,  # GPU
+#     mosaic=1.0,  # default ON
+#     close_mosaic=10  # disable last 10 epochs
+# )
 
 
 
