@@ -710,7 +710,7 @@ if __name__ == '__main__':
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250710_kfar_galim/2025-07-10_09-17-49/camera_2025_7_10-6_17_53'  # bad
 
     # ------------------ kfar galim 16.07.2025 ------------------------------
-    bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_08-42-21/camera_2025_7_16-5_42_34'
+    # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_08-42-21/camera_2025_7_16-5_42_34'
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-16-28/camera_2025_7_16-6_16_31'
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-17-35/camera_2025_7_16-6_17_39'
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-14/camera_2025_7_16-6_18_18'
@@ -899,7 +899,7 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, '2025-06-08_19-17-25/camera_2025_6_8-16_17_28')  # bad
     # bag_folder = os.path.join(base_folder, '2025-06-08_19-18-31/camera_2025_6_8-16_18_34')  # bad
     # bag_folder = os.path.join(base_folder, '2025-06-08_19-24-31/camera_2025_6_8-16_24_34')  # bad
-    bag_folder = os.path.join(base_folder, '2025-06-08_19-25-35/camera_2025_6_8-16_25_38')
+    # bag_folder = os.path.join(base_folder, '2025-06-08_19-25-35/camera_2025_6_8-16_25_38')
 
 
     # ------------------ hadera 21.04.2025 ------------------------------
@@ -910,6 +910,18 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, '2025-04-21_11-13-03/camera_2025_4_21-8_13_40')
     # bag_folder = os.path.join(base_folder, '2025-04-21_11-24-25/camera_2025_4_21-8_25_32')
     # bag_folder = os.path.join(base_folder, '2025-04-21_11-26-29/camera_2025_4_21-8_26_42')
+
+
+
+    # ------------------ kfar_masarik 08.06.2025 ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260103_reshafim'
+    # # bag_folder = os.path.join(base_folder, '20260103_1022_41/camera_20260103_1122')
+    # bag_folder = os.path.join(base_folder, '20260103_1024_30/camera_20260103_1124')
+
+
+    # ------------------ reshafim 20.01.2026 ------------------------------
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260120_reshafim'
+    bag_folder = os.path.join(base_folder, 'camera_20260120_1258')
 
 
     valid_record_times = {'start': -np.inf, 'end': np.inf}
