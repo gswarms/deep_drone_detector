@@ -3,6 +3,7 @@
 import cv2
 import os
 import numpy as np
+from operator import itemgetter
 from ultralytics import YOLO
 import onnxruntime as ort
 
@@ -11,7 +12,7 @@ class SingleFrameDetector:
     """
     This object finds circular blobs in stereo images, and triangulates the 3D position of the correspnding landmarks
     """
-    def __init__(self, model_file_path, use_cpu=False, verbose=False, openvino_model_bin_file_path=None):
+    def __init__(self, model_file_path, use_cpu=False, verbose=False, openvino_model_bin_file_path=None, model_name=None):
         """
         setup yolo_detector
 
@@ -23,9 +24,13 @@ class SingleFrameDetector:
                                         we currently support "simplified=True", and "uint8=False"
                                 * Note: In onnx model, the image will automatically be resized to .onnx predefined image size!
         :param use_cpu: force to use CPU even if GPU exists (used for timing tests)
+
         """
         self.verbose = verbose
-        self.model_type = None
+        self.model_name = model_name
+        if self.model_name not in ['yolov8n','yolov11n','yolov26n']:
+            raise Exception('invalid model type!')
+        self.model_compilation_type = None
         self.onnx_input_name = None
         self.onnx_input_size = None
         if os.path.isfile(model_file_path):
@@ -33,7 +38,7 @@ class SingleFrameDetector:
 
             if model_file_extension == '.pt':
                 self.model = YOLO(model_file_path)
-                self.model_type = 'pt'
+                self.model_compilation_type = 'pt'
                 if use_cpu:
                     self.model.to('cpu')
                     if self.verbose:
@@ -46,7 +51,7 @@ class SingleFrameDetector:
                 if model_file_extension == '.onnx':  # run with onnx runtime
                     # Load ONNX model
                     self.model = ort.InferenceSession(model_file_path)
-                    self.model_type = 'onnx'
+                    self.model_compilation_type = 'onnx'
                     input_info = self.model.get_inputs()[0]
                     self.onnx_input_name = input_info.name
                     self.onnx_input_size = input_info.shape[2:]
@@ -61,7 +66,7 @@ class SingleFrameDetector:
                     # Get input/output layers
                     self.input_layer = self.model.input(0)
                     self.output_layer = self.model.output(0)
-                    self.model_type = 'openvino'  # same pre process and post process as onnxruntime
+                    self.model_compilation_type = 'openvino'  # same pre process and post process as onnxruntime
 
                     input_info = self.model.inputs[0]
                     self.onnx_input_name = None
@@ -110,7 +115,7 @@ class SingleFrameDetector:
         if frame_resize is not None and (frame_resize[0]<=0 or frame_resize[1]<=0):
             frame_resize = None
 
-        if self.model_type == 'pt':
+        if self.model_compilation_type == 'pt':
 
             # check frame resize input
             if frame_resize is not None:
@@ -138,7 +143,7 @@ class SingleFrameDetector:
             results = self._pt_postprocess(outputs, conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold,
                                            max_num_detections=max_num_detections)
 
-        elif self.model_type == 'onnx':
+        elif self.model_compilation_type == 'onnx':
             # onnx preprocessing
             self._onnx_preprocess(image)
             # onnx inference
@@ -147,7 +152,7 @@ class SingleFrameDetector:
             results = self._onnx_postprocess(outputs, conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold,
                                              max_num_detections=max_num_detections)
 
-        elif self.model_type == 'openvino':
+        elif self.model_compilation_type == 'openvino':
             # onnx preprocessing (same as onnx)
             self._onnx_preprocess(image)
             # onnx inference
@@ -157,7 +162,7 @@ class SingleFrameDetector:
                                              max_num_detections=max_num_detections)
 
         else:
-            raise Exception('invalid model type: {}!'.format(self.model_type))
+            raise Exception('invalid model type: {}!'.format(self.model_compilation_type))
 
         return results
 
@@ -228,6 +233,42 @@ class SingleFrameDetector:
         :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
         :return:
         """
+        if self.model_name in ['yolov8n', 'yolov11n']:
+            results = self._onnx_postprocess_yolo11(predictions, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10)
+        elif self.model_name == 'yolov26n':
+            results = self._onnx_postprocess_yolo26(predictions, conf_threshold=0.4, max_num_detections=10)
+        return results
+
+    def _onnx_postprocess_yolo11(self, predictions, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10):
+        """
+        post-processing onnx results:
+        1. Translate objectness score and class score to confidence level
+        2. Converts from YOLO center-based box format to corner coordinates
+        3. Non-Maximal Suppression - Suppresses overlapping boxes for cleaner results
+
+        *** important note:
+            it matters if the onnx is exported with 'simplify'=True or 'simplify'=False!
+            if 'simplify'=True the results are (m,5,N) where:
+                - m = batch size (number of images)
+                - data per yolo_detector is: [x, y, w, h, confidence]
+                - N = number of detections
+
+            if 'simplify'=False the results are (m,5+num_classes,N)
+                - m = batch size (number of images)
+                - data per yolo_detector is: [x, y, w, h, objectness_confidence, class1_confidence, ... ,classn_confidence]
+                - N = number of detections
+
+            so different format is needed in post process.
+
+
+        :param predictions:
+        :param conf_threshold: detections with confidence scores lower than this threshold are discarded.
+        :param nms_iou_threshold: The threshold used in NMS to decide whether boxes overlap too much with respect to
+                                  Intersection over Union (IoU). If the IoU is greater than this value,
+                                  the box with the lower score is suppressed.
+        :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
+        :return:
+        """
         boxes = []
         confidences = []
         class_ids = []
@@ -236,46 +277,45 @@ class SingleFrameDetector:
         preds = predictions[0]
 
         for pred in preds:
+                if pred.shape[0] == 5:  # simplified
 
-            if pred.shape[0] == 5:  # simplified
+                    confidences_tmp = pred[4, :]
+                    idx = confidences_tmp > conf_threshold
 
-                confidences_tmp = pred[4, :]
-                idx = confidences_tmp > conf_threshold
+                    x, y, w, h = pred[0:4, idx]
+                    confidences = pred[4, idx]
 
-                x, y, w, h = pred[0:4, idx]
-                confidences = pred[4, idx]
-
-                # Convert to x1, y1, x2, y2
-                x1 = x - w / 2
-                y1 = y - h / 2
-                x2 = x + w / 2
-                y2 = y + h / 2
-                boxes = np.vstack((x1, y1, x2, y2)).T
-                class_ids = np.zeros(boxes.shape[0])
-
-
-            elif pred.shape[0] > 5:  # non-simplified
-
-                x, y, w, h = pred[0:4]
-                obj_conf = self._sigmoid(pred[4])  # objectness score
-
-                class_scores = pred[5:]
-                class_scores = self._sigmoid(class_scores)  # sigmoid for class confidence
-                class_id = np.argmax(class_scores)
-                class_conf = class_scores[class_id]
-                final_conf = obj_conf * class_conf
-                if final_conf > conf_threshold:
                     # Convert to x1, y1, x2, y2
                     x1 = x - w / 2
                     y1 = y - h / 2
                     x2 = x + w / 2
                     y2 = y + h / 2
-                    boxes.append([x1, y1, x2, y2])
-                    confidences.append(float(final_conf))
-                    class_ids.append(class_id)
+                    boxes = np.vstack((x1, y1, x2, y2)).T
+                    class_ids = np.zeros(boxes.shape[0])
 
-                else:
-                    raise Exception('invalid onnx output size!')
+
+                elif pred.shape[0] > 5:  # non-simplified
+
+                    x, y, w, h = pred[0:4]
+                    obj_conf = self._sigmoid(pred[4])  # objectness score
+
+                    class_scores = pred[5:]
+                    class_scores = self._sigmoid(class_scores)  # sigmoid for class confidence
+                    class_id = np.argmax(class_scores)
+                    class_conf = class_scores[class_id]
+                    final_conf = obj_conf * class_conf
+                    if final_conf > conf_threshold:
+                        # Convert to x1, y1, x2, y2
+                        x1 = x - w / 2
+                        y1 = y - h / 2
+                        x2 = x + w / 2
+                        y2 = y + h / 2
+                        boxes.append([x1, y1, x2, y2])
+                        confidences.append(float(final_conf))
+                        class_ids.append(class_id)
+
+                    else:
+                        raise Exception('invalid onnx output size!')
 
         # Apply Non-Maximum Suppression (NMS)
         indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold, nms_iou_threshold, top_k=max_num_detections)
@@ -285,7 +325,57 @@ class SingleFrameDetector:
             # convert back to [xtl,ytl,w,h]
             results.append({'bbox': [boxes[i][0], boxes[i][1], boxes[i][2]-boxes[i][0], boxes[i][3]-boxes[i][1]],
                             'confidence': confidences[i], 'class_id': class_ids[i]})
+
         return results
+
+    def _onnx_postprocess_yolo26(self, predictions, conf_threshold=0.4, max_num_detections=10):
+        """
+        post-processing onnx results:
+        1. Translate objectness score and class score to confidence level
+        2. Converts from YOLO center-based box format to corner coordinates
+        3. Non-Maximal Suppression - Suppresses overlapping boxes for cleaner results
+
+        *** important note:
+            it matters if the onnx is exported with 'simplify'=True or 'simplify'=False!
+            if 'simplify'=True the results are (m,5,N) where:
+                - m = batch size (number of images)
+                - data per yolo_detector is: [x, y, w, h, confidence]
+                - N = number of detections
+
+            if 'simplify'=False the results are (m,5+num_classes,N)
+                - m = batch size (number of images)
+                - data per yolo_detector is: [x, y, w, h, objectness_confidence, class1_confidence, ... ,classn_confidence]
+                - N = number of detections
+
+            so different format is needed in post process.
+
+
+        :param predictions:
+        :param conf_threshold: detections with confidence scores lower than this threshold are discarded.
+        :param nms_iou_threshold: The threshold used in NMS to decide whether boxes overlap too much with respect to
+                                  Intersection over Union (IoU). If the IoU is greater than this value,
+                                  the box with the lower score is suppressed.
+        :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
+        :return:
+        """
+        # Remove batch dimension if present
+        predictions = np.squeeze(predictions)
+
+        # Filter by confidence
+        mask = predictions[:, 4] > conf_threshold
+        detections = predictions[mask]
+
+        results = []
+        for det in detections:
+            x1, y1, x2, y2, conf, cls = det
+            results.append({
+                "bbox": [x1, y1, x2 - x1, y2 - y1],
+                "class": int(cls),
+                "confidence": float(conf)
+            })
+        sorted_results = sorted(results, key=itemgetter('confidence'))
+
+        return sorted_results[:max_num_detections]
 
 
     @staticmethod

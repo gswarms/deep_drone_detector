@@ -43,11 +43,12 @@ class DetectorTracker:
                           #   'detection_score':, <0-1>}...]
 
         #------------------ Setup yolo_detector --------------------
-        if self.detector_type in ('yolov8n', 'yolov11n'):
+        if self.detector_type in ('yolov8n', 'yolov11n', 'yolov26n'):
             import yolo_detector
             self.detector = yolo_detector.SingleFrameDetector(detector_model_file_path,
                                                           use_cpu=self.detector_use_cpu, verbose=self.verbose,
-                                                              openvino_model_bin_file_path=detector_config_path)
+                                                              openvino_model_bin_file_path=detector_config_path,
+                                                              model_name=self.detector_type)
         elif self.detector_type=='nanodet-plus-m':
             import nanodet_detector
             self.detector = nanodet_detector.NanodetDetector(detector_model_file_path, detector_config_path,
@@ -58,7 +59,7 @@ class DetectorTracker:
         # DetectorTracker will crop / resize according to self.detection_frame_size,
         # but then detector will resize to the onnx predefined size.
         # In this case we except to prevent unexpected behavior.
-        if self.detector.model_type == 'onnx':
+        if self.detector.model_compilation_type == 'onnx':
             if (self.detection_frame_size[0] != self.detector.onnx_input_size[0] or
                     self.detection_frame_size[1] != self.detector.onnx_input_size[1]):
                  raise Exception('detection_frame_size ({},{}) does not match onnx predefined size ({},{})'.format(
