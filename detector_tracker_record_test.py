@@ -130,8 +130,7 @@ if __name__ == '__main__':
 
 
     # ------------------ kfar galim 16.07.2025 ------------------------------
-
-    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-14/camera_2025_7_16-6_18_18_extracted'
+    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-14/camera_2025_7_16-6_18_18_extracted'
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-58/camera_2025_7_16-6_19_1_extracted'
 
 
@@ -146,13 +145,14 @@ if __name__ == '__main__':
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_09-45-04/camera_2025_7_30-6_45_8_extracted'  # bad bag
 
     # ------------------ kfar galim 27.10.2025 ------------------------------
-    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20251027_kfar_galim/20251027_123000/camera_20251027_1230_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20251027_kfar_galim/20251027_123000/camera_20251027_1230_extracted'
+
+
 
     frame_size = (640, 480)
     frame_resize = None
     start_time = -np.inf
     scen_name = path_to_scenario_name(os.path.join(record_folder,'..'))
-    output_video_file = os.path.join(record_folder, scen_name+'_kfar_masarik_results.avi')
     polygons_file = os.path.join(record_folder, scen_name+'_recorded_detection_roi_polygons.yaml')  # ***optional
     # polygons_file = os.path.join(record_folder, scen_name+'_manual_detection_roi_polygons.yaml')  # ***optional
 
@@ -197,10 +197,16 @@ if __name__ == '__main__':
     # detector_type = 'yolov11n'
     # config_path = None
 
-    model_path = 'runs/detect/drone_detector_yolov11n_320x240_20251021/weights/yolov11n_best_lulav_dit_256x256_openvino.xml'
-    config_path = 'runs/detect/drone_detector_yolov11n_320x240_20251021/weights/yolov11n_best_lulav_dit_256x256_openvino.bin'
+    # model_path = 'runs/detect/drone_detector_yolov11n_320x240_20251021/weights/yolov11n_best_lulav_dit_256x256_openvino.xml'
+    # config_path = 'runs/detect/drone_detector_yolov11n_320x240_20251021/weights/yolov11n_best_lulav_dit_256x256_openvino.bin'
+    # detection_frame_size = (256, 256)
+    # detector_type = 'yolov11n'
+
+    model_path = '/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best_256x256_openvino.xml'
+    config_path = '/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best_256x256_openvino.bin'
     detection_frame_size = (256, 256)
-    detector_type = 'yolov11n'
+    detector_type = 'yolov26n'
+
 
     # -------------------- nanodet -------------
     # model_path = "/home/roee/Projects/nanodet/workspace/nanodet-plus-m_320/model_best/nanodet_model_best.pth"
@@ -216,6 +222,7 @@ if __name__ == '__main__':
     step_mode = 'detect_only'  # 'detect_only' / 'detect_track' / 'track_only'
 
     # set video writer
+    output_video_file = os.path.join(record_folder, scen_name+'_kfar_masarik_results_' + detector_type + '.avi')
     if output_video_file is not None:
         print('saving record video to: {}'.format(output_video_file))
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -253,12 +260,13 @@ if __name__ == '__main__':
 
             if frame_resize is not None:
                 img = cv2.resize(img, frame_resize)
+            image_size = (img.shape[1], img.shape[0])
 
             if polygons_per_frame is not None:
                 roi_polygon = polygons_per_frame.get(frame_id)
                 if roi_polygon is not None:
-                    # dttr.set_detection_roi_polygon(roi_polygon, method='crop')
-                    dttr.set_detection_roi_polygon(roi_polygon, method='hybrid')
+                    # dttr.set_detection_roi_polygon(roi_polygon, method='crop', image_size)
+                    dttr.set_detection_roi_polygon(roi_polygon, 'hybrid', image_size)
 
             # test - tmp
             # if frame_id > 50:
@@ -273,7 +281,7 @@ if __name__ == '__main__':
 
             # detect and track
             if step_mode == 'detect_only':
-                tr = dttr.step(img, conf_threshold=0.5, nms_iou_threshold=0.4, max_num_detections=10,
+                tr = dttr.step(img, conf_threshold=0.2, nms_iou_threshold=0.4, max_num_detections=10,
                                operation_mode='detect_only')
             elif step_mode == 'detect_track':
                 tr = dttr.step(img, conf_threshold=0.5, nms_iou_threshold=0.4, max_num_detections=10,
