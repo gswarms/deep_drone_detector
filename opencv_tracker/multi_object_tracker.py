@@ -69,7 +69,7 @@ class BaseMultiObjectTracker(ABC):
         """
         removed_indices = []
         for i in range(len(self.tracks)-1 , -1, -1):
-            if self.tracks[i]['state'] is 0:
+            if self.tracks[i]['state'] == 0:
                 self.remove_track(i)
                 removed_indices.append(i)
         return removed_indices
