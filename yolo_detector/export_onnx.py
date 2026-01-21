@@ -6,8 +6,11 @@ import onnxruntime as ort
 # Load your saved model
 # pt_model_file_path = '../runs/detect/drone_detector_yolov8n/weights/best.pt'
 # pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best.pt'
-pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/detect/drone_detector_yolov11n_320x240_20251021/weights/best.pt'
-image_size = (320, 320)
+# pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/detect/drone_detector_yolov11n_320x240_20251021/weights/best.pt'
+# image_size = (320, 320)
+pt_model_file_path = '/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best.pt'
+image_size = (256, 256)
+
 
 if image_size[0] != image_size[1]:
     raise Exception('yolo onnx must be square bt default! rectangular image configuration more complex, and is not supported in this script!')
