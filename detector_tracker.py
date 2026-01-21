@@ -69,7 +69,6 @@ class DetectorTracker:
         self.detection_roi_polygon = None
         self.detection_roi_bbox = None
         self.detection_roi_method = None
-        self.detection_roi_resize_scale = None
         self.detection_frame = np.zeros((self.detection_frame_size[1], self.detection_frame_size[0], 3), dtype=np.uint8)
 
         # infer once for allocating everything - to reduce first step time
@@ -118,27 +117,24 @@ class DetectorTracker:
         return
 
 
-    def set_detection_roi_polygon(self, polygon_points, method='crop'):
+    def set_detection_roi_polygon(self, polygon_points, method, full_image_size):
         """
         set yolo_detector ROI from a polygon
 
         a smaller ROI will be passed for yolo_detector (useful for reducing runtime)
 
-        There are two main metods:
-        1. resize: polygon bounding box will be resized to the required size
-        2. crop: a box with the required size will be cropped from the image
+        There are two main methods:
+            1. resize: polygon bounding box will be resized to the required size
+            2. crop: a box with the required size will be cropped from the image
                  in a way that best overlaps, with the given polygon
+            3. hybrid: if the roi fits in the detection image size, than crop
+                       if the roi doesn't fit into the detection image size, than resize
 
         params: polygon_points - (nx2) 2D image points polygon
                                   None - no roi polygon applied - use the entire image.
                                   empty (0X2) - roi is outside the image - don't detect
-        params: detection_frame_size - (width, height) frame size for yolo_detector
-        params: method - one of the following: ["resize","crop"]
-                         crop - crop a part of the image of the required size that best overlaps the polygon
-                                if polygon is larget than roi, take equal margins around polygon
-                                if polygon is smaller than roi, roi is symmetric to polygon center
-                                each axis is set separately
-                         resize - take the tight polygon bounding box, and resize it to the required size
+        params: method - one of the following: ["resize","crop",hybrid"]
+        params: full_image_size - (width, height) frame size for the actual image
         """
 
         # calc roi bbox
@@ -146,7 +142,6 @@ class DetectorTracker:
             self.detection_roi_polygon = None
             self.detection_roi_bbox = None
             self.detection_roi_method = None
-            self.detection_roi_resize_scale = None
 
         else:
             # get roi polygon
@@ -165,7 +160,6 @@ class DetectorTracker:
             if not polygon_points_valid:
                 # detection ROI is empty
                 self.detection_roi_bbox = (0, 0, 0, 0)
-                self.detection_roi_resize_scale = None
 
             else:
 
@@ -176,8 +170,7 @@ class DetectorTracker:
                     - if polygon is smaller than required roi, take roi with equal margins arround the polygon
                     each axis is handled separately
                     """
-                    self.detection_roi_bbox = self._find_image_bbox_to_crop_from_polygon(self.detection_roi_polygon, self.detection_frame_size, image_size=None)
-                    self.detection_roi_resize_scale = None
+                    self.detection_roi_bbox = self._find_image_bbox_to_crop_from_polygon(self.detection_roi_polygon, self.detection_frame_size, image_size=full_image_size)
                     self.detection_roi_method = 'crop'
 
                 elif method.lower() == 'resize':
@@ -187,8 +180,8 @@ class DetectorTracker:
                     - pad bbox to get required ROI scale factor
                     - resize bbox to required ROI size keeping the scale factor
                     """
-                    self.detection_roi_bbox, self.detection_roi_resize_scale = self._find_image_bbox_to_resize_from_polygon(
-                        self.detection_roi_polygon, self.detection_frame_size, image_size=None)
+                    self.detection_roi_bbox = self._find_image_bbox_to_resize_from_polygon(
+                        self.detection_roi_polygon, self.detection_frame_size, image_size=full_image_size)
                     self.detection_roi_method = 'resize'
 
                 elif method.lower() == 'hybrid':
@@ -203,12 +196,11 @@ class DetectorTracker:
                     if dx <= self.detection_frame_size[0] and dy <= self.detection_frame_size[1]:
                         self.detection_roi_bbox = self._find_image_bbox_to_crop_from_polygon(self.detection_roi_polygon,
                                                                                              self.detection_frame_size,
-                                                                                             image_size=None)
-                        self.detection_roi_resize_scale = None
+                                                                                             image_size=full_image_size)
                         self.detection_roi_method = 'crop'
                     else:
-                        self.detection_roi_bbox, self.detection_roi_resize_scale = self._find_image_bbox_to_resize_from_polygon(
-                            self.detection_roi_polygon, self.detection_frame_size, image_size=None)
+                        self.detection_roi_bbox = self._find_image_bbox_to_resize_from_polygon(
+                            self.detection_roi_polygon, self.detection_frame_size, image_size=full_image_size)
                         self.detection_roi_method = 'resize'
 
                 else:
@@ -440,15 +432,16 @@ class DetectorTracker:
             elif self.detection_roi_method == 'resize':
                 # take roi
                 self.detection_frame[:] = cv2.resize(image[ytl:ytl + h, xtl:xtl + w], self.detection_frame_size)
+                scale_x = w / self.detection_frame.shape[0]
+                scale_y = h / self.detection_frame.shape[1]
 
                 # detect without a resize
                 results = self.detector.detect(self.detection_frame, frame_resize=self.detection_frame_size,
                                                conf_threshold=conf_threshold,
                                                nms_iou_threshold=nms_iou_threshold)
+
                 # convert back to full image coordinate
-                # TODO: add scale
                 for r in results:
-                    scale_x, scale_y = self.detection_roi_resize_scale
                     r['bbox'] = (int(np.round(r['bbox'][0] * scale_x + xtl)),
                                  int(np.round(r['bbox'][1] * scale_y + ytl)),
                                  int(np.round(r['bbox'][2] * scale_x)),
@@ -535,57 +528,74 @@ class DetectorTracker:
         return roi_bbox
 
     @staticmethod
-    def _find_image_bbox_to_resize_from_polygon(polygon_points, required_roi_size, image_size=None):
+    def _find_image_bbox_to_resize_from_polygon(polygon_points, required_roi_size, image_size):
         """
         find the best bbox to crop from an image, and then resize given a polygon and a required roi size
 
-        1. calc polygon bbox
+        1. calc tight polygon bbox
         2. pad polygon bbox to fit the required roi scale factor
+        3. calc x/y scale
 
         param: polygon_points - (nx2) polygon 2D points
         param: required_roi_size - (dx, dy) required ROI size (x-left, y-down).
         param: image_size - (width, height)
-                            if None - image borders are not considered
         """
 
-        polygon_points = np.asarray(polygon_points)
+        polygon_points = np.asarray(polygon_points, dtype=float)
         if polygon_points.shape[1] != 2:
             raise Exception('invalid polygon_points shape! should be (nx2)')
 
-        if image_size is not None and (required_roi_size[0] > image_size[0] or required_roi_size[1] > image_size[1]):
+        if (required_roi_size[0] > image_size[0] or required_roi_size[1] > image_size[1]):
             raise Exception('required ROI size is larger than the image size!')
 
+        req_w, req_h = required_roi_size
+        img_w, img_h = image_size
+
+        # get polygon tight bbox
         p_xmn = np.min(polygon_points[:, 0])
         p_xmx = np.max(polygon_points[:, 0])
         p_ymn = np.min(polygon_points[:, 1])
         p_ymx = np.max(polygon_points[:, 1])
-        p_w = p_xmx - p_xmn
-        p_h = p_ymx - p_ymn
+        p_w = p_xmx - p_xmn + 1
+        p_h = p_ymx - p_ymn + 1
+        if p_xmn < 0 or p_xmx > img_w or p_ymn < 0 or p_ymx > img_h:
+            raise Exception('polygon is outside image borders!')
 
-        x_scale = p_w / required_roi_size[0]
-        y_scale = p_h / required_roi_size[1]
+        # pad to get the required aspect ratio
+        # increase one of the dimensions if possible (doesn't overflow full image size)
+        # otherwise reduce the other dimention
+        req_aspect_ratio = req_w / req_h
+        p_aspect_ratio = p_w / p_h
+        expand_x =  p_aspect_ratio < req_aspect_ratio  # test aspect ratio
 
-        if  y_scale > x_scale:  # pad x-axis to reach the desired scale
-            p_w_adjusted = required_roi_size[0] * y_scale
-            dx = (p_w_adjusted - p_w)/2
-            xtl = int(np.floor(p_xmn - dx))
-            xbr = int(np.floor(p_xmx + dx))
-            roi_bbox = (xtl, p_ymn, xbr-xtl, p_h)
+        if expand_x:
+            crop_w = p_h * req_aspect_ratio
+            crop_h = p_h
+            if crop_w > img_w:  # max w, and reduce h accordingly
+                crop_w = img_w
+                crop_h = crop_w / req_aspect_ratio
+        else:  # expand y
+            crop_w = p_w
+            crop_h = p_w / req_aspect_ratio
+            if crop_h > img_h:  # max h, and reduce w accordingly
+                crop_h = img_h
+                crop_w = crop_h * req_aspect_ratio
+        crop_h = int(np.ceil(crop_h))
+        crop_w = int(np.ceil(crop_w))
 
-        else:  # pad y-axis to reach the desired scale
-            p_h_adjusted = required_roi_size[1] * x_scale
-            dy = (p_h_adjusted - p_h) / 2
-            ytl = int(np.floor(p_ymn - dy))
-            ybr = int(np.floor(p_ymx + dy))
-            roi_bbox = (p_xmn, ytl, p_w, ybr - ytl)
+        # choose top left corner
+        p_xc = (p_xmn + p_xmx) / 2
+        p_yc = (p_ymn + p_ymx) / 2
+        crop_xtl = p_xc - crop_w / 2
+        crop_ytl = p_yc - crop_h / 2
 
-        if image_size is not None:
-            [xtl, ytl, w, h] = roi_bbox
-            xtl = min(max(xtl, 0), image_size[0] - w)
-            ytl = min(max(ytl, 0), image_size[1] - h)
-            roi_bbox = (xtl, ytl, w, h)
+        # make sure crop is inside image borders
+        crop_xtl = min(max(crop_xtl, 0), image_size[0] - crop_w)
+        crop_ytl = min(max(crop_ytl, 0), image_size[1] - crop_h)
+        crop_xtl = int(np.floor(crop_xtl))
+        crop_ytl = int(np.floor(crop_ytl))
 
-        return roi_bbox, (x_scale, y_scale)
+        return crop_xtl, crop_ytl, crop_w, crop_h
 
     def remove_lost_tracks(self):
         """
