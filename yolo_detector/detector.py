@@ -57,7 +57,7 @@ class SingleFrameDetector:
                     self.onnx_input_size = input_info.shape[2:]
 
                 elif model_file_extension == '.xml':  # run with openvino
-                    from openvino.runtime import Core
+                    from openvino import Core
                     # Load ONNX-openvino model
                     ie = Core()
                     model = ie.read_model(model=model_file_path, weights=openvino_model_bin_file_path)
