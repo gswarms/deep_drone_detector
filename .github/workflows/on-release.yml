@@ -1,0 +1,13 @@
+name: Notify Discord on Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    uses: gswarms/.github/.github/workflows/discord-release-notify.yml@main
+    secrets:
+      DISCORD_WEBHOOK_DEFAULT: ${{ secrets.DISCORD_WEBHOOK_DEFAULT }}
+      DISCORD_WEBHOOK_MAP: ${{ secrets.DISCORD_WEBHOOK_MAP }}
+      DISCORD_MENTION_MAP: ${{ secrets.DISCORD_MENTION_MAP }}
