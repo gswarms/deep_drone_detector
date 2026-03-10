@@ -41,7 +41,7 @@ output_name = 'drone_detector_yolov26n_256x256_20260119'
 model.train(
     data=dataset_yaml_file,
     imgsz=256,
-    epochs=150,
+    epochs=250,
     batch=16,
     freeze=5,
     optimizer="AdamW",
