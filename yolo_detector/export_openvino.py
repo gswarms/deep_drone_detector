@@ -21,7 +21,7 @@ output_dir = onnx_model_path.parent
 # output_dir.mkdir(parents=True, exist_ok=True)
 # file_name = os.path.basename(onnx_model_path)
 # xml_file_name = file_name[:-5] + '_openvino.xml'
-# from openvino.runtime import serialize
+# from openvino import serialize
 # serialize(ir_model, str(output_dir / xml_file_name))
 # print("OpenVINO IR saved to:", output_dir)
 
@@ -38,7 +38,7 @@ ov.save_model(ov_model, xml_file_name, compress_to_fp16=True)
 print("FP16 OpenVINO model saved successfully to: {}".format(xml_file_name))
 
 # # Load ONNX-openvino model
-# from openvino.runtime import Core
+# from openvino import Core
 # output_model_xml_file = os.path.join(output_dir, xml_file_name)
 # output_model_bin_file = output_model_xml_file.replace('.xml','.bin')
 #
