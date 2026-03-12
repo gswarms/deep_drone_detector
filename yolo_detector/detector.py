@@ -234,9 +234,9 @@ class SingleFrameDetector:
         :return:
         """
         if self.model_name in ['yolov8n', 'yolov11n']:
-            results = self._onnx_postprocess_yolo11(predictions, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10)
+            results = self._onnx_postprocess_yolo11(predictions, conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold, max_num_detections=max_num_detections)
         elif self.model_name == 'yolov26n':
-            results = self._onnx_postprocess_yolo26(predictions, conf_threshold=0.4, max_num_detections=10)
+            results = self._onnx_postprocess_yolo26(predictions, conf_threshold=conf_threshold, max_num_detections=max_num_detections)
         return results
 
     def _onnx_postprocess_yolo11(self, predictions, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10):

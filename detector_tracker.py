@@ -326,9 +326,6 @@ class DetectorTracker:
             unmatched_valid_detection_scores = detection_scores
             # unmatched_valid_tracking_bboxs = tracking_bboxs
 
-        # if len(unmatched_valid_tracking_bboxs) > 0 and len(unmatched_valid_detection_bboxs)>0:
-        #     aa=5
-
         # --------------- new tracks ----------------
         # open new tracks
         if len(unmatched_valid_detection_bboxs) > 0:
@@ -393,7 +390,22 @@ class DetectorTracker:
 
         if self.detection_roi_method is None:
             # no ROI - use the entire frame
-            valid_results = self.detector.detect(image, frame_resize=None)
+            xtl, ytl = (0,0)
+            h, w = image.shape[:2]
+            # take roi
+            self.detection_frame[:] = cv2.resize(image, self.detection_frame_size)
+            scale_x = w / self.detection_frame.shape[0]
+            scale_y = h / self.detection_frame.shape[1]
+            # detect without a resize
+            valid_results = self.detector.detect(self.detection_frame, frame_resize=self.detection_frame_size,
+                                           conf_threshold=conf_threshold,
+                                           nms_iou_threshold=nms_iou_threshold)
+            # convert back to full image coordinate
+            for r in valid_results:
+                r['bbox'] = (int(np.round(r['bbox'][0] * scale_x + xtl)),
+                             int(np.round(r['bbox'][1] * scale_y + ytl)),
+                             int(np.round(r['bbox'][2] * scale_x)),
+                             int(np.round(r['bbox'][3] * scale_y)))
 
         else:
             # make sure roi is in the image
@@ -650,7 +662,7 @@ def _sort_closest_keypoint(keypoints, ref_point):
     """
 
     pt = np.array(keypoints)
-    d = np.linalg.norm(pt - ref_point)
+    d = np.linalg.norm(pt - ref_point, axis=1)
     idx = np.argsort(d)
 
     return idx
