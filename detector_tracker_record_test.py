@@ -4,86 +4,14 @@ import os
 import cv2
 import sys
 import numpy as np
-import re
 from test_utils.standard_record import StandardRecord
 from test_utils.roi_utils import PolygonPerFrame
+from test_utils import common_utils
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import detector_tracker
 
-
-def path_to_scenario_name(scenario_folder_path):
-    """
-    reformat a file / folder name to a scenario name.
-    path format:  <path>/year_month_day-hour_min_sec_<any suffix>  or <path>/yyymmdd_HHMMSS_<any suffix>
-    scenario name: yyyymmdd_HHMMSS
-
-    :param scenario_folder_path:
-    :return:
-    """
-    base_name = os.path.basename(os.path.abspath(scenario_folder_path))
-    sp = re.split('_|-', base_name)
-    if len(sp) == 6:
-        scenario_name = '{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}'.format(int(sp[0]), int(sp[1]), int(sp[2]), int(sp[3]), int(sp[4]), int(sp[5]))
-    elif len(sp) == 2:
-        scenario_name = '{:08d}_{:06d}'.format(int(sp[0]), int(sp[1]))
-    else:
-        raise Exception('invalid naming convention for scenario folder: {}'.format(scenario_folder_path))
-
-    return scenario_name
-
 if __name__ == '__main__':
-
-    # trackign problem from close range - maybe try:
-    # 1. force match to yolo_detector even with no overlap
-    # 2. resize image so we track a blob with no shape! (in an adaptive way related to the shape of the target blob)
-
-    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_140609_extracted'
-    # frame_size = (640, 480)
-    # frame_resize = None
-    # start_time = -np.inf
-    # output_video_file = os.path.join(record_folder, '20250511_140609_kfar_galim_results.avi')
-    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_140609_polygons.yaml')  # ***optional
-
-
-    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_133041_extracted'
-    # frame_size = (640, 480)
-    # frame_resize = None
-    # start_time = -np.inf
-    # output_video_file = os.path.join(record_folder, '20250511_133041_kfar_galim_results.avi')
-    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250511_133041_polygons.yaml')  # ***optional
-
-
-    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827_extracted'
-    # frame_size = (640, 480)
-    # frame_resize = None
-    # start_time = -np.inf
-    # output_video_file = os.path.join(record_folder, '20250519_083827_kfar_galim_results.avi')
-    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250519_083827_polygons.yaml')  # ***optional
-
-
-    # record_folder = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted'
-    # frame_size = (640, 480)
-    # frame_resize = None
-    # start_time = -np.inf
-    # output_video_file = os.path.join(record_folder, '20250605_125626_kfar_galim_results.avi')
-    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250605_125626_polygons.yaml')  # ***optional
-
-
-    # record_folder = '/home/roee/Downloads/camera_2025_6_6-3_0_31_extracted/'
-    # frame_size = (640, 480)
-    # frame_resize = None
-    # start_time = -np.inf
-    # output_video_file = os.path.join(record_folder, '20250606_030031_kfar_galim_results.avi')
-    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250606_030031_polygons.yaml')  # ***optional
-
-
-    # record_folder = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/'
-    # frame_size = (640, 480)
-    # frame_resize = None
-    # start_time = -np.inf
-    # output_video_file = os.path.join(record_folder, '20250605_114739_kfar_galim_results.avi')
-    # polygons_file = os.path.join(record_folder, 'kfar_galim_20250605_114739_polygons.yaml')  # ***optional
 
     # ------------------ kfar massarik 08.06.2025 ------------------------------
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250608_kfar_masarik/2025-06-08_17-30-42/camera_2025_6_8-14_30_56_extracted'  # bad
@@ -130,7 +58,7 @@ if __name__ == '__main__':
 
 
     # ------------------ kfar galim 16.07.2025 ------------------------------
-    record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-14/camera_2025_7_16-6_18_18_extracted'
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-14/camera_2025_7_16-6_18_18_extracted'
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250716_kfar_galim/2025-07-16_09-18-58/camera_2025_7_16-6_19_1_extracted'
 
 
@@ -144,15 +72,212 @@ if __name__ == '__main__':
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_08-50-03/camera_2025_7_30-5_50_7_extracted'
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20250730_kfar_galim/2025-07-30_09-45-04/camera_2025_7_30-6_45_8_extracted'  # bad bag
 
+
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5 common dataset start %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+    # ------------------ 20251214_reshafim ------------------------------  *** clr_format = 'BGR'
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251214_reshafim'
+    # record_folder = os.path.join(base_folder, '20251214_1124_19/20251214_1234_56/camera_20251214_1335_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251214_1232_41/20251214_1233_08/camera_20251214_1333_extracted')
+    # record_folder = os.path.join(base_folder, '20251214_1232_41/20251214_1234_56/camera_20251214_1335_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251214_1232_41/20251214_1235_55/camera_20251214_1336_extracted')
+    # record_folder = os.path.join(base_folder, '20251214_1232_41/20251214_1236_52/camera_20251214_1336_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251214_1322_23/20251214_1325_35/camera_20251214_1425_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251214_1322_23/20251214_1327_07/camera_20251214_1427_extracted')
+
+
+    # ------------------ 20251208_reshafim ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251208_reshafim'
+    # record_folder = os.path.join(base_folder, '20251208_1155_58/20251208_1157_42/camera_20251208_1257_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1155_58/20251208_1200_23/camera_20251208_1300_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1155_58/20251208_1204_12/camera_20251208_1304_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1155_58/20251208_1206_00/camera_20251208_1306_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1155_58/20251208_1207_52/camera_20251208_1307_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1216_03/20251208_1216_29/camera_20251208_1316_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1235_31/20251208_1239_35/camera_20251208_1339_extracted')
+    # record_folder = os.path.join(base_folder, '20251208_1246_16/20251208_1247_59/camera_20251208_1348_extracted')
+    # record_folder = os.path.join(base_folder, '20251208_1256_17/20251208_1257_05/camera_20251208_1357_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1256_17/20251208_1259_11/camera_20251208_1359_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1256_17/20251208_1301_26/camera_20251208_1401_extracted')
+    # record_folder = os.path.join(base_folder, '20251208_1256_17/20251208_1303_25/camera_20251208_1403_extracted')
+    # record_folder = os.path.join(base_folder, '20251208_1327_30/20251208_1332_56/camera_20251208_1433_extracted')
+    # record_folder = os.path.join(base_folder, '20251208_1454_32/20251208_1457_05/camera_20251208_1557_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1454_32/20251208_1458_20/camera_20251208_1558_extracted')
+    # record_folder = os.path.join(base_folder, '20251208_1454_32/20251208_1500_28/camera_20251208_1600_extracted')
+    # record_folder = os.path.join(base_folder, '20251208_1454_32/20251208_1501_47/camera_20251208_1601_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1509_37/20251208_1511_41/camera_20251208_1611_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1509_37/20251208_1513_17/camera_20251208_1613_extracted')
+    # record_folder = os.path.join(base_folder, '20251208_1509_37/20251208_1514_28/camera_20251208_1614_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1509_37/20251208_1515_50/camera_20251208_1615_extracted')
+    # record_folder = os.path.join(base_folder, '20251208_1509_37/20251208_1516_53/camera_20251208_1616_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1521_09/20251208_1523_58/camera_20251208_1624_extracted')
+    # record_folder = os.path.join(base_folder, '20251208_1521_09/20251208_1525_11/camera_20251208_1625_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251208_1521_09/20251208_1526_27/camera_20251208_1626_extracted')  # test mns ????????
+
+
+    # ------------------ kfar_galim 04.12.2025 ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251204_kfar_galim'
+    # record_folder = os.path.join(base_folder, '20251204_1423_16/20251204_1423_36/camera_20251204_1523_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251204_1423_16/20251204_1425_28/camera_20251204_1525_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251204_1423_16/20251204_1431_50/camera_20251204_1531_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251204_1438_06/20251204_1438_28/camera_20251204_1538_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251204_1453_40/20251204_1454_07/camera_20251204_1554_extracted')
+    # record_folder = os.path.join(base_folder, '20251204_1511_13/20251204_1511_34/camera_20251204_1611_extracted')
+    # record_folder = os.path.join(base_folder, '20251204_1511_13/20251204_1515_28/camera_20251204_1615_extracted')
+    # record_folder = os.path.join(base_folder, '20251204_1526_11/20251204_1527_23/camera_20251204_1627_extracted')
+    # record_folder = os.path.join(base_folder, '20251204_1526_11/20251204_1532_30/camera_20251204_1632_extracted')
+    # record_folder = os.path.join(base_folder, '20251204_1550_34/20251204_1550_54/camera_20251204_1650_extracted')
+    # record_folder = os.path.join(base_folder, '20251204_1600_55/20251204_1601_20/camera_20251204_1701_extracted')
+    # record_folder = os.path.join(base_folder, '20251204_1600_55/20251204_1603_11/camera_20251204_1703_extracted')
+
+
+    # ------------------ kfar_galim 26.11.2025 ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251126_kfar_galim'
+    # record_folder = os.path.join(base_folder, '20251126_1507_31/20251126_1509_36/camera_20251126_1609_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251126_1507_31/20251126_1510_20/camera_20251126_1610_extracted')
+    # record_folder = os.path.join(base_folder, '20251126_1507_31/20251126_1511_16/camera_20251126_1611_extracted')
+    # record_folder = os.path.join(base_folder, '20251126_1507_31/20251126_1512_12/camera_20251126_1612_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251126_1507_31/20251126_1513_05/camera_20251126_1613_extracted')
+    # record_folder = os.path.join(base_folder, '20251126_1507_31/20251126_1514_12/camera_20251126_1614_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251126_1523_01/20251126_1524_04/camera_20251126_1624_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251126_1523_01/20251126_1526_12/camera_20251126_1626_extracted')
+    # record_folder = os.path.join(base_folder, '20251126_1523_01/20251126_1527_11/camera_20251126_1627_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251126_1536_04/20251126_1536_50/camera_20251126_1636_extracted')
+    # record_folder = os.path.join(base_folder, '20251126_1558_12/20251126_1558_24/camera_20251126_1658_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251126_1558_12/20251126_1600_23/camera_20251126_1700_extracted')
+    # record_folder = os.path.join(base_folder, '20251126_1603_18/20251126_1603_41/camera_20251126_1703_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251126_1603_18/20251126_1604_48/camera_20251126_1704_extracted')
+    # record_folder = os.path.join(base_folder, '20251126_1603_18/20251126_1605_59/camera_20251126_1706_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251126_1603_18/20251126_1607_28/camera_20251126_1707_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '20251126_1603_18/20251126_1608_34/camera_20251126_1708_extracted')
+
+    # ------------------ kfar_galim 27.10.2025 ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251027_kfar_galim'
+    # record_folder = os.path.join(base_folder, '20251027_123000/camera_20251027_1230_extracted')
+
+
+    # ------------------ lehavim 18.09.2025 ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250918_lehavim'
+
+    # record_folder = os.path.join(base_folder, 'hb002/20250910_1441_06/camera_20250910_1441_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb002/20250910_1442_03/camera_20250910_1442_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb002/20250915_1019_36/camera_20250915_1019_extracted')
+    # record_folder = os.path.join(base_folder, 'hb002/20250918_0941_14/camera_20250918_0941_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb002/20250918_1005_37/camera_20250918_1005_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb002/20250918_1008_19/camera_20250918_1008_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb002/20250918_1010_22/camera_20250918_1010_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb002/20250918_1040_02/camera_20250918_1040_extracted')
+    # record_folder = os.path.join(base_folder, 'hb002/20250918_1041_26/camera_20250918_1041_extracted')
+    # record_folder = os.path.join(base_folder, 'hb002/20250918_1043_09/camera_20250918_1043_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb002/20250918_1044_49/camera_20250918_1044_extracted')
+    # record_folder = os.path.join(base_folder, 'hb002/20250918_1046_44/camera_20250918_1046_extracted')  # bad
+
+    # record_folder = os.path.join(base_folder, 'hb004/20250918_1439_53/camera_20250918_1440_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb004/20250918_1441_41/camera_20250918_1441_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb004/20250918_1443_47/camera_20250918_1443_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb004/20250918_1446_11/camera_20250918_1446_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb004/20250918_1451_40/camera_20250918_1451_extracted')
+    # record_folder = os.path.join(base_folder, 'hb004/20250918_1453_47/camera_20250918_1453_extracted')
+    # record_folder = os.path.join(base_folder, 'hb004/20250918_1456_00/camera_20250918_1456_extracted')
+    # record_folder = os.path.join(base_folder, 'hb004/20250918_1457_57/camera_20250918_1458_extracted')  # bad
+
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1154_08/camera_20250918_1154_extracted')
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1156_18/camera_20250918_1156_extracted')
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1158_27/camera_20250918_1158_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1200_17/camera_20250918_1200_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1210_46/camera_20250918_1210_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1216_55/camera_20250918_1217_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1219_00/camera_20250918_1219_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1232_08/camera_20250918_1232_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1235_26/camera_20250918_1235_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1239_54/camera_20250918_1239_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1248_01/camera_20250918_1248_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1249_56/camera_20250918_1249_extracted')
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1252_07/camera_20250918_1252_extracted')
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1256_02/camera_20250918_1256_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1336_04/camera_20250918_1336_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1338_16/camera_20250918_1338_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1341_50/camera_20250918_1341_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'pz004/20250918_1410_23/camera_20250918_1411_extracted')  # bad
+
+    # ------------------ lehavim 17.09.2025 ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250917_lehavim'
+    # record_folder = os.path.join(base_folder, 'hb003/20250915_1028_24/camera_20250915_1028_extracted')
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1506_17/camera_20250917_1506_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1547_12/camera_20250917_1547_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1549_23/camera_20250917_1549_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1557_10/camera_20250917_1557_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1623_52/camera_20250917_1624_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1625_13/camera_20250917_1625_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1645_47/camera_20250917_1645_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1657_35/camera_20250917_1657_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1715_18/camera_20250917_1715_extracted')  # bad
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1747_34/camera_20250917_1747_extracted')
+    # record_folder = os.path.join(base_folder, 'hb003/20250917_1754_26/camera_20250917_1754_extracted')  # bad
+
+    # ------------------ kfar_masarik 08.06.2025 ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250608_kfar_masarik'
+    # record_folder = os.path.join(base_folder, '2025-06-08_17-30-42/camera_2025_6_8-14_30_56_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-04-53/camera_2025_6_8-15_4_56_extracted')
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-17-57/camera_2025_6_8-14_30_56_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-17-57/camera_2025_6_8-15_18_8_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-29-51/camera_2025_6_8-15_29_54_extracted')
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-41-19/camera_2025_6_8-15_41_22_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-45-39/camera_2025_6_8-15_45_44_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-51-15/camera_2025_6_8-15_51_18_extracted')
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-52-56/camera_2025_6_8-15_52_58_extracted')
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-53-46/camera_2025_6_8-15_53_49_extracted')
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-58-42/camera_2025_6_8-15_58_44_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-59-46/camera_2025_6_8-15_59_49_extracted')
+    # record_folder = os.path.join(base_folder, '2025-06-08_19-00-25/camera_2025_6_8-16_0_28_extracted')
+    # record_folder = os.path.join(base_folder, '2025-06-08_19-08-34/camera_2025_6_8-16_8_48_extracted')
+    # record_folder = os.path.join(base_folder, '2025-06-08_19-09-33/camera_2025_6_8-16_9_38_extracted')
+    # record_folder = os.path.join(base_folder, '2025-06-08_19-17-25/camera_2025_6_8-16_17_28_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '2025-06-08_19-18-31/camera_2025_6_8-16_18_34_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '2025-06-08_19-24-31/camera_2025_6_8-16_24_34_extracted')  # bad
+    # record_folder = os.path.join(base_folder, '2025-06-08_19-25-35/camera_2025_6_8-16_25_38_extracted')
+
+    # ------------------ hadera 21.04.2025 ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250421_hadera'
+    # record_folder = os.path.join(base_folder, '2025-04-21_10-57-38/camera_2025_4_21-7_59_8_extracted')
+    # record_folder = os.path.join(base_folder, '2025-04-21_10-59-30/camera_2025_4_21-7_59_41_extracted')
+    # record_folder = os.path.join(base_folder, '2025-04-21_11-11-25/camera_2025_4_21-8_12_28_extracted')
+    # record_folder = os.path.join(base_folder, '2025-04-21_11-13-03/camera_2025_4_21-8_13_40_extracted')
+    # record_folder = os.path.join(base_folder, '2025-04-21_11-24-25/camera_2025_4_21-8_25_32_extracted')
+    # record_folder = os.path.join(base_folder, '2025-04-21_11-26-29/camera_2025_4_21-8_26_42_extracted')
+
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5 common dataset end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
     # ------------------ kfar galim 27.10.2025 ------------------------------
     # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20251027_kfar_galim/20251027_123000/camera_20251027_1230_extracted'
 
 
+    # ------------------ reshafim 20.01.2026 ------------------------------
+    # record_folder = '/home/roee/Projects/datasets/interceptor_drone/20260120_reshafim/20260120_1029_46/20260120_103322/camera_20260120_1133_extracted'
+
+
+    # ------------------ 309 25.02.2026 ------------------------------
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260225_309'
+    # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091227/camera_20260225_1012_extracted')
+    # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091409/camera_20260225_1014_extracted')  # bad bag magic
+    # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091522/camera_20260225_1015_extracted')
+    # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091409/camera_20260225_1014_extracted')  # bad bag magic
+    # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091522/camera_20260225_1015_extracted')
+    # record_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123437/camera_20260225_1334_extracted')  # bad bag magic
+    # record_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123557/camera_20260225_1336_extracted')  # bad bag magic
+    # record_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123723/camera_20260225_1337_extracted')
+    record_folder = os.path.join(base_folder, '20260225_1347_29/20260225_134854/camera_20260225_1448_extracted')
+    # record_folder = os.path.join(base_folder, '20260225_1347_29/20260225_135130/camera_20260225_1451_extracted')  # bad bag magic
+
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250608_kfar_masarik'
+    # record_folder = os.path.join(base_folder, '2025-06-08_18-04-53/camera_2025_6_8-15_4_56_extracted')
 
     frame_size = (640, 480)
     frame_resize = None
     start_time = -np.inf
-    scen_name = path_to_scenario_name(os.path.join(record_folder,'..'))
+    scen_name = common_utils.path_to_scenario_name(os.path.join(record_folder,'..'))
     polygons_file = os.path.join(record_folder, scen_name+'_recorded_detection_roi_polygons.yaml')  # ***optional
     # polygons_file = os.path.join(record_folder, scen_name+'_manual_detection_roi_polygons.yaml')  # ***optional
 
@@ -206,6 +331,7 @@ if __name__ == '__main__':
     config_path = '/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best_256x256_openvino.bin'
     detection_frame_size = (256, 256)
     detector_type = 'yolov26n'
+    detector_name = 'yolov26n_256x256_20260119'
 
 
     # -------------------- nanodet -------------
@@ -222,7 +348,7 @@ if __name__ == '__main__':
     step_mode = 'detect_only'  # 'detect_only' / 'detect_track' / 'track_only'
 
     # set video writer
-    output_video_file = os.path.join(record_folder, scen_name+'_kfar_masarik_results_' + detector_type + '.avi')
+    output_video_file = os.path.join(record_folder, scen_name+'_results_' + detector_name + '.avi')
     if output_video_file is not None:
         print('saving record video to: {}'.format(output_video_file))
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -254,16 +380,23 @@ if __name__ == '__main__':
     video_initialized = False
     frame_id = 0
     tr = []
+    frame_time_step = np.median(np.diff([x['time'] for x in record.frames]))
+    polygon_valid_time_gap = frame_time_step * 0.5
     for frame in record.frames:
         if frame['time'] >= start_time:
             img = cv2.imread(frame['image_file'])
 
+            if img is None:
+                continue
+
             if frame_resize is not None:
                 img = cv2.resize(img, frame_resize)
+
             image_size = (img.shape[1], img.shape[0])
 
             if polygons_per_frame is not None:
-                roi_polygon = polygons_per_frame.get(frame_id)
+                # roi_polygon = polygons_per_frame.get(frame_id)
+                roi_polygon = polygons_per_frame.get_time(frame['time'], valid_time_gap=polygon_valid_time_gap)
                 if roi_polygon is not None:
                     # dttr.set_detection_roi_polygon(roi_polygon, method='crop', image_size)
                     dttr.set_detection_roi_polygon(roi_polygon, 'hybrid', image_size)
@@ -281,7 +414,7 @@ if __name__ == '__main__':
 
             # detect and track
             if step_mode == 'detect_only':
-                tr = dttr.step(img, conf_threshold=0.2, nms_iou_threshold=0.4, max_num_detections=10,
+                tr = dttr.step(img, conf_threshold=0.4, nms_iou_threshold=0.4, max_num_detections=10,
                                operation_mode='detect_only')
             elif step_mode == 'detect_track':
                 tr = dttr.step(img, conf_threshold=0.5, nms_iou_threshold=0.4, max_num_detections=10,

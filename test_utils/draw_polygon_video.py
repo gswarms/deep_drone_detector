@@ -125,7 +125,8 @@ if __name__ == '__main__':
                     key = cv2.waitKey(50)
 
                     if len(points) == polygon_num_points:
-                        frame_polygons.set(frame_id, points)
+                        frame_time = frame_id * video_time_step
+                        frame_polygons.set(frame_id, points, frame_time)
                     else:
                         print('Warning! invalid number of polygon points! got {} expecting {}! skipping this frame.'.format(len(points), polygon_num_points))
 
@@ -159,7 +160,7 @@ if __name__ == '__main__':
             ret, frame = cap.read()
             if ret == True:
                 frame = cv2.resize(frame, image_resize)
-                pts = frame_polygons2.get(frame_id)
+                pts = frame_polygons2.get_id(frame_id)
                 if pts is not None:
                     pts = np.array(pts, dtype = np.int32)
                     pts = pts.reshape((-1, 1, 2))

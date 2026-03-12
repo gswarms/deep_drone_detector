@@ -260,7 +260,7 @@ if __name__ == '__main__':
             if ret == True:
                 if image_resize is not None:
                     frame = cv2.resize(frame, image_resize)
-                pts = frame_polygons2.get(frame_id)
+                pts = frame_polygons2.get_id(frame_id)
                 if pts is not None:
                     pts = np.array(pts, dtype = np.int32)
                     pts = pts.reshape((-1, 1, 2))

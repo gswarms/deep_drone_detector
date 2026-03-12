@@ -17,6 +17,7 @@ import pathlib
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('TkAgg')
+import common_utils
 import roi_utils
 
 
@@ -219,40 +220,62 @@ class RosBagRecord:
         return
 
 
-    def _get_closest_detection_polygon(self, query_times, time_step):
+    def _get_closest_detection_polygon(self, query_times, valid_time_gap):
         """
         get the closest polygon to a specific time
+
+        :param query_times - query times list or scalar
+        :param valid_time_gap - valid time gap from query times
+                                if the closes entry is not within this time gap, result will be None
+        :return: res_polygons - each results is a nX2 np.array of polygon points
+                                   list of results if query_times is a list
+                                   scalar result if query_times is scalar
         """
 
         if not isinstance(query_times, list):
+            return_scalar = True
             query_times = [query_times]
+        else:
+            return_scalar = False
 
-        res_polygons = None
         # get detection input polygon
         if len(self.detection_input_polygon_data) > 0:
             polygon_times = np.array([p['time'] for p in self.detection_input_polygon_data])
-
             # find the closest polygon in time
             res_polygons = []
             for t in query_times:
                 idx = np.argmin(np.abs(t - polygon_times))
-                if np.abs(t - polygon_times[idx]) < 2*time_step/3:
+                if np.abs(t - polygon_times[idx]) < valid_time_gap:
                     res_polygons.append(self.detection_input_polygon_data[idx]['points'])
                 else:
                     res_polygons.append(None)
+        else:
+            res_polygons = [None] * len(query_times)
+
+        if return_scalar:
+            res_polygons = res_polygons[0]
 
         return res_polygons
 
 
-    def _get_closest_detection_results(self, query_times, time_step):
+    def _get_closest_detection_results(self, query_times, valid_time_gap):
         """
-        get the closest polygon to a specific time
+        get the closest detection results to a specific time
+
+        :param query_times - query times list or scalar
+        :param valid_time_gap - valid time gap from query times
+                                if the closes entry is not within this time gap, result will be None
+        :return: detection_results - each results is a detection bbox [xtl, ytl, w, h]
+                                   list of results if query_times is a list
+                                   scalar result if query_times is scalar
         """
 
         if not isinstance(query_times, list):
+            return_scalar = True
             query_times = [query_times]
+        else:
+            return_scalar = False
 
-        detection_results = None
         # get detection input polygon
         if len(self.detection_input_polygon_data) > 0:
             detection_result_times = np.array([p['time'] for p in self.detection_results_data])
@@ -261,15 +284,17 @@ class RosBagRecord:
             detection_results = []
             for t in query_times:
                 idx = np.argmin(np.abs(t - detection_result_times))
-                if np.abs(t - detection_result_times[idx]) < time_step:
+                if np.abs(t - detection_result_times[idx]) < valid_time_gap:
                     detection_results.append(self.detection_results_data[idx]['points'])
                 else:
                     detection_results.append(None)
+        else:
+            detection_results = [None] * len(query_times)
+
+        if return_scalar:
+            detection_results = detection_results[0]
 
         return detection_results
-
-
-        return
 
 
     @staticmethod
@@ -308,8 +333,8 @@ class RosBagRecord:
             # save bbox ref data
             self._save_bbox_ref(output_folder, self.ref_bbox_topic)
 
-            # if detection_polygon_output_file is not None:
-            #     self._save_detection_input_polygon(detection_polygon_output_file)
+            if detection_polygon_output_file is not None:
+                self._save_detection_input_polygon(detection_polygon_output_file)
 
 
         print('Done')
@@ -371,14 +396,12 @@ class RosBagRecord:
                             raise Exception('invalid image!')
 
                         frames_time_step = np.median(np.diff(self.frame_times))
+                        valid_time_gap = frames_time_step * 0.6
 
 
                         # get detection input polygon
                         if draw_detection_polygon:
-                            if np.abs(frame_time - 1749395144.490971) < 0.05:
-                                aa = 5
-                            polygon_points = self._get_closest_detection_polygon(frame_time, frames_time_step)
-                            polygon_points = polygon_points[0]
+                            polygon_points = self._get_closest_detection_polygon(frame_time, valid_time_gap)
                             if polygon_points is not None:
                                 pp = np.round(polygon_points).astype(np.int32)
                                 cv_img = cv2.polylines(cv_img, np.array([pp]), isClosed=True,
@@ -386,8 +409,7 @@ class RosBagRecord:
 
                         # get detection results
                         if draw_detection_results:
-                            bbox_points = self._get_closest_detection_results(frame_time, frames_time_step)
-                            bbox_points = bbox_points[0]
+                            bbox_points = self._get_closest_detection_results(frame_time, valid_time_gap)
                             if bbox_points is not None:
                                 bp = np.round(bbox_points).astype(np.int32)
                                 cv_img = cv2.polylines(cv_img, np.array([bp]), isClosed=True,
@@ -444,6 +466,7 @@ class RosBagRecord:
             if not os.path.isdir(detection_polygons_output_folder):
                 os.makedirs(detection_polygons_output_folder)
             frames_time_step = np.median(np.diff(self.frame_times))
+            valid_time_gap = frames_time_step * 0.6
             self.frame_size = None
             frame_polygons = roi_utils.PolygonPerFrame(frame_size=self.frame_size)
 
@@ -489,10 +512,10 @@ class RosBagRecord:
 
                     if save_detection_polygons:
                         t1 = time.monotonic()
-                        detection_polygon = self._get_closest_detection_polygon(frame_time, frames_time_step)
-                        if detection_polygon[0] is not None:
-                            detection_polygon[0] = detection_polygon[0].tolist()
-                        frame_polygons.set(frame_id_left, detection_polygon[0])
+                        detection_polygon = self._get_closest_detection_polygon(frame_time, valid_time_gap)
+                        if detection_polygon is not None:
+                            detection_polygon = detection_polygon.tolist()
+                            frame_polygons.set(frame_id_left, detection_polygon)
                         # frame_polygons.save(detection_polygons_output_file)
                         t_poly = t_poly + (time.monotonic() - t1)
 
@@ -533,25 +556,25 @@ class RosBagRecord:
         """
         save imu data to a text file
         """
+        if ref_bbox_topic is not None:
+            if not os.path.isdir(output_folder):
+                os.makedirs(output_folder)
+            output_file = os.path.join(output_folder, 'bbox_reference.txt')
 
-        if not os.path.isdir(output_folder):
-            os.makedirs(output_folder)
-        output_file = os.path.join(output_folder, 'bbox_reference.txt')
-
-        with open(output_file, 'w') as f:
-            if ref_bbox_topic is not None:
-                f.write('# timestamp [ns]	center_x   center_y   size_x   size_y\n')
-                connections = [x for x in self.bag.connections if x.topic == ref_bbox_topic]
-                for connection, timestamp, rawdata in self.bag.messages(connections=connections):
-                    msg = self.bag.deserialize(rawdata, connection.msgtype)
-                    frame_time = float(self.__to_time(msg.header.stamp))
-                    msg_timestamp = timestamp * 1e-9
-                    if self.start_time <= msg_timestamp <= self.end_time:
-                        if len(msg.detections) > 0:
-                            for d in msg.detections:
-                                f.write('{:.6f} {} {} {} {}\n'.format(frame_time,
-                                                                        d.bbox.center.position.x, d.bbox.center.position.y,
-                                                                        d.bbox.size_x, d.bbox.size_y))
+            with open(output_file, 'w') as f:
+                if ref_bbox_topic is not None:
+                    f.write('# timestamp [ns]	center_x   center_y   size_x   size_y\n')
+                    connections = [x for x in self.bag.connections if x.topic == ref_bbox_topic]
+                    for connection, timestamp, rawdata in self.bag.messages(connections=connections):
+                        msg = self.bag.deserialize(rawdata, connection.msgtype)
+                        frame_time = float(self.__to_time(msg.header.stamp))
+                        msg_timestamp = timestamp * 1e-9
+                        if self.start_time <= msg_timestamp <= self.end_time:
+                            if len(msg.detections) > 0:
+                                for d in msg.detections:
+                                    f.write('{:.6f} {} {} {} {}\n'.format(frame_time,
+                                                                            d.bbox.center.position.x, d.bbox.center.position.y,
+                                                                            d.bbox.size_x, d.bbox.size_y))
 
         return
 
@@ -563,34 +586,14 @@ class RosBagRecord:
         polygon_data = roi_utils.PolygonPerFrame(self.frame_size)
         for i, p in enumerate(self.detection_input_polygon_data):
             polygon_points = p['points'].tolist()  # xy to pixel, and convert to list
-            polygon_data.set(i, polygon_points)
+            polygon_time = p['time']
+            polygon_data.set(i, polygon_points, polygon_time)
         polygon_data.save(output_file)
         return
 
     def __del__(self):
         if type(self.bag) == AnyReader and self.bag.isopen:
             self.bag.close()
-
-def path_to_scenario_name(scenario_folder_path):
-    """
-    reformat a file / folder name to a scenario name.
-    path format:  <path>/year_month_day-hour_min_sec_<any suffix>
-    scenario name: yyyymmdd_HHMMSS
-
-    :param scenario_folder_path:
-    :return:
-    """
-
-    base_name = os.path.basename(os.path.abspath(scenario_folder_path))
-    sp = re.split('_|-', base_name)
-    if len(sp) == 6:  # folder naming format yyyy-mm-dd_HH-MM-SS
-        scenario_name = '{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}'.format(int(sp[0]), int(sp[1]), int(sp[2]), int(sp[3]), int(sp[4]), int(sp[5]))
-    elif len(sp) == 2:  # folder naming format yyyymmdd_HHMMSS
-        scenario_name = '{:08d}_{:06d}'.format(int(sp[0]), int(sp[1]))
-    else:
-        raise Exception('invalid folder naming format: {}'.format(scenario_folder_path))
-
-    return scenario_name
 
 if __name__ == '__main__':
 
@@ -600,7 +603,6 @@ if __name__ == '__main__':
     # image_topic = '/world/baylands/model/gs001_0/link/base_link/sensor/camera_sensor/image'
     # ref_bbox_topic = '/boxes_2d'
     # output_folder = '/home/roee/Projects/datasets/interceptor_drone/common_tests/2025-04-07-08-07-18_gazebo_extracted/'
-
 
     # # bag_file = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_133041/'
     # bag_file = '/home/roee/Projects/datasets/interceptor_drone/20250511_kfar_galim/camera_20250511_140609'
@@ -618,32 +620,6 @@ if __name__ == '__main__':
     # output_folder = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827_extracted/'
     # video_output_file = '/home/roee/Projects/datasets/interceptor_drone/20250519_kfar_galim/camera_20250519_083827.avi'
 
-
-    # bag_file = '/home/roee/Downloads/camera_2025_6_5-12_56_26'
-    # valid_record_times = {'start': -np.inf, 'end': np.inf}
-    # image_topic = '/camera/image_raw'
-    # detection_polygon_topic = '/detection/visualization/roi_bounding_box'
-    # detection_results_bbox_topic = '/detection/visualization/target_bounding_box'
-    # image_topic = '/camera/image_raw'
-    # ref_bbox_topic = None
-    # output_folder = '/home/roee/Downloads/camera_2025_6_5-12_56_26_extracted/'
-    # video_output_file = '/home/roee/Downloads/camera_2025_6_5-12_56_26.avi'
-
-    # bag_file = '/home/roee/Downloads/camera_2025_6_6-3_0_31'
-    # valid_record_times = {'start': -np.inf, 'end': np.inf}
-    # image_topic = '/camera/image_raw'
-    # ref_bbox_topic = None
-    # output_folder = '/home/roee/Downloads/camera_2025_6_6-3_0_31_extracted/'
-    # video_output_file = '/home/roee/Downloads/camera_2025_6_6-3_0_31.avi'
-
-    # bag_file = '/home/roee/Downloads/camera_2025_6_5-11_47_39'
-    # valid_record_times = {'start': -np.inf, 'end': np.inf}
-    # image_topic = '/camera/image_raw'
-    # ref_bbox_topic = None
-    # detection_polygon_topic='/detection/visualization/roi_bounding_box'
-    # detection_results_bbox_topic='/detection/visualization/target_bounding_box'
-    # output_folder = '/home/roee/Downloads/camera_2025_6_5-11_47_39_extracted/'
-    # video_output_file = '/home/roee/Downloads/camera_2025_6_5-11_47_39.avi'
 
     # ------------------ kfar massarik 08.06.2025 ------------------------------
 
@@ -738,46 +714,49 @@ if __name__ == '__main__':
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_163355/camera_20251005_1633'
     # bag_folder = '/home/roee/Projects/datasets/interceptor_drone/20251005_kfar_galim/20251005_163529/camera_20251005_1635'
 
-    # ------------------ 20251214_reshafim ------------------------------
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5 common dataset start %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    # ------------------ 20251214_reshafim ------------------------------  *** clr_format = 'BGR'
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251214_reshafim'
+    # bag_folder = os.path.join(base_folder, '20251214_1124_19/20251214_1234_56/camera_20251214_1335')  # bad
+    # bag_folder = os.path.join(base_folder, '20251214_1232_41/20251214_1233_08/camera_20251214_1333')
+    # bag_folder = os.path.join(base_folder, '20251214_1232_41/20251214_1234_56/camera_20251214_1335')  # bad
+    # bag_folder = os.path.join(base_folder, '20251214_1232_41/20251214_1235_55/camera_20251214_1336')
+    # bag_folder = os.path.join(base_folder, '20251214_1232_41/20251214_1236_52/camera_20251214_1336')  # bad
+    # bag_folder = os.path.join(base_folder, '20251214_1322_23/20251214_1325_35/camera_20251214_1425')  # bad
+    # bag_folder = os.path.join(base_folder, '20251214_1322_23/20251214_1327_07/camera_20251214_1427')
+
+
+    # ------------------ 20251208_reshafim ------------------------------  *** clr_format = 'BGR'
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251208_reshafim'
-    # bag_folder = os.path.join(base_folder, '/20251214_1124_19/20251214_1234_56/camera_20251214_1335'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251214_1322_23/20251214_1327_07/camera_20251214_1427'
-    # bag_folder = os.path.join(base_folder, '/20251214_1322_23/20251214_1325_35/camera_20251214_1425'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251214_1232_41/20251214_1233_08/camera_20251214_1333'
-    # bag_folder = os.path.join(base_folder, '/20251214_1232_41/20251214_1234_56/camera_20251214_1335'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251214_1232_41/20251214_1235_55/camera_20251214_1336'
-    # bag_folder = os.path.join(base_folder, '/20251214_1232_41/20251214_1236_52/camera_20251214_1336'  # bad
-
-    # ------------------ 20251208_reshafim ------------------------------
-    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251208_reshafim'
-    # bag_folder = os.path.join(base_folder, '/20251208_1155_58/20251208_1157_42/camera_20251208_1257'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1155_58/20251208_1200_23/camera_20251208_1300'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1155_58/20251208_1204_12/camera_20251208_1304'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1155_58/20251208_1206_00/camera_20251208_1306'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1155_58/20251208_1207_52/camera_20251208_1307'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1216_03/20251208_1216_29/camera_20251208_1316'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1235_31/20251208_1239_35/camera_20251208_1339'
-    # bag_folder = os.path.join(base_folder, '/20251208_1246_16/20251208_1247_59/camera_20251208_1348'
-    # bag_folder = os.path.join(base_folder, '/20251208_1256_17/20251208_1257_05/camera_20251208_1357'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1256_17/20251208_1259_11/camera_20251208_1359'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1256_17/20251208_1301_26/camera_20251208_1401'
-    # bag_folder = os.path.join(base_folder, '/20251208_1256_17/20251208_1303_25/camera_20251208_1403'
-    # bag_folder = os.path.join(base_folder, '/20251208_1327_30/20251208_1332_56/camera_20251208_1433'
-    # bag_folder = os.path.join(base_folder, '/20251208_1454_32/20251208_1457_05/camera_20251208_1557'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1454_32/20251208_1458_20/camera_20251208_1558'
-    # bag_folder = os.path.join(base_folder, '/20251208_1454_32/20251208_1500_28/camera_20251208_1600'
-    # bag_folder = os.path.join(base_folder, '/20251208_1454_32/20251208_1501_47/camera_20251208_1601'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1509_37/20251208_1511_41/camera_20251208_1611'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1509_37/20251208_1513_17/camera_20251208_1613'
-    # bag_folder = os.path.join(base_folder, '/20251208_1509_37/20251208_1514_28/camera_20251208_1614'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1509_37/20251208_1515_50/camera_20251208_1615'
-    # bag_folder = os.path.join(base_folder, '/20251208_1509_37/20251208_1516_53/camera_20251208_1616'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1521_09/20251208_1523_58/camera_20251208_1624'
-    # bag_folder = os.path.join(base_folder, '/20251208_1521_09/20251208_1525_11/camera_20251208_1625'  # bad
-    # bag_folder = os.path.join(base_folder, '/20251208_1521_09/20251208_1526_27/camera_20251208_1626'
+    # bag_folder = os.path.join(base_folder, '20251208_1155_58/20251208_1157_42/camera_20251208_1257')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1155_58/20251208_1200_23/camera_20251208_1300')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1155_58/20251208_1204_12/camera_20251208_1304')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1155_58/20251208_1206_00/camera_20251208_1306')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1155_58/20251208_1207_52/camera_20251208_1307')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1216_03/20251208_1216_29/camera_20251208_1316')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1235_31/20251208_1239_35/camera_20251208_1339')
+    # bag_folder = os.path.join(base_folder, '20251208_1246_16/20251208_1247_59/camera_20251208_1348')
+    # bag_folder = os.path.join(base_folder, '20251208_1256_17/20251208_1257_05/camera_20251208_1357')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1256_17/20251208_1259_11/camera_20251208_1359')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1256_17/20251208_1301_26/camera_20251208_1401')
+    # bag_folder = os.path.join(base_folder, '20251208_1256_17/20251208_1303_25/camera_20251208_1403')
+    # bag_folder = os.path.join(base_folder, '20251208_1327_30/20251208_1332_56/camera_20251208_1433')
+    # bag_folder = os.path.join(base_folder, '20251208_1454_32/20251208_1457_05/camera_20251208_1557')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1454_32/20251208_1458_20/camera_20251208_1558')
+    # bag_folder = os.path.join(base_folder, '20251208_1454_32/20251208_1500_28/camera_20251208_1600')
+    # bag_folder = os.path.join(base_folder, '20251208_1454_32/20251208_1501_47/camera_20251208_1601')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1509_37/20251208_1511_41/camera_20251208_1611')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1509_37/20251208_1513_17/camera_20251208_1613')
+    # bag_folder = os.path.join(base_folder, '20251208_1509_37/20251208_1514_28/camera_20251208_1614')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1509_37/20251208_1515_50/camera_20251208_1615')
+    # bag_folder = os.path.join(base_folder, '20251208_1509_37/20251208_1516_53/camera_20251208_1616')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1521_09/20251208_1523_58/camera_20251208_1624')
+    # bag_folder = os.path.join(base_folder, '20251208_1521_09/20251208_1525_11/camera_20251208_1625')  # bad
+    # bag_folder = os.path.join(base_folder, '20251208_1521_09/20251208_1526_27/camera_20251208_1626')
 
 
-    # ------------------ kfar_galim 04.12.2025 ------------------------------
+    # ------------------ kfar_galim 04.12.2025 ------------------------------  *** clr_format = 'BGR'
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251204_kfar_galim'
     # bag_folder = os.path.join(base_folder, '20251204_1423_16/20251204_1423_36/camera_20251204_1523')  # bad
     # bag_folder = os.path.join(base_folder, '20251204_1423_16/20251204_1425_28/camera_20251204_1525')  # bad
@@ -793,7 +772,7 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, '20251204_1600_55/20251204_1603_11/camera_20251204_1703')
 
 
-    # ------------------ kfar_galim 26.11.2025 ------------------------------ (RGB)
+    # ------------------ kfar_galim 26.11.2025 ------------------------------  *** clr_format = 'RGB'
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251126_kfar_galim'
     # bag_folder = os.path.join(base_folder, '20251126_1507_31/20251126_1509_36/camera_20251126_1609')  # bad
     # bag_folder = os.path.join(base_folder, '20251126_1507_31/20251126_1510_20/camera_20251126_1610')
@@ -813,12 +792,12 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, '20251126_1603_18/20251126_1607_28/camera_20251126_1707')  # bad
     # bag_folder = os.path.join(base_folder, '20251126_1603_18/20251126_1608_34/camera_20251126_1708')
 
-    # ------------------ kfar_galim 27.10.2025 ------------------------------
+    # ------------------ kfar_galim 27.10.2025 ------------------------------  *** clr_format = 'RGB'
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251027_kfar_galim'
     # bag_folder = os.path.join(base_folder, '20251027_123000/camera_20251027_1230')
 
 
-    # ------------------ lehavim 18.09.2025 ------------------------------
+    # ------------------ lehavim 18.09.2025 ------------------------------  *** clr_format = 'RGB'
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250918_lehavim'
 
     # bag_folder = os.path.join(base_folder, 'hb002/20250910_1441_06/camera_20250910_1441')  # bad
@@ -862,8 +841,7 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, 'pz004/20250918_1341_50/camera_20250918_1341')  # bad
     # bag_folder = os.path.join(base_folder, 'pz004/20250918_1410_23/camera_20250918_1411')  # bad
 
-
-    # ------------------ lehavim 17.09.2025 ------------------------------
+    # ------------------ lehavim 17.09.2025 ------------------------------  *** clr_format = 'RGB'
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250917_lehavim'
     # bag_folder = os.path.join(base_folder, 'hb003/20250915_1028_24/camera_20250915_1028')
     # bag_folder = os.path.join(base_folder, 'hb003/20250917_1506_17/camera_20250917_1506')  # bad
@@ -878,9 +856,8 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, 'hb003/20250917_1747_34/camera_20250917_1747')
     # bag_folder = os.path.join(base_folder, 'hb003/20250917_1754_26/camera_20250917_1754')  # bad
 
-
-    # ------------------ kfar_masarik 08.06.2025 ------------------------------
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250608_kfar_masarik'
+    # ------------------ kfar_masarik 08.06.2025 ------------------------------  *** clr_format = 'RGB'
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250608_kfar_masarik'
     # bag_folder = os.path.join(base_folder, '2025-06-08_17-30-42/camera_2025_6_8-14_30_56')  # bad
     # bag_folder = os.path.join(base_folder, '2025-06-08_18-04-53/camera_2025_6_8-15_4_56')
     # bag_folder = os.path.join(base_folder, '2025-06-08_18-17-57/camera_2025_6_8-14_30_56')  # bad
@@ -901,8 +878,7 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, '2025-06-08_19-24-31/camera_2025_6_8-16_24_34')  # bad
     # bag_folder = os.path.join(base_folder, '2025-06-08_19-25-35/camera_2025_6_8-16_25_38')
 
-
-    # ------------------ hadera 21.04.2025 ------------------------------
+    # ------------------ hadera 21.04.2025 ------------------------------  *** clr_format = 'RGB'
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250421_hadera'
     # bag_folder = os.path.join(base_folder, '2025-04-21_10-57-38/camera_2025_4_21-7_59_8')
     # bag_folder = os.path.join(base_folder, '2025-04-21_10-59-30/camera_2025_4_21-7_59_41')
@@ -911,17 +887,53 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, '2025-04-21_11-24-25/camera_2025_4_21-8_25_32')
     # bag_folder = os.path.join(base_folder, '2025-04-21_11-26-29/camera_2025_4_21-8_26_42')
 
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5 common dataset end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-    # ------------------ kfar_masarik 08.06.2025 ------------------------------
+    # ------------------ reshafim 01.03.2026 ------------------------------
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260103_reshafim'
     # # bag_folder = os.path.join(base_folder, '20260103_1022_41/camera_20260103_1122')
     # bag_folder = os.path.join(base_folder, '20260103_1024_30/camera_20260103_1124')
 
 
     # ------------------ reshafim 20.01.2026 ------------------------------
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260120_reshafim'
-    bag_folder = os.path.join(base_folder, 'camera_20260120_1258')
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260120_reshafim'
+    # bag_folder = os.path.join(base_folder, 'camera_20260120_1258')
+    # bag_folder = os.path.join(base_folder, '20260120_1029_46/20260120_103322/camera_20260120_1133')
+
+    # ------------------ 309 25.02.2026 ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260225_309'
+    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_0912_27/camera_20260225_1012')
+    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_0914_09/camera_20260225_1014')  # bad bag magic
+    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_0915_22/camera_20260225_1015')
+
+    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_0914_09/camera_20260225_1014')  # bad bag magic
+    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_0915_22/camera_20260225_1015')
+
+    # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_1234_37/camera_20260225_1334')  # bad bag magic
+    # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_1235_57/camera_20260225_1336')  # bad bag magic
+    # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_1237_23/camera_20260225_1337')
+
+    # bag_folder = os.path.join(base_folder, '20260225_1347_29/20260225_1348_54/camera_20260225_1448')
+    # bag_folder = os.path.join(base_folder, '20260225_1347_29/20260225_1351_30/camera_20260225_1451')  # bad bag magic
+
+
+    # ------------------ 309 25.02.2026 ------------------------------
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260225_309'
+    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091227/camera_20260225_1012')
+    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091409/camera_20260225_1014')  # bad bag magic
+    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091522/camera_20260225_1015')
+
+    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091409/camera_20260225_1014')  # bad bag magic
+    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091522/camera_20260225_1015')
+
+    # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123437/camera_20260225_1334')  # bad bag magic
+    # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123557/camera_20260225_1336')  # bad bag magic
+    # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123723/camera_20260225_1337')
+
+    bag_folder = os.path.join(base_folder, '20260225_1347_29/20260225_134854/camera_20260225_1448')
+    # bag_folder = os.path.join(base_folder, '20260225_1347_29/20260225_135130/camera_20260225_1451')  # bad bag magic
+
 
 
     valid_record_times = {'start': -np.inf, 'end': np.inf}
@@ -929,11 +941,13 @@ if __name__ == '__main__':
     ref_bbox_topic = None
     detection_polygon_topic='/detection/visualization/roi_bounding_box'
     detection_results_bbox_topic='/detection/visualization/target_bounding_box'
+
+    scen_folder = os.path.dirname(bag_folder)
     output_folder = bag_folder + '_extracted'
     video_output_file = bag_folder + '.avi'
-    # scen_name = path_to_scenario_name(os.path.join(bag_folder,'..'))
-    # detection_polygon_output_file = os.path.join(output_folder, scen_name+'_recorded_detection_roi_polygons.yaml')
-    detection_polygon_output_file = os.path.join(output_folder, os.path.basename(bag_folder) + '_recorded_detection_roi_polygons.yaml')
+    # scen_name = os.path.basename(os.path.dirname(bag_folder))
+    scen_name = common_utils.path_to_scenario_name(os.path.join(bag_folder,'..'))
+    detection_polygon_output_file = os.path.join(output_folder, scen_name + '_recorded_detection_roi_polygons.yaml')
     frame_size = (640, 480)
     clr_format = 'RGB'  # 'BGR' / 'RGB'
 
@@ -947,16 +961,16 @@ if __name__ == '__main__':
     ros_record.analyse_bag()
 
     t1 = time.monotonic()
-    # ros_record.save_to_folder(output_folder, start_time=valid_record_times['start'], end_time=valid_record_times['end'],
-    #                           detection_polygon_output_file = detection_polygon_output_file)
     ros_record.save_to_folder(output_folder, start_time=valid_record_times['start'], end_time=valid_record_times['end'],
-                              detection_polygon_output_file = None)
+                              detection_polygon_output_file = detection_polygon_output_file)
+    # ros_record.save_to_folder(output_folder, start_time=valid_record_times['start'], end_time=valid_record_times['end'],
+    #                           detection_polygon_output_file = None)
 
     print('save_to_folder time - {}sec'.format(time.monotonic()-t1))
 
-    # t1 = time.monotonic()
-    # ros_record.save_to_video(video_output_file, start_time=valid_record_times['start'], end_time=valid_record_times['end'],
-    #                          draw_detection_polygon=True, draw_detection_results=True, draw_frame_id=True)
-    # print('save_to_video time - {}sec'.format(time.monotonic()-t1))
+    t1 = time.monotonic()
+    ros_record.save_to_video(video_output_file, start_time=valid_record_times['start'], end_time=valid_record_times['end'],
+                             draw_detection_polygon=True, draw_detection_results=True, draw_frame_id=True)
+    print('save_to_video time - {}sec'.format(time.monotonic()-t1))
 
     print('Done!')

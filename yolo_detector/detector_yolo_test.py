@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
             roi_polygon = None
             if polygons_per_frame is not None:
-                roi_polygon = polygons_per_frame.get(frame_id)
+                roi_polygon = polygons_per_frame.get_time(frame['time'])
                 # if roi_polygon is not None:
                 #     dttr.set_detection_roi_polygon(roi_polygon, method='crop')
 
