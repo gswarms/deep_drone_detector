@@ -100,28 +100,40 @@ def merge_dataset():
     """
     merge single experiment scenario datasets to one big dataset
     """
+    # -------- dataset_20251211 -------
+    # base_folder = Path('/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset')
+    # merged_dataset_root_folder = base_folder / 'dataset_20251211' / 'merged_dataset_raw'
+    # exp_folders = []
+    # exp_folders.append(base_folder / 'scenarios_vis' / '20251214_reshafim')
+    # exp_folders.append(base_folder / 'scenarios_vis' / '20251208_reshafim')
+    # exp_folders.append(base_folder / 'scenarios_vis' / '20251204_kfar_galim')
+    # exp_folders.append(base_folder / 'scenarios_vis' / '20251126_kfar_galim')
+    # exp_folders.append(base_folder / 'scenarios_vis' / '20251027_kfar_galim')
+    # exp_folders.append(base_folder / 'scenarios_vis' / '20250917_lehavim')
+    # exp_folders.append(base_folder / 'scenarios_vis' / '20250918_lehavim')
+    # exp_folders.append(base_folder / 'scenarios_vis' / '20250608_kfar_masarik')
+    # exp_folders.append(base_folder / 'scenarios_vis' / '20250421_hadera')
+    # # TODO: add  20251005_kfar_galim
+    # # TODO: add  20250730_kfar_galim
+    # discard_exp = ['camera_20251126_1611_extracted','camera_20251126_1613_extracted']
 
-
-
-    base_folder = Path('/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211')
-
-    merged_dataset_root_folder = base_folder / 'merged_dataset_raw'
-
-
+    # -------- dataset_20260323 -------
+    base_folder = Path('/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset')
+    merged_dataset_root_folder = base_folder / 'dataset_20260323' / 'merged_dataset_raw'
     exp_folders = []
-    exp_folders.append(base_folder / '20251214_reshafim')
-    exp_folders.append(base_folder / '20251208_reshafim')
-    exp_folders.append(base_folder / '20251204_kfar_galim')
-    exp_folders.append(base_folder / '20251126_kfar_galim')
-    exp_folders.append(base_folder / '20251027_kfar_galim')
-    exp_folders.append(base_folder / '20250917_lehavim')
-    exp_folders.append(base_folder / '20250918_lehavim')
-    exp_folders.append(base_folder / '20250608_kfar_masarik')
-    exp_folders.append(base_folder / '20250421_hadera')
-    # TODO: add  20251005_kfar_galim
-    # TODO: add  20250730_kfar_galim
+    exp_folders.append(base_folder / 'scenarios_vis' / '20251214_reshafim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20251208_reshafim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20251204_kfar_galim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20251126_kfar_galim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20251027_kfar_galim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20250917_lehavim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20250918_lehavim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20250608_kfar_masarik')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20250421_hadera')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20260218_reshafim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20260322_reshafim')
+    discard_exp = ['camera_20260218_1225_extracted']
 
-    discard_exp = ['camera_20251126_1611_extracted','camera_20251126_1613_extracted']
 
     # init merged dataset
     print('merging dataset to: {}'.format(merged_dataset_root_folder))
@@ -284,12 +296,12 @@ if __name__ == '__main__':
 
 
     # ------------------ kfar_galim 04.12.2025 ------------------------------
-    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251204_kfar_galim'
-    images_metadata = {'datetime': None, 'location': 'kfar_galim',
-                       'camera': 'arducam_imx708_B0310',
-                       'clouds': 'mostly_clear', 'visibility': 'clear', 'daytime': 'day', 'lighting': 'good',
-                       'view_direction':'north_west', 'sun_direction': 'left'}
-    annotations_metadata = {'subcategory': 'fms_1800mm_ranger_green'}
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20251204_kfar_galim'
+    # images_metadata = {'datetime': None, 'location': 'kfar_galim',
+    #                    'camera': 'arducam_imx708_B0310',
+    #                    'clouds': 'mostly_clear', 'visibility': 'clear', 'daytime': 'day', 'lighting': 'good',
+    #                    'view_direction':'north_west', 'sun_direction': 'left'}
+    # annotations_metadata = {'subcategory': 'fms_1800mm_ranger_green'}
 
     # dataset_root_folder = os.path.join(exp_folder, '20251204_1453_40/20251204_1454_07/camera_20251204_1554_extracted')  # no target
     # images_metadata['datetime'] = '20251204_145407'
@@ -443,12 +455,12 @@ if __name__ == '__main__':
 
 
     # ------------------ hadera 21.04.2025 ------------------------------
-    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250421_hadera'
-    images_metadata = {'datetime': None, 'location': 'hadera',
-                       'camera': 'arducam_imx708_B0310',
-                       'clouds': 'clear', 'visibility': 'good', 'daytime': 'day', 'lighting': 'good',
-                       'view_direction': 'south', 'sun_direction': 'front'}
-    annotations_metadata = {'subcategory': 'E-Flite_Apprentice_Sts1.5M_blackened'}
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250421_hadera'
+    # images_metadata = {'datetime': None, 'location': 'hadera',
+    #                    'camera': 'arducam_imx708_B0310',
+    #                    'clouds': 'clear', 'visibility': 'good', 'daytime': 'day', 'lighting': 'good',
+    #                    'view_direction': 'south', 'sun_direction': 'front'}
+    # annotations_metadata = {'subcategory': 'E-Flite_Apprentice_Sts1.5M_blackened'}
 
     # dataset_root_folder = os.path.join(exp_folder, '2025-04-21_10-57-38/camera_2025_4_21-7_59_8_extracted')  # no target (almost)
     # images_metadata['datetime'] = '20250421_105738'
@@ -460,8 +472,41 @@ if __name__ == '__main__':
     # images_metadata['datetime'] = '20250421_111303'
     # dataset_root_folder = os.path.join(exp_folder, '2025-04-21_11-24-25/camera_2025_4_21-8_25_32_extracted')  # passes far - OK
     # images_metadata['datetime'] = '20250421_112425'
-    dataset_root_folder = os.path.join(exp_folder, '2025-04-21_11-26-29/camera_2025_4_21-8_26_42_extracted')  # passes far - OK
-    images_metadata['datetime'] = '20250421_112629'
+    # dataset_root_folder = os.path.join(exp_folder, '2025-04-21_11-26-29/camera_2025_4_21-8_26_42_extracted')  # passes far - OK
+    # images_metadata['datetime'] = '20250421_112629'
+
+
+
+    # ------------------ 20260322_reshafim ------------------------------ (10" quadrotor target)
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/20260322_reshafim'
+    # images_metadata = {'datetime': None, 'location': 'reshafim',
+    #                    'camera': 'arducam_imx708_B0310',
+    #                    'clouds': 'partly_cloudy', 'visibility': 'good', 'daytime': 'afternoon', 'lighting': 'good',
+    #                    'view_direction': 'east', 'sun_direction': 'back'}
+    # annotations_metadata = {'subcategory': '10in_quad'}
+    # dataset_root_folder = os.path.join(exp_folder, '20260322_1459_23/camera_20260322_1559_f1_extracted')
+    # images_metadata['datetime'] = '20260322_145923'
+    # dataset_root_folder = os.path.join(exp_folder, '20260322_1459_23/camera_20260322_1559_f2_extracted')
+    # images_metadata['datetime'] = '20260322_145923'
+    # dataset_root_folder = os.path.join(exp_folder, '20260322_1459_23/camera_20260322_1559_f3_extracted')
+    # images_metadata['datetime'] = '20260322_145923'
+
+
+    # ------------------ 20260218_reshafim ------------------------------ (18" quadrotor target)
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/20260218_reshafim'
+    images_metadata = {'datetime': None, 'location': 'reshafim',
+                       'camera': 'arducam_imx708_B0310',
+                       'clouds': 'mostly_clear', 'visibility': 'light_haze', 'daytime': 'noon', 'lighting': 'good',
+                       'view_direction': 'west', 'sun_direction': 'left'}
+    annotations_metadata = {'subcategory': '18in_quad'}
+    dataset_root_folder = os.path.join(exp_folder, '20260218_1019_25/20260218_1020_18/camera_20260218_1120_extracted')
+    images_metadata['datetime'] = '20260218_102018'
+    # dataset_root_folder = os.path.join(exp_folder, '20260218_1123_37/20260218_1124_44/camera_20260218_1225_extracted')
+    # images_metadata['datetime'] = '20260218_112444'
+    # dataset_root_folder = os.path.join(exp_folder, '20260218_1306_42/20260218_1307_22/camera_20260218_1407_extracted')  # only far target
+    # images_metadata['datetime'] = '20260218_130722'
+    # dataset_root_folder = os.path.join(exp_folder, '20260218_1306_42/20260218_1309_26/camera_20260218_1409_extracted')  # only far target
+    # images_metadata['datetime'] = '20260218_130926'
 
 
 

@@ -896,44 +896,91 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, '20260103_1024_30/camera_20260103_1124')
 
 
-    # ------------------ reshafim 20.01.2026 ------------------------------
+    # ------------------ reshafim 20.01.2026 ------------------------------ (rc-plane)
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260120_reshafim'
-    # bag_folder = os.path.join(base_folder, 'camera_20260120_1258')
+    # bag_folder = os.path.join(base_folder, '20260120_1005_54/20260120_1006_12/camera_20260120_1106')
+    # bag_folder = os.path.join(base_folder, '20260120_1029_46/20260120_1032_24/camera_20260120_1132')
     # bag_folder = os.path.join(base_folder, '20260120_1029_46/20260120_103322/camera_20260120_1133')
+    # bag_folder = os.path.join(base_folder, '20260120_1110_10/20260120_1111_10/camera_20260120_1211')
+    # bag_folder = os.path.join(base_folder, '20260120_1157_26/20260120_1158_03/camera_20260120_1258')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260120_1258_00/camera_20260120_1258')  # bad magic
 
-    # ------------------ 309 25.02.2026 ------------------------------
+
+    # ------------------ 309 25.02.2026 ------------------------------ (rc-plane)
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260225_309'
     # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_0912_27/camera_20260225_1012')
     # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_0914_09/camera_20260225_1014')  # bad bag magic
     # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_0915_22/camera_20260225_1015')
-
     # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_0914_09/camera_20260225_1014')  # bad bag magic
     # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_0915_22/camera_20260225_1015')
-
     # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_1234_37/camera_20260225_1334')  # bad bag magic
     # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_1235_57/camera_20260225_1336')  # bad bag magic
     # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_1237_23/camera_20260225_1337')
-
     # bag_folder = os.path.join(base_folder, '20260225_1347_29/20260225_1348_54/camera_20260225_1448')
     # bag_folder = os.path.join(base_folder, '20260225_1347_29/20260225_1351_30/camera_20260225_1451')  # bad bag magic
 
+    # ------------------ 20260322_reshafim ------------------------------ (10" quadrotor target)
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260322_reshafim/'
+    # bag_folder = os.path.join(base_folder, '20260322_1459_23/camera_20260322_1559')
+    # valid_record_times = {'start': 1774184384.332746792, 'end': 1774184393.383570394}
+    # valid_record_times = {'start': 1774184396.711760611, 'end': 1774184405.281982002}
+    # valid_record_times = {'start': 1774184408.932056670, 'end': 1774184418.157677743 }
 
-    # ------------------ 309 25.02.2026 ------------------------------
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260225_309'
-    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091227/camera_20260225_1012')
-    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091409/camera_20260225_1014')  # bad bag magic
-    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091522/camera_20260225_1015')
+    # ------------------ 20260218_reshafim ------------------------------ (18" quadrotor target)
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260218_reshafim'
+    # bag_folder = os.path.join(base_folder, '20260218_1019_25/20260218_1020_18/camera_20260218_1120')
+    # bag_folder = os.path.join(base_folder, '20260218_1042_35/20260218_1044_43/camera_20260218_1144')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260218_1123_37/20260218_1124_44/camera_20260218_1225')
+    # bag_folder = os.path.join(base_folder, '20260218_1306_42/20260218_1307_22/camera_20260218_1407')
+    # bag_folder = os.path.join(base_folder, '20260218_1306_42/20260218_1308_29/camera_20260218_1408')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260218_1306_42/20260218_1309_26/camera_20260218_1409')
 
-    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091409/camera_20260225_1014')  # bad bag magic
-    # bag_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091522/camera_20260225_1015')
+    # ------------------ 20260215_reshafim ------------------------------ (rc plane)
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260215_reshafim'
+    # bag_folder = os.path.join(base_folder, '20260215_1306_22/20260215_1310_35/camera_20260215_1410')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260215_1424_51/20260215_1425_49/camera_20260215_1526')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260215_1424_51/20260215_1428_31/camera_20260215_1528')
+    # bag_folder = os.path.join(base_folder, '20260215_1424_51/20260215_1431_14/camera_20260215_1531')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260215_1510_13/20260215_1511_47/camera_20260215_1611')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260215_1537_35/20260215_1537_53/camera_20260215_1637')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260215_1537_35/20260215_1539_19/camera_20260215_1639')  # bad magic
 
-    # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123437/camera_20260225_1334')  # bad bag magic
-    # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123557/camera_20260225_1336')  # bad bag magic
-    # bag_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123723/camera_20260225_1337')
+    # ------------------ 20260209_reshafim ------------------------------ (rc plane / 18" quadrotor - lense out of focus)
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim'
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/20260209_0920_32/20260209_0923_57/camera_20260209_1024')
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/20260209_0920_32/20260209_0924_58/camera_20260209_1025')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/20260209_1039_12/20260209_1043_28/camera_20260209_1143')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/20260209_1337_18/20260209_1339_17/camera_20260209_1439')
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/20260209_1337_18/20260209_1341_32/camera_20260209_1441')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/20260209_1620_51/20260209_1623_40/camera_20260209_1723')
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1122_55/camera_20260209_1223')
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1134_23/camera_20260209_1234')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1134_57/camera_20260209_1235')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1137_07/camera_20260209_1237')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1138_29/camera_20260209_1238')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1316_17/camera_20260209_1416')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1339_17/camera_20260209_1439')
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1341_32/camera_20260209_1441')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1621_53/camera_20260209_1722')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1622_32/camera_20260209_1722')  # bad magic
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1623_40/camera_20260209_1723')
+    # bag_folder = os.path.join(base_folder, '/home/roee/Projects/datasets/interceptor_drone/20260209_reshafim/hb005/20260209_1625_12/camera_20260209_1725')  # bad magic
 
-    bag_folder = os.path.join(base_folder, '20260225_1347_29/20260225_134854/camera_20260225_1448')
-    # bag_folder = os.path.join(base_folder, '20260225_1347_29/20260225_135130/camera_20260225_1451')  # bad bag magic
 
+    # ------------------ 20260208_reshafim ------------------------------ (rc plane / 18" quadrotor - lense out of focus)
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260208_reshafim'
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1346_25/camera_20260208_1446')  # bad magic
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1348_54/camera_20260208_1449')  # bad magic
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1351_03/camera_20260208_1451')
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1419_19/camera_20260208_1519')
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1513_51/camera_20260208_1614')  # bad magic
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1517_47/camera_20260208_1617')
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1531_15/camera_20260208_1631')  # bad magic
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1558_39/camera_20260208_1658')  # bad magic
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1600_22/camera_20260208_1700')
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1602_30/camera_20260208_1702')
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1616_00/camera_20260208_1716')  # bad magic
+    # bag_folder = os.path.join(base_folder, 'hb013/20260208_1620_24/camera_20260208_1720')
 
 
     valid_record_times = {'start': -np.inf, 'end': np.inf}
