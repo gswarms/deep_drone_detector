@@ -140,6 +140,7 @@ class Annotator:
                 if x1 <= x <= x1+x2 and y1 <= y <= y1+y2:
                     del self.current_annotation_boxes[i]
                     del self.current_annotation_classes[i]
+                    del self.current_annotation_ids[i]
                     print("Removed annotation.")
                     box_removed = True
                     break
@@ -569,11 +570,33 @@ if __name__ == "__main__":
     # TODO: add  20251005_kfar_galim
     # TODO: add  20250730_kfar_galim
 
+    # ------------------ hadera 21.04.2025 ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250421_hadera'
+    # base_folder = os.path.join(exp_folder, '2025-04-21_10-57-38/camera_2025_4_21-7_59_8_extracted')  # no target (almost)
+    # base_folder = os.path.join(exp_folder, '2025-04-21_10-59-30/camera_2025_4_21-7_59_41_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '2025-04-21_11-11-25/camera_2025_4_21-8_12_28_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '2025-04-21_11-13-03/camera_2025_4_21-8_13_40_extracted')  # OK
+    # base_folder = os.path.join(exp_folder, '2025-04-21_11-24-25/camera_2025_4_21-8_25_32_extracted')  # passes far - OK
+    # base_folder = os.path.join(exp_folder, '2025-04-21_11-26-29/camera_2025_4_21-8_26_42_extracted')  # passes far - OK
 
-    # data_format = 'coco_dataset'
-    # annotations_file_name = "coco_dataset.json"
-    # categories = ['rc-plane']
-    # color_space = 'BGR'
+    # ------------------ 20260322_reshafim ------------------------------ (10" quadrotor target)
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/20260322_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260322_1459_23/camera_20260322_1559_f1_extracted')
+    # base_folder = os.path.join(exp_folder, '20260322_1459_23/camera_20260322_1559_f2_extracted')
+    # base_folder = os.path.join(exp_folder, '20260322_1459_23/camera_20260322_1559_f3_extracted')
+
+    # ------------------ 20260218_reshafim ------------------------------ (18" quadrotor target)
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/20260218_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260218_1019_25/20260218_1020_18/camera_20260218_1120_extracted')
+    # base_folder  = os.path.join(exp_folder, '20260218_1123_37/20260218_1124_44/camera_20260218_1225_extracted')
+    # base_folder = os.path.join(exp_folder, '20260218_1306_42/20260218_1307_22/camera_20260218_1407_extracted')
+    # base_folder = os.path.join(exp_folder, '20260218_1306_42/20260218_1309_26/camera_20260218_1409_extracted')
+
+
+    data_format = 'coco_dataset'
+    annotations_file_name = "coco_dataset.json"
+    categories = ['rc-plane']
+    color_space = 'BGR'
 
 
     print("Controls:")
