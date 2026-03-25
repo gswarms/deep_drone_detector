@@ -28,7 +28,7 @@ class SingleFrameDetector:
         """
         self.verbose = verbose
         self.model_name = model_name
-        if self.model_name not in ['yolov8n','yolov11n','yolov26n']:
+        if self.model_name not in ['yolov8n','yolov11n','yolov26n','yolov26np2']:
             raise Exception('invalid model type!')
         self.model_compilation_type = None
         self.onnx_input_name = None
@@ -237,6 +237,8 @@ class SingleFrameDetector:
             results = self._onnx_postprocess_yolo11(predictions, conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold, max_num_detections=max_num_detections)
         elif self.model_name == 'yolov26n':
             results = self._onnx_postprocess_yolo26(predictions, conf_threshold=conf_threshold, max_num_detections=max_num_detections)
+        elif self.model_name == 'yolov26np2':
+            results = self._onnx_postprocess_yolo26p2(predictions, conf_threshold=conf_threshold, max_num_detections=max_num_detections)
         return results
 
     def _onnx_postprocess_yolo11(self, predictions, conf_threshold=0.4, nms_iou_threshold=0.5, max_num_detections=10):
@@ -370,6 +372,62 @@ class SingleFrameDetector:
             x1, y1, x2, y2, conf, cls = det
             results.append({
                 "bbox": [x1, y1, x2 - x1, y2 - y1],
+                "class": int(cls),
+                "confidence": float(conf)
+            })
+        sorted_results = sorted(results, key=itemgetter('confidence'))
+
+        return sorted_results[:max_num_detections]
+
+
+    def _onnx_postprocess_yolo26p2(self, predictions, conf_threshold=0.4, max_num_detections=10):
+        """
+        post-processing onnx results:
+        1. Translate objectness score and class score to confidence level
+        2. Converts from YOLO center-based box format to corner coordinates
+        3. Non-Maximal Suppression - Suppresses overlapping boxes for cleaner results
+
+        *** important note:
+            it matters if the onnx is exported with 'simplify'=True or 'simplify'=False!
+            if 'simplify'=True the results are (m,5,N) where:
+                - m = batch size (number of images)
+                - data per yolo_detector is: [x, y, w, h, confidence]
+                - N = number of detections
+
+            if 'simplify'=False the results are (m,5+num_classes,N)
+                - m = batch size (number of images)
+                - data per yolo_detector is: [x, y, w, h, objectness_confidence, class1_confidence, ... ,classn_confidence]
+                - N = number of detections
+
+            so different format is needed in post process.
+
+
+        :param predictions:
+        :param conf_threshold: detections with confidence scores lower than this threshold are discarded.
+        :param nms_iou_threshold: The threshold used in NMS to decide whether boxes overlap too much with respect to
+                                  Intersection over Union (IoU). If the IoU is greater than this value,
+                                  the box with the lower score is suppressed.
+        :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
+        :return:
+        """
+        # Remove batch dimension if present
+        predictions = np.squeeze(predictions)
+
+        # Filter by confidence
+        mask = predictions[4, :] > conf_threshold
+        detections = predictions[:, mask].transpose()
+
+        results = []
+        for det in detections:
+            if det.size == 6:
+                xc, yc, w, h, conf, cls = det
+            elif det.size == 5:
+                xc, yc, w, h, conf = det
+                cls = 0
+            x1 = xc - w / 2
+            y1 = yc - h / 2
+            results.append({
+                "bbox": [x1, y1, w, h],
                 "class": int(cls),
                 "confidence": float(conf)
             })
