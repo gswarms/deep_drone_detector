@@ -493,14 +493,14 @@ if __name__ == '__main__':
 
 
     # ------------------ 20260218_reshafim ------------------------------ (18" quadrotor target)
-    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/20260218_reshafim'
-    images_metadata = {'datetime': None, 'location': 'reshafim',
-                       'camera': 'arducam_imx708_B0310',
-                       'clouds': 'mostly_clear', 'visibility': 'light_haze', 'daytime': 'noon', 'lighting': 'good',
-                       'view_direction': 'west', 'sun_direction': 'left'}
-    annotations_metadata = {'subcategory': '18in_quad'}
-    dataset_root_folder = os.path.join(exp_folder, '20260218_1019_25/20260218_1020_18/camera_20260218_1120_extracted')
-    images_metadata['datetime'] = '20260218_102018'
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/20260218_reshafim'
+    # images_metadata = {'datetime': None, 'location': 'reshafim',
+    #                    'camera': 'arducam_imx708_B0310',
+    #                    'clouds': 'mostly_clear', 'visibility': 'light_haze', 'daytime': 'noon', 'lighting': 'good',
+    #                    'view_direction': 'west', 'sun_direction': 'left'}
+    # annotations_metadata = {'subcategory': '18in_quad'}
+    # dataset_root_folder = os.path.join(exp_folder, '20260218_1019_25/20260218_1020_18/camera_20260218_1120_extracted')
+    # images_metadata['datetime'] = '20260218_102018'
     # dataset_root_folder = os.path.join(exp_folder, '20260218_1123_37/20260218_1124_44/camera_20260218_1225_extracted')
     # images_metadata['datetime'] = '20260218_112444'
     # dataset_root_folder = os.path.join(exp_folder, '20260218_1306_42/20260218_1307_22/camera_20260218_1407_extracted')  # only far target
@@ -508,6 +508,57 @@ if __name__ == '__main__':
     # dataset_root_folder = os.path.join(exp_folder, '20260218_1306_42/20260218_1309_26/camera_20260218_1409_extracted')  # only far target
     # images_metadata['datetime'] = '20260218_130926'
 
+
+    # ------------------ 20260324_reshafim ------------------------------ (10" quadrotor target)
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/20260324_reshafim'
+    # images_metadata = {'datetime': None, 'location': 'reshafim',
+    #                    'camera': 'arducam_imx708_B0310',
+    #                    'clouds': 'partly_cloudy', 'visibility': 'good', 'daytime': 'noon', 'lighting': 'good',
+    #                    'view_direction': 'west', 'sun_direction': 'up'}
+    # annotations_metadata = {'subcategory': '10in_quad'}
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f1_extracted')
+    # images_metadata['datetime'] = '20260324_103104'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f2_extracted')
+    # images_metadata['datetime'] = '20260324_103104'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f3_extracted')
+    # images_metadata['datetime'] = '20260324_103104'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f4_extracted')
+    # images_metadata['datetime'] = '20260324_103104'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1037_17/20260324_1037_40/camera_20260324_1137_f1_extracted')
+    # images_metadata['datetime'] = '20260324_103740'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1037_17/20260324_1037_40/camera_20260324_1137_f2_extracted')
+    # images_metadata['datetime'] = '20260324_103740'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1037_17/20260324_1037_40/camera_20260324_1137_f3_extracted')
+    # images_metadata['datetime'] = '20260324_103740'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1037_17/20260324_1042_30/camera_20260324_1142_f1_extracted')
+    # images_metadata['datetime'] = '20260324_104230'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1037_17/20260324_1042_30/camera_20260324_1142_f2_extracted')
+    # images_metadata['datetime'] = '20260324_104230'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1037_17/20260324_1042_30/camera_20260324_1142_f3_extracted')
+    # images_metadata['datetime'] = '20260324_104230'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1048_29/20260324_1049_06/camera_20260324_1149_f1_extracted')
+    # images_metadata['datetime'] = '20260324_104906'
+    # dataset_root_folder = os.path.join(exp_folder, '20260324_1048_29/20260324_1049_06/camera_20260324_1149_f2_extracted')
+    # images_metadata['datetime'] = '20260324_104906'
+
+
+    # ------------------ 20260325_reshafim ------------------------------ (10" quadrotor target)
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/20260325_reshafim'
+    images_metadata = {'datetime': None, 'location': 'reshafim',
+                       'camera': 'arducam_imx708_B0310',
+                       'clouds': 'mostly_cloudy', 'visibility': 'good', 'daytime': 'noon', 'lighting': 'good',
+                       'view_direction': 'east', 'sun_direction': 'up'}
+    annotations_metadata = {'subcategory': '10in_quad'}
+    # dataset_root_folder = os.path.join(exp_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f1_extracted')
+    # images_metadata['datetime'] = '20260325_120703'
+    # dataset_root_folder = os.path.join(exp_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f2_extracted')
+    # images_metadata['datetime'] = '20260325_120703'
+    # dataset_root_folder = os.path.join(exp_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f3_extracted')
+    # images_metadata['datetime'] = '20260325_120703'
+    # dataset_root_folder = os.path.join(exp_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f4_extracted')
+    # images_metadata['datetime'] = '20260325_120703'
+    dataset_root_folder = os.path.join(exp_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f5_extracted')
+    images_metadata['datetime'] = '20260325_120703'
 
 
     # ----------------------- add dataset metadata ---------------------

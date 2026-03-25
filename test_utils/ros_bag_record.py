@@ -983,7 +983,36 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, 'hb013/20260208_1620_24/camera_20260208_1720')
 
 
-    valid_record_times = {'start': -np.inf, 'end': np.inf}
+    # ------------------ 20260324_reshafim ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260324_reshafim'
+    # bag_folder = os.path.join(base_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131')
+    # valid_record_times = {'start': 1774341088.511273944, 'end': 1774341107.831755309}
+    # valid_record_times = {'start': 1774341108.822549225, 'end': 1774341140.032557584}
+    # valid_record_times = {'start': 1774341143.203098115, 'end': 1774341151.129449444}
+    # valid_record_times = {'start': 1774341162.622658872, 'end': 1774341175.800217957}
+    # bag_folder = os.path.join(base_folder, '20260324_1037_17/20260324_1037_40/camera_20260324_1137')
+    # valid_record_times = {'start': 1774341491.030302707, 'end': 1774341507.485129842}
+    # valid_record_times = {'start': 1774341553.300530886, 'end': 1774341561.366622620}
+    # valid_record_times = {'start': 1774341573.196890495, 'end': 1774341595.727706104}
+    # bag_folder = os.path.join(base_folder, '20260324_1037_17/20260324_1042_30/camera_20260324_1142')
+    # valid_record_times = {'start': 1774341774.101288827, 'end': 1774341793.229704096}
+    # valid_record_times = {'start': 1774341809.108145897, 'end': 1774341815.515236448}
+    # valid_record_times = {'start': 1774341850.986375442, 'end': 1774341863.614843775}
+    # bag_folder = os.path.join(base_folder, '20260324_1048_29/20260324_1049_06/camera_20260324_1149')
+    # valid_record_times = {'start': 1774342179.798100476, 'end': 1774342200.653628793}
+    # valid_record_times = {'start': 1774342209.228744498, 'end': 1774342223.838200883}
+
+
+    # ------------------ 20260325_reshafim ------------------------------
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260325_reshafim'
+    bag_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307')
+    # valid_record_times = {'start': 1774433258.376069064, 'end': 1774433273.599835676}
+    # valid_record_times = {'start': 1774433288.305787097, 'end': 1774433295.348073693}
+    # valid_record_times = {'start': 1774433308.604142580, 'end': 1774433315.439303099}
+    # valid_record_times = {'start': 1774433327.038363375, 'end': 1774433334.391339085}
+    valid_record_times = {'start': 1774433341.330062643, 'end': 1774433350.547173041}
+
+    # valid_record_times = {'start': -np.inf, 'end': np.inf}
     image_topic = '/camera/image_raw'
     ref_bbox_topic = None
     detection_polygon_topic='/detection/visualization/roi_bounding_box'
