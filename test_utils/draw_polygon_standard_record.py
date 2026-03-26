@@ -83,6 +83,15 @@ if __name__ == '__main__':
     show_polygons = True
 
     if annotate_polygons:
+
+        print("Controls:")
+        print("  D / right arrow       : Next image")
+        print("  A / left arrow        : Prev image")
+        print("  P                     : Start marking new polygon")
+        print("  Q / ESC               : Save and exit")
+        print("  mouse LB              : mark bbox points")
+        print("  mouse LB double click : finish mark bbox points")
+
         video_time_step = 1
 
         # Check images folder
@@ -96,7 +105,10 @@ if __name__ == '__main__':
         frame_polygons = []
         done = False
         frame_polygons = roi_utils.PolygonPerFrame(frame_size=frame_size)
-        for frm in frames:
+        frame_index = 0
+        while True:
+            # for frm in frames:
+            frm = frames[frame_index]
 
             # Capture frame-by-frame
             frame_id = frm['id']
@@ -109,9 +121,16 @@ if __name__ == '__main__':
                 if image_resize is not None:
                     frame = cv2.resize(frame, image_resize)
 
-                cv2.imshow("image", frame)
+                curr_poly = frame_polygons.get_id(frame_id)
+                if curr_poly is not None:
+                    pts = np.array(curr_poly, dtype=np.int32)
+                    pts = pts.reshape((-1, 1, 2))
+                    cv2.polylines(frame, [pts], isClosed=True, color=(200, 200, 0), thickness=2)
+
                 cv2.putText(frame, 'frame {}'.format(frame_id), (20,20),
                             fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5,   color=(100, 255, 255))
+
+                cv2.imshow("image", frame)
                 cv2.waitKey(100)
                 key = cv2.waitKey(0)
                 # wait for user key:
@@ -119,8 +138,14 @@ if __name__ == '__main__':
                 # - esc means stop marking
                 # - anything else mean mark this frame
 
-                if key == ord('\x1b'):  # press ESC to quit
+                if key == ord('\x1b') or key == ord('q'):  # press ESC to quit
                     break
+
+                if key == ord('d') or key == ord('D') or key == 65363:  # d / D / right arrow
+                    frame_index = min(frame_index + 1, len(frames)-1)
+
+                elif key == ord('a') or key == ord('A') or key == 65361:  # a / A / left arrow
+                    frame_index = max(frame_index - 1, 0)
 
                 elif key == ord('p'):  # press 'p' to mark a polygon
                     print('set polygon frame')
@@ -149,8 +174,10 @@ if __name__ == '__main__':
                     # User finished entering the polygon points, so let's make the final drawing
                     # of a filled polygon
                     if len(points) > 0:
-                        image = cv2.polylines(frame, np.array([points]),
+                        frame = cv2.polylines(frame, np.array([points]),
                                               isClosed=True, color=(255, 0, 0), thickness=3)
+                    cv2.putText(frame, "frame {}".format(frame_id), (10, 30),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
                     # And show it
                     cv2.imshow("image", frame)
                     # Waiting for the user to press any key
@@ -162,11 +189,11 @@ if __name__ == '__main__':
                         print('Warning! invalid number of polygon points! got {} expecting {}! skipping this frame.'.format(len(points), polygon_num_points))
 
                 else:
-                    print('skip frame')
+                    pass
 
-                frame_id = frame_id + 1
             else:
                 break
+
 
         # add interpolated polygons to all frames
         frame_ids = [x['id'] for x in frames]
