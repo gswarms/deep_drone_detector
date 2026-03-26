@@ -259,10 +259,10 @@ if __name__ == '__main__':
 
 
     # ------------------ 309 25.02.2026 ------------------------------
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260225_309'
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260225_309'
     # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091227/camera_20260225_1012_extracted')
     # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091409/camera_20260225_1014_extracted')  # bad bag magic
-    record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091522/camera_20260225_1015_extracted')
+    # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091522/camera_20260225_1015_extracted')
     # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091409/camera_20260225_1014_extracted')  # bad bag magic
     # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091522/camera_20260225_1015_extracted')
     # record_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123437/camera_20260225_1334_extracted')  # bad bag magic
@@ -280,14 +280,14 @@ if __name__ == '__main__':
     # record_folder = os.path.join(base_folder, '20260322_1459_23/camera_20260322_1559_f3_extracted')
 
     # ------------------ 20260218_reshafim ------------------------------ (18" quadrotor target)
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/scenarios_vis/20260218_reshafim'
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/scenarios_vis/20260218_reshafim'
     # record_folder = os.path.join(base_folder, '20260218_1019_25/20260218_1020_18/camera_20260218_1120_extracted')
-    record_folder = os.path.join(base_folder, '20260218_1123_37/20260218_1124_44/camera_20260218_1225_extracted')
+    # record_folder = os.path.join(base_folder, '20260218_1123_37/20260218_1124_44/camera_20260218_1225_extracted')
     # record_folder = os.path.join(base_folder, '20260218_1306_42/20260218_1307_22/camera_20260218_1407_extracted')  # only far target
     # record_folder = os.path.join(base_folder, '20260218_1306_42/20260218_1309_26/camera_20260218_1409_extracted')  # only far target
 
     # ------------------ 20260324_reshafim ------------------------------ (10" quadrotor target)
-    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260324_reshafim'
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/scenarios_vis/20260324_reshafim'
     # record_folder = os.path.join(base_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f1_extracted')
     # record_folder = os.path.join(base_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f2_extracted')
     # record_folder = os.path.join(base_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f3_extracted')
@@ -302,12 +302,12 @@ if __name__ == '__main__':
     # record_folder = os.path.join(base_folder, '20260324_1048_29/20260324_1049_06/camera_20260324_1149_f2_extracted')
 
     # ------------------ 20260325_reshafim ------------------------------ (10" quadrotor target)
-    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260325_reshafim'
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/scenarios_vis/20260325_reshafim'
     # record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f1_extracted')
     # record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f2_extracted')
     # record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f3_extracted')
     # record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f4_extracted')
-    # record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f5_extracted')
+    record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f5_extracted')
 
 
 
@@ -315,8 +315,8 @@ if __name__ == '__main__':
     frame_resize = None
     start_time = -np.inf
     scen_name = common_utils.path_to_scenario_name(os.path.join(record_folder,'..'))
-    polygons_file = os.path.join(record_folder, scen_name+'_recorded_detection_roi_polygons.yaml')  # ***optional
-    # polygons_file = os.path.join(record_folder, scen_name+'_manual_detection_roi_polygons.yaml')  # ***optional
+    # polygons_file = os.path.join(record_folder, scen_name+'_recorded_detection_roi_polygons.yaml')  # ***optional
+    polygons_file = os.path.join(record_folder, scen_name+'_manual_detection_roi_polygons.yaml')  # ***optional
 
     # -------------------- yolov8n -------------
     # model_path = 'runs/detect/drone_detector_yolov8n/weights/best.pt'
