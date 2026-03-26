@@ -1,3 +1,4 @@
+import copy
 import os
 import numpy as np
 import yaml
@@ -58,6 +59,8 @@ class PolygonPerFrame:
         return
 
     def set(self, frame_id, polygon, time=None):
+        polygon = self._to_list(polygon)
+
         if frame_id in self.frame_ids:
             idx = int(np.argwhere(self.frame_ids == frame_id).flatten()[0])
             self.frame_polygons[idx]['polygon'] = polygon
@@ -127,8 +130,11 @@ class PolygonPerFrame:
         if len(self.frame_polygons) > 0:
 
             if valid_time_gap is None:
-                time_step =  np.median(np.diff(np.array(self.polygon_times)))
-                valid_time_gap = 0.4 * time_step
+                # d1 = np.diff(np.array(self.polygon_times))
+                # d2 = np.diff(np.array(self.frame_ids))
+                # time_step =  np.median(np.divide(d1,d2))
+                # valid_time_gap = 0.4 * time_step
+                valid_time_gap = np.inf
 
             # find the closest polygon in time
             res_polygons = []
@@ -215,33 +221,39 @@ class PolygonPerFrame:
 
         # pad to beginning
         if interp_by_time:
-            if min(self.polygon_times) >= frame_times[0]:
+            if min(self.polygon_times) > frame_times[0]:
                 p = self.get_time(min(self.polygon_times))
-                self.set(frame_ids[0], p, frame_times[0])
+                pc = copy.deepcopy(p)
+                self.set(frame_ids[0], pc, frame_times[0])
         else:
-            if min(self.frame_ids) >= frame_ids[0]:
+            if min(self.frame_ids) > frame_ids[0]:
                 p = self.get_id(min(self.frame_ids))
+                pc = copy.deepcopy(p)
                 if frame_times is not None:
                     idx = self.frame_ids == min(self.frame_ids)
                     t = self.polygon_times[idx]
-                    self.set(frame_ids[0], p, t)
+                    tc = copy.deepcopy(t)
+                    self.set(frame_ids[0], pc, tc)
                 else:
-                    self.set(frame_ids[0], p)
+                    self.set(frame_ids[0], pc)
 
         # pad to end
         if interp_by_time:
-            if max(self.polygon_times) <= frame_times[-1]:
+            if max(self.polygon_times) < frame_times[-1]:
                 p = self.get_time(max(self.polygon_times))
-                self.set(frame_ids[-1], p, frame_times[-1])
+                pc = copy.deepcopy(p)
+                self.set(frame_ids[-1], pc, frame_times[-1])
         else:
-            if max(self.frame_ids) <= frame_ids[-1]:
+            if max(self.frame_ids) < frame_ids[-1]:
                 p = self.get_id(max(self.frame_ids))
+                pc = copy.deepcopy(p)
                 if frame_times is not None:
                     idx = self.frame_ids == max(self.frame_ids)
                     t = self.polygon_times[idx]
-                    self.set(frame_ids[-1], p, t)
+                    tc = copy.deepcopy(t)
+                    self.set(frame_ids[-1], pc, tc)
                 else:
-                    self.set(frame_ids[-1], p)
+                    self.set(frame_ids[-1], pc)
 
         # add new frame ids
         for i, fid in enumerate(frame_ids):
@@ -256,11 +268,11 @@ class PolygonPerFrame:
                     # find prev reference
                     idx1 = _closest_below(self.polygon_times, est_time)
                     prev_time = self.polygon_times[idx1]
-                    prev_poly = self.get_time(prev_time)
+                    prev_poly = np.array(self.get_time(prev_time))
                     # find next reference
                     idx2 = _closest_above(self.polygon_times, est_time)
                     next_time = self.polygon_times[idx2]
-                    next_poly = self.get_time(next_time)
+                    next_poly = np.array(self.get_time(next_time))
 
                 else:
                     est_time = fid
@@ -276,8 +288,12 @@ class PolygonPerFrame:
                 # interpolate
                 a = (next_time - est_time) / (next_time - prev_time)
                 est_polygon = prev_poly * a + next_poly * (1 - a)
+                est_polygon = np.round(est_polygon).astype(int)
 
-                self.set(fid, est_polygon.tolist())
+                if frame_times is not None:
+                    self.set(fid, est_polygon.tolist(), frame_times[i])
+                else:
+                    self.set(fid, est_polygon.tolist())
 
                 if verbose:
                     print('frame {} a={} interpolated polygon:'.format(fid, a))
@@ -288,3 +304,11 @@ class PolygonPerFrame:
         self.frame_ids = np.sort(self.frame_ids)
         return res_polygons
 
+    @staticmethod
+    def _to_list(x):
+        if isinstance(x, np.ndarray):
+            return x.tolist()
+        elif isinstance(x, (list, tuple)):
+            return list(x)
+        else:
+            return [x]  # optional: wrap scalar into list
