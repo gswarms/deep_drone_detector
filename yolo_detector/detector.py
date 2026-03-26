@@ -410,6 +410,10 @@ class SingleFrameDetector:
         :param max_num_detections: Keeps at most k detections. Useful when you only want the top results.
         :return:
         """
+        # raw output is [5, 5376]
+        # (xc, yc, w, h, conf)
+        # 5376 is because of the 4x4 anchor spread for a 256x256 image
+
         # Remove batch dimension if present
         predictions = np.squeeze(predictions)
 
@@ -417,17 +421,29 @@ class SingleFrameDetector:
         mask = predictions[4, :] > conf_threshold
         detections = predictions[:, mask].transpose()
 
+        # Non-Maximal Suppression
+        if len(detections) > 0:
+            boxes = detections[:, :4]  # cx, cy, w, h
+            scores = detections[:, 4]
+            # Convert cx, cy, w, h to x, y, w, h (top-left) for OpenCV
+            boxes[:, 0] -= boxes[:, 2] / 2
+            boxes[:, 1] -= boxes[:, 3] / 2
+            # 3. RUN NMS (The overlap cleaner)
+            nms_threshold = 0.45  # If boxes overlap more than 45%, delete the weaker one
+            indices = cv2.dnn.NMSBoxes(boxes.tolist(), scores.tolist(), conf_threshold, nms_threshold)
+            final_detections = detections[indices]
+        else:
+            final_detections = detections
+
         results = []
-        for det in detections:
+        for det in final_detections:
             if det.size == 6:
-                xc, yc, w, h, conf, cls = det
+                xtl, ytl, w, h, conf, cls = det
             elif det.size == 5:
-                xc, yc, w, h, conf = det
+                xtl, ytl, w, h, conf = det
                 cls = 0
-            x1 = xc - w / 2
-            y1 = yc - h / 2
             results.append({
-                "bbox": [x1, y1, w, h],
+                "bbox": [xtl, ytl, w, h],
                 "class": int(cls),
                 "confidence": float(conf)
             })
