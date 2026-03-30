@@ -53,6 +53,8 @@ class DetectorTracker:
             import nanodet_detector
             self.detector = nanodet_detector.NanodetDetector(detector_model_file_path, detector_config_path,
                                                               use_cpu=self.detector_use_cpu, verbose=self.verbose)
+        else:
+            raise Exception('invalid model type!')
 
         # onnx must work with it's predefined input size!
         # if self.detection_frame_size does not match, there might be unexpected behavior!
