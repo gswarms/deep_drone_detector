@@ -1002,17 +1002,26 @@ if __name__ == '__main__':
     # valid_record_times = {'start': 1774342179.798100476, 'end': 1774342200.653628793}
     # valid_record_times = {'start': 1774342209.228744498, 'end': 1774342223.838200883}
 
-
     # ------------------ 20260325_reshafim ------------------------------
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260325_reshafim'
-    bag_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307')
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260325_reshafim'
+    # bag_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307')
     # valid_record_times = {'start': 1774433258.376069064, 'end': 1774433273.599835676}
     # valid_record_times = {'start': 1774433288.305787097, 'end': 1774433295.348073693}
     # valid_record_times = {'start': 1774433308.604142580, 'end': 1774433315.439303099}
     # valid_record_times = {'start': 1774433327.038363375, 'end': 1774433334.391339085}
-    valid_record_times = {'start': 1774433341.330062643, 'end': 1774433350.547173041}
+    # valid_record_times = {'start': 1774433341.330062643, 'end': 1774433350.547173041}
 
-    # valid_record_times = {'start': -np.inf, 'end': np.inf}
+    # ------------------ 20260329_reshafim ------------------------------
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260329_reshafim'
+    # bag_folder = os.path.join(base_folder, '20260329_1404_43/20260329_1405_07/camera_20260329_1405')
+    # bag_folder = os.path.join(base_folder, '20260329_1404_43/20260329_1407_02/camera_20260329_1407')
+    # bag_folder = os.path.join(base_folder, '20260329_1404_43/20260329_1405_07/camera_20260329_1405')
+    # bag_folder = os.path.join(base_folder, '20260329_1411_41/20260329_1411_56/camera_20260329_1412')
+    # bag_folder = os.path.join(base_folder, '20260329_1445_19/20260329_1446_24/camera_20260329_1446')
+    # bag_folder = os.path.join(base_folder, '20260329_1445_19/20260329_1448_12/camera_20260329_1448')
+    bag_folder = os.path.join(base_folder, '20260329_1516_47/20260329_1518_30/camera_20260329_1518')
+
+    valid_record_times = {'start': -np.inf, 'end': np.inf}
     image_topic = '/camera/image_raw'
     ref_bbox_topic = None
     detection_polygon_topic='/detection/visualization/roi_bounding_box'

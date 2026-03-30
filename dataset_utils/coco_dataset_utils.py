@@ -561,6 +561,29 @@ if __name__ == '__main__':
     images_metadata['datetime'] = '20260325_120703'
 
 
+
+    # ------------------ 20260325_reshafim ------------------------------ (10" quadrotor target)
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/20260329_reshafim'
+    images_metadata = {'datetime': None, 'location': 'reshafim',
+                       'camera': 'arducam_imx708_B0310',
+                       'clouds': 'fully_cloudy', 'visibility': 'good', 'daytime': 'noon', 'lighting': 'low',
+                       'view_direction': 'east', 'sun_direction': 'up'}
+    annotations_metadata = {'subcategory': '10in_quad'}
+    # dataset_root_folder = os.path.join(exp_folder, '20260329_1404_43/20260329_1407_02/camera_20260329_1407_extracted')
+    # images_metadata['datetime'] = '20260329_140702'
+    # dataset_root_folder = os.path.join(exp_folder, '20260329_1404_43/20260329_1405_07/camera_20260329_1405_extracted')
+    # images_metadata['datetime'] = '20260329_140507'
+    # dataset_root_folder = os.path.join(exp_folder, '20260329_1411_41/20260329_1411_56/camera_20260329_1412_extracted')
+    # images_metadata['datetime'] = '20260329_141156'
+    # dataset_root_folder = os.path.join(exp_folder, '20260329_1445_19/20260329_1446_24/camera_20260329_1446_extracted')
+    # images_metadata['datetime'] = '20260329_144624'
+    # dataset_root_folder = os.path.join(exp_folder, '20260329_1445_19/20260329_1448_12/camera_20260329_1448_extracted')
+    # images_metadata['datetime'] = '20260329_144812'
+    dataset_root_folder = os.path.join(exp_folder, '20260329_1516_47/20260329_1518_30/camera_20260329_1518_extracted')
+    images_metadata['datetime'] = '20260329_151830'
+
+
+
     # ----------------------- add dataset metadata ---------------------
     json_path = str(Path(dataset_root_folder) / 'annotations' / 'coco_dataset.json')
     dataset = coco_dataset_manager.CocoDatasetManager()

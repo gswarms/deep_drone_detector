@@ -618,6 +618,16 @@ if __name__ == "__main__":
     # base_folder = os.path.join(exp_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f5_extracted')
 
 
+    # ------------------ 20260329_reshafim ------------------------------
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/20260329_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260329_1404_43/20260329_1405_07/camera_20260329_1405_extracted')
+    # base_folder = os.path.join(exp_folder, '20260329_1404_43/20260329_1407_02/camera_20260329_1407_extracted')
+    # base_folder = os.path.join(exp_folder, '20260329_1404_43/20260329_1405_07/camera_20260329_1405_extracted')
+    # base_folder = os.path.join(exp_folder, '20260329_1411_41/20260329_1411_56/camera_20260329_1412_extracted')
+    # base_folder = os.path.join(exp_folder, '20260329_1445_19/20260329_1446_24/camera_20260329_1446_extracted')
+    # base_folder = os.path.join(exp_folder, '20260329_1445_19/20260329_1448_12/camera_20260329_1448_extracted')
+    base_folder = os.path.join(exp_folder, '20260329_1516_47/20260329_1518_30/camera_20260329_1518_extracted')
+
     data_format = 'coco_dataset'
     annotations_file_name = "coco_dataset.json"
     categories = ['rc-plane']
