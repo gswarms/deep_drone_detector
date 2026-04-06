@@ -1,3 +1,4 @@
+import copy
 import os
 import numpy as np
 import yaml
@@ -58,17 +59,19 @@ class PolygonPerFrame:
         return
 
     def set(self, frame_id, polygon, time=None):
+        polygon = self._to_list(polygon)
+
         if frame_id in self.frame_ids:
-            idx = np.argwhere(self.frame_ids == frame_id)
+            idx = int(np.argwhere(self.frame_ids == frame_id).flatten()[0])
             self.frame_polygons[idx]['polygon'] = polygon
             if time is not None:
-                self.frame_polygons[idx]['time'] = time
+                self.frame_polygons[idx]['time'] = float(time)
         else:
             self.frame_ids = np.append(self.frame_ids, np.uint32(frame_id))
             if time is None:
                 time = np.nan
             self.polygon_times = np.append(self.polygon_times, float(time))
-            self.frame_polygons.append({'frame_id': frame_id, 'time': time, 'polygon': polygon})
+            self.frame_polygons.append({'frame_id': int(frame_id), 'time': float(time), 'polygon': polygon})
 
         return
 
@@ -77,7 +80,6 @@ class PolygonPerFrame:
         get polygon by frame id
         :param frame_id: frame id list / scalar
         :return: polygon points list / scalar (in correspondance with the input)
-
         """
 
         if not isinstance(frame_id, list):
@@ -94,9 +96,8 @@ class PolygonPerFrame:
             # find frame id
             res_polygons = []
             for fid in frame_id:
-                self.frame_ids == fid
-                idx = self.frame_ids == fid
-                if any(idx):
+                if fid in self.frame_ids:
+                    idx = int(np.argwhere(self.frame_ids == fid).flatten()[0])
                     res_polygons.append(self.frame_polygons[idx]['polygon'])
                 else:
                     res_polygons.append(None)
@@ -129,8 +130,11 @@ class PolygonPerFrame:
         if len(self.frame_polygons) > 0:
 
             if valid_time_gap is None:
-                time_step =  np.median(np.diff(np.array(self.polygon_times)))
-                valid_time_gap = 0.4 * time_step
+                # d1 = np.diff(np.array(self.polygon_times))
+                # d2 = np.diff(np.array(self.frame_ids))
+                # time_step =  np.median(np.divide(d1,d2))
+                # valid_time_gap = 0.4 * time_step
+                valid_time_gap = np.inf
 
             # find the closest polygon in time
             res_polygons = []
@@ -166,18 +170,38 @@ class PolygonPerFrame:
             data = yaml.safe_load(file)
             self.frame_size = data['frame_size']
             self.frame_polygons = data['frame_polygons']
-            self.frame_ids = np.array([x['frame_id'] for x in self.frame_polygons], dtype=np.uint32)
-            self.polygon_times = np.array([x['time'] if 'time' in x.keys() else None for x in self.frame_polygons], dtype=float)
+            self.frame_ids = np.array([int(x['frame_id']) for x in self.frame_polygons], dtype=np.uint32)
+            self.polygon_times = np.array([float(x['time']) if 'time' in x.keys() else None for x in self.frame_polygons], dtype=float)
 
         return
 
-    def interpolate_polygons(self, frame_ids, verbose=False):
+    def interpolate_polygons(self, frame_ids, frame_times=None, verbose=False):
         """
-        linear interpolation of polygons for all frame ids given reference for some frame ids.
-        for this all polygons must be the same number of points!
+        add polygons for new frames by interpolation from existing frames
 
-        param: frame_ids - list of frame ids
+        Notes:
+        1. extrapolation to new frames before the first existing frame, or after the last frame
+           will be done by keeping first / last polygon
+        2. if frame_times is supplied, and all existing frames have time, interpolatino will be done by time
+           if not, interpolation will be done by frame ids
+        3. polygons for all existing frames must be os the same number of points
+
+        param: frame_ids - list of new frame ids
+        param: frame_times - list of corresponding frame times
+        param: verbose - bool
         """
+        # check inputs
+        if frame_times is not None and len(frame_ids) != len(frame_times):
+            raise Exception('invalid input size!')
+
+        frame_ids = np.array(frame_ids).flatten()
+        if frame_times is not None:
+            frame_times = np.array(frame_times).flatten()
+            idx = np.argsort(frame_times)
+            frame_times = frame_times[idx]
+            frame_ids = frame_ids[idx]
+        else:
+            frame_ids = np.sort(frame_ids)
 
         # check if all polygons are the same size!
         n = np.array(self.frame_polygons[0]['polygon']).size / 2
@@ -187,46 +211,104 @@ class PolygonPerFrame:
                 print('Warning! not all polygons are the same size! skipping interpolate_polygons')
                 return
 
+        # check if we can do time based interpolation
+        if (frame_times is not None) and not(np.isnan(self.polygon_times).any()):
+            interp_by_time = True
+        else:
+            interp_by_time = False
+
         res_polygons = []
 
         # pad to beginning
-        if min(self.frame_ids) > min(frame_ids):
-            self.set(min(frame_ids), self.frame_polygons[0]['polygon'])
+        if interp_by_time:
+            if min(self.polygon_times) > frame_times[0]:
+                p = self.get_time(min(self.polygon_times))
+                pc = copy.deepcopy(p)
+                self.set(frame_ids[0], pc, frame_times[0])
+        else:
+            if min(self.frame_ids) > frame_ids[0]:
+                p = self.get_id(min(self.frame_ids))
+                pc = copy.deepcopy(p)
+                if frame_times is not None:
+                    idx = self.frame_ids == min(self.frame_ids)
+                    t = self.polygon_times[idx]
+                    tc = copy.deepcopy(t)
+                    self.set(frame_ids[0], pc, tc)
+                else:
+                    self.set(frame_ids[0], pc)
+
         # pad to end
-        if max(self.frame_ids) < max(frame_ids):
-            self.set(max(frame_ids), self.frame_polygons[-1]['polygon'])
+        if interp_by_time:
+            if max(self.polygon_times) < frame_times[-1]:
+                p = self.get_time(max(self.polygon_times))
+                pc = copy.deepcopy(p)
+                self.set(frame_ids[-1], pc, frame_times[-1])
+        else:
+            if max(self.frame_ids) < frame_ids[-1]:
+                p = self.get_id(max(self.frame_ids))
+                pc = copy.deepcopy(p)
+                if frame_times is not None:
+                    idx = self.frame_ids == max(self.frame_ids)
+                    t = self.polygon_times[idx]
+                    tc = copy.deepcopy(t)
+                    self.set(frame_ids[-1], pc, tc)
+                else:
+                    self.set(frame_ids[-1], pc)
 
         # add new frame ids
-        for fid in frame_ids:
-
+        for i, fid in enumerate(frame_ids):
             if fid in self.frame_ids:
                 if verbose:
                     print('frame {} reference polygon polygon:'.format(fid))
+                    current_polygon = self.get_id(fid)
                     print(current_polygon)
-
             else:
-                # find prev reference
-                idx1 = _closest_below(self.frame_ids, fid)
-                prev_poly = np.array(self.frame_polygons[idx1]['polygon'])
-                prev_t = self.frame_polygons[idx1]['frame_id']
+                if interp_by_time:
+                    est_time = frame_times[i]
+                    # find prev reference
+                    idx1 = _closest_below(self.polygon_times, est_time)
+                    prev_time = self.polygon_times[idx1]
+                    prev_poly = np.array(self.get_time(prev_time))
+                    # find next reference
+                    idx2 = _closest_above(self.polygon_times, est_time)
+                    next_time = self.polygon_times[idx2]
+                    next_poly = np.array(self.get_time(next_time))
 
-                # find next reference
-                idx2 = _closest_above(self.frame_ids, fid)
-                next_poly = np.array(self.frame_polygons[idx2]['polygon'])
-                next_t = self.frame_polygons[idx2]['frame_id']
+                else:
+                    est_time = fid
+                    # find prev reference
+                    idx1 = _closest_below(self.frame_ids, fid)
+                    prev_poly = np.array(self.frame_polygons[idx1]['polygon'])
+                    prev_time = self.frame_polygons[idx1]['frame_id']
+                    # find next reference
+                    idx2 = _closest_above(self.frame_ids, fid)
+                    next_poly = np.array(self.frame_polygons[idx2]['polygon'])
+                    next_time = self.frame_polygons[idx2]['frame_id']
 
                 # interpolate
-                a = (next_t - fid) / (next_t - prev_t)
-                current_polygon = prev_poly * a + next_poly * (1 - a)
+                a = (next_time - est_time) / (next_time - prev_time)
+                est_polygon = prev_poly * a + next_poly * (1 - a)
+                est_polygon = np.round(est_polygon).astype(int)
 
-                self.set(fid, current_polygon.tolist())
+                if frame_times is not None:
+                    self.set(fid, est_polygon.tolist(), frame_times[i])
+                else:
+                    self.set(fid, est_polygon.tolist())
 
                 if verbose:
                     print('frame {} a={} interpolated polygon:'.format(fid, a))
-                    print(current_polygon)
+                    print(est_polygon)
 
-        # sort by frame id
+        # sort
         self.frame_polygons = sorted(self.frame_polygons, key=lambda x: x['frame_id'])
         self.frame_ids = np.sort(self.frame_ids)
         return res_polygons
 
+    @staticmethod
+    def _to_list(x):
+        if isinstance(x, np.ndarray):
+            return x.tolist()
+        elif isinstance(x, (list, tuple)):
+            return list(x)
+        else:
+            return [x]  # optional: wrap scalar into list

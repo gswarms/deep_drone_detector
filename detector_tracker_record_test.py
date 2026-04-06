@@ -259,7 +259,7 @@ if __name__ == '__main__':
 
 
     # ------------------ 309 25.02.2026 ------------------------------
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260225_309'
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260225_309'
     # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091227/camera_20260225_1012_extracted')
     # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091409/camera_20260225_1014_extracted')  # bad bag magic
     # record_folder = os.path.join(base_folder, '20260225_0911_49/20260225_091522/camera_20260225_1015_extracted')
@@ -268,11 +268,58 @@ if __name__ == '__main__':
     # record_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123437/camera_20260225_1334_extracted')  # bad bag magic
     # record_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123557/camera_20260225_1336_extracted')  # bad bag magic
     # record_folder = os.path.join(base_folder, '20260225_1233_44/20260225_123723/camera_20260225_1337_extracted')
-    record_folder = os.path.join(base_folder, '20260225_1347_29/20260225_134854/camera_20260225_1448_extracted')
+    # record_folder = os.path.join(base_folder, '20260225_1347_29/20260225_134854/camera_20260225_1448_extracted')
     # record_folder = os.path.join(base_folder, '20260225_1347_29/20260225_135130/camera_20260225_1451_extracted')  # bad bag magic
 
-    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/20250608_kfar_masarik'
-    # record_folder = os.path.join(base_folder, '2025-06-08_18-04-53/camera_2025_6_8-15_4_56_extracted')
+
+
+    # ------------------ 20260322_reshafim ------------------------------ (10" quadrotor target)
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/scenarios_vis/20260322_reshafim'
+    # record_folder = os.path.join(base_folder, '20260322_1459_23/camera_20260322_1559_f1_extracted')
+    # record_folder = os.path.join(base_folder, '20260322_1459_23/camera_20260322_1559_f2_extracted')
+    # record_folder = os.path.join(base_folder, '20260322_1459_23/camera_20260322_1559_f3_extracted')
+
+    # ------------------ 20260218_reshafim ------------------------------ (18" quadrotor target)
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/scenarios_vis/20260218_reshafim'
+    # record_folder = os.path.join(base_folder, '20260218_1019_25/20260218_1020_18/camera_20260218_1120_extracted')
+    # record_folder = os.path.join(base_folder, '20260218_1123_37/20260218_1124_44/camera_20260218_1225_extracted')
+    # record_folder = os.path.join(base_folder, '20260218_1306_42/20260218_1307_22/camera_20260218_1407_extracted')  # only far target
+    # record_folder = os.path.join(base_folder, '20260218_1306_42/20260218_1309_26/camera_20260218_1409_extracted')  # only far target
+
+    # ------------------ 20260324_reshafim ------------------------------ (10" quadrotor target)
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/scenarios_vis/20260324_reshafim'
+    # record_folder = os.path.join(base_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f1_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f2_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f3_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1029_26/20260324_1031_04/camera_20260324_1131_f4_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1037_17/20260324_1037_40/camera_20260324_1137_f1_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1037_17/20260324_1037_40/camera_20260324_1137_f2_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1037_17/20260324_1037_40/camera_20260324_1137_f3_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1037_17/20260324_1042_30/camera_20260324_1142_f1_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1037_17/20260324_1042_30/camera_20260324_1142_f2_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1037_17/20260324_1042_30/camera_20260324_1142_f3_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1048_29/20260324_1049_06/camera_20260324_1149_f1_extracted')
+    # record_folder = os.path.join(base_folder, '20260324_1048_29/20260324_1049_06/camera_20260324_1149_f2_extracted')
+
+    # ------------------ 20260325_reshafim ------------------------------ (10" quadrotor target)
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/scenarios_vis/20260325_reshafim'
+    # record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f1_extracted')
+    # record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f2_extracted')
+    # record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f3_extracted')
+    # record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f4_extracted')
+    # record_folder = os.path.join(base_folder, '20260325_1206_34/20260325_1207_03/camera_20260325_1307_f5_extracted')
+
+
+    # ------------------ 20260329_reshafim ------------------------------
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/scenarios_vis/20260329_reshafim'
+    # record_folder = os.path.join(base_folder, '20260329_1404_43/20260329_1405_07/camera_20260329_1405_extracted')
+    # record_folder = os.path.join(base_folder, '20260329_1404_43/20260329_1407_02/camera_20260329_1407_extracted')
+    # record_folder = os.path.join(base_folder, '20260329_1404_43/20260329_1405_07/camera_20260329_1405_extracted')
+    # record_folder = os.path.join(base_folder, '20260329_1411_41/20260329_1411_56/camera_20260329_1412_extracted')
+    # record_folder = os.path.join(base_folder, '20260329_1445_19/20260329_1446_24/camera_20260329_1446_extracted')
+    # record_folder = os.path.join(base_folder, '20260329_1445_19/20260329_1448_12/camera_20260329_1448_extracted')
+    record_folder = os.path.join(base_folder, '20260329_1516_47/20260329_1518_30/camera_20260329_1518_extracted')
+
 
     frame_size = (640, 480)
     frame_resize = None
@@ -327,11 +374,22 @@ if __name__ == '__main__':
     # detection_frame_size = (256, 256)
     # detector_type = 'yolov11n'
 
-    model_path = '/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best_256x256_openvino.xml'
-    config_path = '/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best_256x256_openvino.bin'
+    # model_path = '/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best_256x256_openvino.xml'
+    # config_path = '/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best_256x256_openvino.bin'
+    # detection_frame_size = (256, 256)
+    # detector_type = 'yolov26n'
+    # detector_name = 'yolov26n_256x256_20260119'
+
+    # model_path = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/models/ultralytics_yolo26_20260324/best_256x256_v2_tmp_openvino.xml'
+    # config_path = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/models/ultralytics_yolo26_20260324/best_256x256_v2_tmp_openvino.bin'
+    # model_path = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/models/ultralytics_yolo26_20260325/yolov26n_256x256_20260325_mixed_p2/best_256x256_openvino.xml'
+    # config_path = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/models/ultralytics_yolo26_20260325/yolov26n_256x256_20260325_mixed_p2/best_256x256_openvino.bin'
+    model_path = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/models/ultralytics_yolo26_20260330/yolov26n_256x256_20260330_mixed_p2/best_256x256_openvino.xml'
+    config_path = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/models/ultralytics_yolo26_20260330/yolov26n_256x256_20260330_mixed_p2/best_256x256_openvino.bin'
+
     detection_frame_size = (256, 256)
-    detector_type = 'yolov26n'
-    detector_name = 'yolov26n_256x256_20260119'
+    detector_type = 'yolov26np2'
+    detector_name = 'yolov26n_256x256_20260330'
 
 
     # -------------------- nanodet -------------

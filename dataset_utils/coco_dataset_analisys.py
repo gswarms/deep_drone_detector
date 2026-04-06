@@ -44,20 +44,25 @@ def analyse_dataset(dataset):
     ax2.set_ylabel("Count")
     plt.show(block=False)
 
-    # # metadata histogram
-    # areas = dataset.get_images_metadata_histogram('lighting')
-    # bin_edges = np.linspace(0, max(areas), 1000)
-    # fig2, ax2 = plt.subplots()
-    # ax2.hist(areas, bins=bin_edges, edgecolor='black')
-    # ax2.set_title("Bbox Area Histogram")
-    # ax2.set_xlabel("bbox area")
-    # ax2.set_ylabel("Count")
-    # plt.show(block=False)
+    # metadata histogram
+    metric_names = ['clouds', 'visibility']
+    for metric_name in metric_names:
+        data = dataset.get_images_metadata_histogram(metric_name)
+        fig2, ax2 = plt.subplots()
+        names = list(data.keys())
+        values = list(data.values())
+        ax2.bar(names, values, color='skyblue')
+        ax2.set_xlabel('metric type')
+        ax2.set_ylabel('Counts')
+        ax2.set_title('Database Metric Distribution - {}'.format(metric_name))
+
+    plt.show(block=True)
 
 
 if __name__ == '__main__':
 
-    dataset_path = Path('/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/merged_dataset_raw')
+    # dataset_path = Path('/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211/merged_dataset_raw')
+    dataset_path = Path('/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323/merged_dataset_raw')
     json_path = dataset_path / 'annotations' / 'coco_dataset.json'
 
     dataset = coco_dataset_manager.CocoDatasetManager()

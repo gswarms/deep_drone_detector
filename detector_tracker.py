@@ -43,7 +43,7 @@ class DetectorTracker:
                           #   'detection_score':, <0-1>}...]
 
         #------------------ Setup yolo_detector --------------------
-        if self.detector_type in ('yolov8n', 'yolov11n', 'yolov26n'):
+        if self.detector_type in ('yolov8n', 'yolov11n', 'yolov26n', 'yolov26np2'):
             import yolo_detector
             self.detector = yolo_detector.SingleFrameDetector(detector_model_file_path,
                                                           use_cpu=self.detector_use_cpu, verbose=self.verbose,
@@ -53,6 +53,8 @@ class DetectorTracker:
             import nanodet_detector
             self.detector = nanodet_detector.NanodetDetector(detector_model_file_path, detector_config_path,
                                                               use_cpu=self.detector_use_cpu, verbose=self.verbose)
+        else:
+            raise Exception('invalid model type!')
 
         # onnx must work with it's predefined input size!
         # if self.detection_frame_size does not match, there might be unexpected behavior!
