@@ -1012,14 +1012,28 @@ if __name__ == '__main__':
     # valid_record_times = {'start': 1774433341.330062643, 'end': 1774433350.547173041}
 
     # ------------------ 20260329_reshafim ------------------------------
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260329_reshafim'
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260329_reshafim'
     # bag_folder = os.path.join(base_folder, '20260329_1404_43/20260329_1405_07/camera_20260329_1405')
     # bag_folder = os.path.join(base_folder, '20260329_1404_43/20260329_1407_02/camera_20260329_1407')
     # bag_folder = os.path.join(base_folder, '20260329_1404_43/20260329_1405_07/camera_20260329_1405')
     # bag_folder = os.path.join(base_folder, '20260329_1411_41/20260329_1411_56/camera_20260329_1412')
     # bag_folder = os.path.join(base_folder, '20260329_1445_19/20260329_1446_24/camera_20260329_1446')
     # bag_folder = os.path.join(base_folder, '20260329_1445_19/20260329_1448_12/camera_20260329_1448')
-    bag_folder = os.path.join(base_folder, '20260329_1516_47/20260329_1518_30/camera_20260329_1518')
+    # bag_folder = os.path.join(base_folder, '20260329_1516_47/20260329_1518_30/camera_20260329_1518')
+
+    # ------------------ 20260331_mashabei_sade ------------------------------
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/20260331_mashabei_sade'
+    # bag_folder = os.path.join(base_folder, '20260331_0747_53/20260331_0751_33/camera_20260331_0751')
+    # bag_folder = os.path.join(base_folder, '20260331_0800_27/20260331_0801_02/camera_20260331_0801')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260331_0933_46/20260331_0934_52/camera_20260331_0934')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260331_1056_21/20260331_1057_57/camera_20260331_1058')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260331_1229_14/20260331_1229_42/camera_20260331_1229')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260331_1400_31/20260331_1403_27/camera_20260331_1403')
+    # bag_folder = os.path.join(base_folder, '20260331_1400_31/20260331_1406_56/camera_20260331_1407')
+    # bag_folder = os.path.join(base_folder, '20260331_1419_28/20260331_1420_34/camera_20260331_1420')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260331_1419_28/20260331_1422_32/camera_20260331_1422')
+    bag_folder = os.path.join(base_folder, '20260331_1419_28/20260331_1424_14/camera_20260331_1424')  # bad something related to bag
+
 
     valid_record_times = {'start': -np.inf, 'end': np.inf}
     image_topic = '/camera/image_raw'

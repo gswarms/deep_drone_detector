@@ -584,6 +584,34 @@ if __name__ == '__main__':
 
 
 
+
+    # ------------------ 20260331_mashabei_sade ------------------------------
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/20260331_mashabei_sade'
+    images_metadata = {'datetime': None, 'location': 'mashabei_sade',
+                       'camera': 'arducam_imx708_B0310',
+                       'clouds': 'mostly_clear', 'visibility': 'good', 'daytime': 'noon', 'lighting': 'good',
+                       'view_direction': 'south', 'sun_direction': 'up'}
+    annotations_metadata = {'subcategory': '10in_quad'}
+    # dataset_root_folder = os.path.join(exp_folder, '20260331_0747_53/20260331_0751_33/camera_20260331_0751_extracted')
+    # images_metadata['datetime'] = '20260331_075133'
+    # images_metadata['daytime'] = 'morning'
+    # images_metadata['sun_direction'] = 'left'
+    # dataset_root_folder = os.path.join(exp_folder, '20260331_1400_31/20260331_1403_27/camera_20260331_1403_extracted')
+    # images_metadata['datetime'] = '20260331_140327'
+    # images_metadata['daytime'] = 'noon'
+    # images_metadata['sun_direction'] = 'up'
+    # dataset_root_folder = os.path.join(exp_folder, '20260331_1400_31/20260331_1406_56/camera_20260331_1407_extracted')
+    # images_metadata['datetime'] = '20260331_140656'
+    # images_metadata['daytime'] = 'noon'
+    # images_metadata['sun_direction'] = 'up'
+    dataset_root_folder = os.path.join(exp_folder, '20260331_1419_28/20260331_1422_32/camera_20260331_1422_extracted')
+    images_metadata['datetime'] = '20260331_142232'
+    images_metadata['daytime'] = 'noon'
+    images_metadata['sun_direction'] = 'up'
+
+
+
+
     # ----------------------- add dataset metadata ---------------------
     json_path = str(Path(dataset_root_folder) / 'annotations' / 'coco_dataset.json')
     dataset = coco_dataset_manager.CocoDatasetManager()
