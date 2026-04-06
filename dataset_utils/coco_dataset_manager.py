@@ -231,7 +231,7 @@ class CocoDatasetManager:
                 "width": row["width"],
                 "height": row["height"]
             }
-            if len(row["metadata"]) > 0:
+            if (isinstance(row["metadata"], float) and np.isnan(row["metadata"])) or len(row["metadata"]) > 0:
                 tmp_dict["metadata"] = row["metadata"]
             coco_dict["images"].append(tmp_dict)
 

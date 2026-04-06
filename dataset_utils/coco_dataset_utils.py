@@ -118,8 +118,8 @@ def merge_dataset():
     # discard_exp = ['camera_20251126_1611_extracted','camera_20251126_1613_extracted']
 
     # -------- dataset_20260323 -------
-    base_folder = Path('/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset')
-    merged_dataset_root_folder = base_folder / 'dataset_20260323' / 'merged_dataset_raw'
+    base_folder = Path('/home/roee/Projects/datasets/UAV_fixed_wing_dataset')
+    merged_dataset_root_folder = base_folder / 'dataset_20260330' / 'merged_dataset_raw'
     exp_folders = []
     exp_folders.append(base_folder / 'scenarios_vis' / '20251214_reshafim')
     exp_folders.append(base_folder / 'scenarios_vis' / '20251208_reshafim')
@@ -132,8 +132,10 @@ def merge_dataset():
     exp_folders.append(base_folder / 'scenarios_vis' / '20250421_hadera')
     exp_folders.append(base_folder / 'scenarios_vis' / '20260218_reshafim')
     exp_folders.append(base_folder / 'scenarios_vis' / '20260322_reshafim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20260324_reshafim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20260325_reshafim')
+    exp_folders.append(base_folder / 'scenarios_vis' / '20260329_reshafim')
     discard_exp = ['camera_20260218_1225_extracted']
-
 
     # init merged dataset
     print('merging dataset to: {}'.format(merged_dataset_root_folder))
