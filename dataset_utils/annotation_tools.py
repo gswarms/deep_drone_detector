@@ -391,8 +391,10 @@ class AnnotatorCoco(Annotator):
 
         img_data = self.dataset.get_image(self.current_image_id)
         img_path = self.dataset.images_folder / img_data['file_name']
-        self.current_image = cv2.imread(img_path)
-        if color_space == 'RGB':
+        if color_space == 'BGR':
+            self.current_image = cv2.imread(img_path)
+        elif color_space == 'RGB':
+            self.current_image = cv2.imread(img_path)
             self.current_image = cv2.cvtColor(self.current_image, cv2.COLOR_RGB2BGR)
         elif color_space == 'Y16':
             img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
