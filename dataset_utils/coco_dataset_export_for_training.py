@@ -430,9 +430,9 @@ if __name__ == '__main__':
     # augment_crop = None
 
 
-    base_dataset_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20260323'
+    base_dataset_folder = '/home/roee/Projects/datasets/UAV_fixed_wing_dataset/dataset_20260330'
     input_coco_dataset_json = os.path.join(base_dataset_folder, 'merged_dataset_raw/annotations/coco_dataset.json')
-    output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260324')
+    output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260330')
     split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
     # augment_crop = {'image_size': (256, 256), 'num_samples': 4}
     augment_crop = None

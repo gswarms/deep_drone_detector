@@ -1,4 +1,3 @@
-import os.path
 import openvino as ov
 # from openvino.tools import mo
 from pathlib import Path
@@ -6,7 +5,11 @@ from pathlib import Path
 # onnx_model_path = Path("/home/roee/Projects/deep_drone_detector/runs/detect/drone_detector_yolov11n_320x240_20251021/weights/yolov11n_best_lulav_dit_256x256.onnx")
 # output_dir = Path("/home/roee/Projects/deep_drone_detector/runs/detect/drone_detector_yolov11n_320x240_20251021/weights")
 
-onnx_model_path = Path('/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best_256x256.onnx')
+# onnx_model_path = Path('/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best_256x256.onnx')
+# onnx_model_path = Path('/home/roee/Projects/deep_drone_detector/runs/drone_detector_yolov26n_256x256_20260324_mixed_p2_v2/train/weights/best_256x256.onnx')
+# onnx_model_path = Path('/home/roee/Projects/deep_drone_detector/runs/drone_detector_yolov26n_256x256_20260325_mixed_p2_v2/train2/weights/best_256x256.onnx')
+onnx_model_path = Path('/home/roee/Projects/deep_drone_detector/runs/drone_detector_yolov26n_256x256_20260330_mixed_p2/train/weights/best_256x256.onnx')
+
 output_dir = onnx_model_path.parent
 
 

@@ -8,15 +8,20 @@ import onnxruntime as ort
 # pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/detect/20250709_drone_detector_yolov8n3/weights/best.pt'
 # pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/detect/drone_detector_yolov11n_320x240_20251021/weights/best.pt'
 # image_size = (320, 320)
-pt_model_file_path = '/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best.pt'
-image_size = (256, 256)
+# pt_model_file_path = '/home/roee/Projects/deep_drone_detector/yolo_detector/runs/drone_detector_yolov26n_256x256_20260119/weights/best.pt'
+# pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/drone_detector_yolov26n_256x256_20260324_mixed_p2_v2/train/weights/best.pt'
+# pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/drone_detector_yolov26n_256x256_20260325_mixed_p2_v2/train2/weights/best.pt'
+pt_model_file_path = '/home/roee/Projects/deep_drone_detector/runs/drone_detector_yolov26n_256x256_20260330_mixed_p2/train/weights/best.pt'
 
+
+image_size = (256, 256)
+output_name = '256x256_mixed_p2'
 
 if image_size[0] != image_size[1]:
     raise Exception('yolo onnx must be square bt default! rectangular image configuration more complex, and is not supported in this script!')
 
 model = YOLO(pt_model_file_path)
-model.export(format='onnx', imgsz=image_size, dynamic=False, simplify=True, device='cpu', name='best')   # or 'tflite', 'coreml', etc.
+model.export(format='onnx', imgsz=image_size, dynamic=False, simplify=True, device='cpu', name='output_name')   # or 'tflite', 'coreml', etc.
 res_file_name = '{:d}x{:d}'.format(image_size[0], image_size[1])
 
 
