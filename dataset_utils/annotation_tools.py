@@ -66,6 +66,7 @@ class Annotator:
     def clear_current_annotations(self):
         self.current_annotation_boxes = []
         self.current_annotation_classes = []
+        self.current_annotation_ids = []
 
     def set_current_class(self, class_name):
         self.current_class = class_name
