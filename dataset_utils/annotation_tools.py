@@ -393,6 +393,22 @@ class AnnotatorCoco(Annotator):
         self.current_image = cv2.imread(img_path)
         if color_space == 'RGB':
             self.current_image = cv2.cvtColor(self.current_image, cv2.COLOR_RGB2BGR)
+        elif color_space == 'Y16':
+            img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+            if img.dtype == np.uint8:
+                img = img.view(dtype=np.uint16).reshape(img.shape[:2])
+
+            # scale to 8 bit for video
+            p_low, p_high = np.percentile(img, [0.5, 99.5])
+            if p_high <= p_low:
+                p_high = np.max(img)
+                p_low = np.min(img)
+            if p_high <= p_low:
+                p_high = 255
+                p_low = 0
+            img_8bit = np.clip((img - p_low) * (255.0 / (p_high - p_low)), 0, 255).astype(
+                np.uint8)
+            self.current_image = cv2.cvtColor(img_8bit, cv2.COLOR_GRAY2BGR)
 
         self.current_annotation_boxes = []
         self.current_annotation_classes = []
@@ -628,7 +644,7 @@ if __name__ == "__main__":
     # base_folder = os.path.join(exp_folder, '20260329_1516_47/20260329_1518_30/camera_20260329_1518_extracted')
 
     # ------------------ 20260331_mashabei_sade ------------------------------
-    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/20260331_mashabei_sade'
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/20260331_mashabei_sade'
     # base_folder = os.path.join(exp_folder, '20260331_0747_53/20260331_0751_33/camera_20260331_0751_extracted')
     # base_folder = os.path.join(exp_folder, '20260331_0800_27/20260331_0801_02/camera_20260331_0801_extracted')  # bad magic
     # base_folder = os.path.join(exp_folder, '20260331_0933_46/20260331_0934_52/camera_20260331_0934_extracted')  # bad magic
@@ -637,13 +653,74 @@ if __name__ == "__main__":
     # base_folder = os.path.join(exp_folder, '20260331_1400_31/20260331_1403_27/camera_20260331_1403_extracted')
     # base_folder = os.path.join(exp_folder, '20260331_1400_31/20260331_1406_56/camera_20260331_1407_extracted')
     # base_folder = os.path.join(exp_folder, '20260331_1419_28/20260331_1420_34/camera_20260331_1420_extracted')  # bad magic
-    base_folder = os.path.join(exp_folder, '20260331_1419_28/20260331_1422_32/camera_20260331_1422_extracted')
+    # base_folder = os.path.join(exp_folder, '20260331_1419_28/20260331_1422_32/camera_20260331_1422_extracted')
     # base_folder = os.path.join(exp_folder, '20260331_1419_28/20260331_1424_14/camera_20260331_1424_extracted')  # bad something related to bag
+
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% thermal dataset %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    # ------------------ 20260201_reshafim thermal ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260201_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260201_1408_32/camera_20260201_1508_extracted')
+    # color_space = 'Y16'
+
+    # ------------------ 20260202_reshafim thermal ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260202_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260202_1007_24/20260202_1008_03/camera_20260202_1108_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260202_1007_24/20260202_1009_33/camera_20260202_1109_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260202_1007_24/20260202_1010_39/camera_20260202_1110_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260202_1016_47/20260202_1017_32/camera_20260202_1117_extracted')
+    # base_folder = os.path.join(exp_folder, '20260202_1016_47/20260202_1019_27/camera_20260202_1119_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260202_1016_47/20260202_1020_41/camera_20260202_1120_extracted')
+    # base_folder = os.path.join(exp_folder, '20260202_1044_13/20260202_1044_55/camera_20260202_1145_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260202_1044_13/20260202_1046_28/camera_20260202_1146_extracted')
+    # base_folder = os.path.join(exp_folder, '20260202_1044_13/20260202_1047_25/camera_20260202_1147_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260202_1044_13/20260202_1048_30/camera_20260202_1148_extracted')
+    # base_folder = os.path.join(exp_folder, '20260202_1111_54/20260202_1112_47/camera_20260202_1213_extracted')  # bad magic
+    # color_space = 'Y16'
+
+    # ------------------ 20260205_reshafim thermal ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260205_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260205_1030_44/20260205_1032_58/camera_20260205_1133_extracted')
+    # base_folder = os.path.join(exp_folder, '20260205_1123_17/20260205_1123_40/camera_20260205_1223_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260205_1123_17/20260205_1125_01/camera_20260205_1225_extracted')
+    # base_folder = os.path.join(exp_folder, '20260205_1123_17/20260205_1125_46/camera_20260205_1225_extracted')  # bad magic
+    # color_space = 'Y16'
+
+    # ------------------ 20260206_reshafim thermal ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260206_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260206_1357_25/camera_20260206_1457_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260206_1419_03/camera_20260206_1519_extracted')  # bad bag
+    # base_folder = os.path.join(exp_folder, '20260206_1421_17/camera_20260206_1521_extracted')  # bad bag
+    # base_folder = os.path.join(exp_folder, '20260206_1502_49/camera_20260206_1602_extracted')  # bad bag
+    # base_folder = os.path.join(exp_folder, '20260206_1552_14/camera_20260206_1652_extracted')
+    # base_folder = os.path.join(exp_folder, '20260206_1554_52/camera_20260206_1654_extracted')  # bad bag
+    # color_space = 'Y16'
+
+    # ------------------ 20260415_reshafim thermal ------------------------------
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260415_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260415_1202_12/20260415_1204_46/camera_20260415_1204_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1202_12/20260415_1206_29/camera_20260415_1206_extracted')  # birds and insects
+    # base_folder = os.path.join(exp_folder, '20260415_1202_12/20260415_1208_44/camera_20260415_1208_extracted')
+    base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1338_45/camera_20260415_1338_f1_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1338_45/camera_20260415_1338_f2_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1338_45/camera_20260415_1338_f3_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1341_48/camera_20260415_1341_f1_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1341_48/camera_20260415_1341_f2_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1405_11/camera_20260415_1405_f1_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1405_11/camera_20260415_1405_f2_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1405_11/camera_20260415_1405_f3_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f1_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f2_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f3_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f4_extracted')
+    color_space = 'Y16'
+
 
     data_format = 'coco_dataset'
     annotations_file_name = "coco_dataset.json"
     categories = ['rc-plane']
-    color_space = 'BGR'
+    # color_space = 'BGR'
+
 
 
     print("Controls:")
