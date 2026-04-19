@@ -111,3 +111,13 @@ dataset_root_folder/
         }
         }
 ```
+
+## 🚀 Usage
+
+1. annotate scenarios using **annotation_tools.py**
+2. add metadata to scenarios using **coco_dataset_utils.py**
+3. collect scenarios sub-datasets to on e large dataset using **coco_dataset_utils.py**
+4. use **coco_dataset_analysis.py** for looking ath the dataset balance. 
+5. export for ultralytics yolo training using **coco_dataset_export_for_training.py**
+
+* The **coco_dataset_manager.py** is the main utility for all these actions.   
