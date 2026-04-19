@@ -4,7 +4,6 @@ import cv2
 import os
 import numpy as np
 from operator import itemgetter
-from ultralytics import YOLO
 import onnxruntime as ort
 
 
@@ -37,6 +36,7 @@ class SingleFrameDetector:
             model_file_name, model_file_extension = os.path.splitext(model_file_path)
 
             if model_file_extension == '.pt':
+                from ultralytics import YOLO
                 self.model = YOLO(model_file_path)
                 self.model_compilation_type = 'pt'
                 if use_cpu:
