@@ -487,6 +487,15 @@ if __name__ == '__main__':
     # dataset_root_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f4_extracted')
     metadata_yaml_file = os.path.join(dataset_root_folder, 'dataset_metadata.yaml')
 
+    # ------------------ 20260419_reshafim thermal ------------------------------
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260419_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0920_06/camera_20260419_0920_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0921_15/camera_20260419_0921_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0928_10/camera_20260419_0928_extracted')  # what to do with the bird?
+    # base_folder = os.path.join(exp_folder, '20260419_0936_00/20260419_0937_08/camera_20260419_0937_extracted')  # bad magic
+    base_folder = os.path.join(exp_folder, '20260419_0936_00/20260419_0939_18/camera_20260419_0939_extracted')
+    color_space = 'Y16'
+
 
     # ----------------------- add dataset metadata ---------------------
     json_path = str(Path(dataset_root_folder) / 'annotations' / 'coco_dataset.json')

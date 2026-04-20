@@ -700,22 +700,31 @@ if __name__ == "__main__":
     # color_space = 'Y16'
 
     # ------------------ 20260415_reshafim thermal ------------------------------
-    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260415_reshafim'
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260415_reshafim'
     # base_folder = os.path.join(exp_folder, '20260415_1202_12/20260415_1204_46/camera_20260415_1204_extracted')
     # base_folder = os.path.join(exp_folder, '20260415_1202_12/20260415_1206_29/camera_20260415_1206_extracted')  # birds and insects
     # base_folder = os.path.join(exp_folder, '20260415_1202_12/20260415_1208_44/camera_20260415_1208_extracted')
-    base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1338_45/camera_20260415_1338_f1_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1338_45/camera_20260415_1338_f1_extracted')  # birds and insects
     # base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1338_45/camera_20260415_1338_f2_extracted')
     # base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1338_45/camera_20260415_1338_f3_extracted')
     # base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1341_48/camera_20260415_1341_f1_extracted')
     # base_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1341_48/camera_20260415_1341_f2_extracted')
-    # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1405_11/camera_20260415_1405_f1_extracted')
+    # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1405_11/camera_20260415_1405_f1_extracted')  # birds and insects
     # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1405_11/camera_20260415_1405_f2_extracted')
     # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1405_11/camera_20260415_1405_f3_extracted')
     # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f1_extracted')
     # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f2_extracted')
     # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f3_extracted')
     # base_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f4_extracted')
+    # color_space = 'Y16'
+
+    # ------------------ 20260419_reshafim thermal ------------------------------
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260419_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0920_06/camera_20260419_0920_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0921_15/camera_20260419_0921_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0928_10/camera_20260419_0928_extracted')  # what to do with the bird?
+    # base_folder = os.path.join(exp_folder, '20260419_0936_00/20260419_0937_08/camera_20260419_0937_extracted')  # bad magic
+    base_folder = os.path.join(exp_folder, '20260419_0936_00/20260419_0939_18/camera_20260419_0939_extracted')
     color_space = 'Y16'
 
 
@@ -723,7 +732,6 @@ if __name__ == "__main__":
     annotations_file_name = "coco_dataset.json"
     categories = ['rc-plane']
     # color_space = 'BGR'
-
 
 
     print("Controls:")
