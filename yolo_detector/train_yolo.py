@@ -60,11 +60,14 @@ results = model.train(
     scale=0.9,  # Varies drone size from 5px to 200px
     flipud=0.5,  # Air-to-air can have inverted horizons
     fliplr=0.5,
+    stal=True,            # Enable Small-Target-Aware Label Assignment
+    progloss=True,        # Enable Progressive Loss (O2M to O2O transition)
+    end2end=True,         # Ensure the model is NMS-Free for RPi 5
 
     # --- LOSS & LABEL SETTINGS ---
     # We prioritize the "box" loss so the model gets precise 5x5 coords
     box=10.0, # put weight on tiny box coordinates
-    cls=2,  # Give more weight to finding the drone
+    cls=2,  # Give more weight to finding the drone (boost clasification signal)
     dfl=0.0,  # YOLO26 is better without DFL for OpenVINO export
     obj=1.5,  # Focus on 'objectness'
     fl_gamma=2.0, # Use 'Focal Loss' to focus on the 'hard' samples (the 5x5 drones) and ignore the 'easy' samples (the empty sky).
@@ -72,7 +75,11 @@ results = model.train(
     # --- 2026 SPECIFIC FEATURES ---
     close_mosaic=20,  # Turn off mosaic for last 20 epochs to clean up 5x5 detections
     patience=30,  # Stop if no improvement
-    device=0  # Use your GPU
+
+    # --- SYSTEM ---
+    device=0,             # GPU index
+    project='drone_v1',
+    name='yolo26n_p2_spd_stal'
 )
 
 # 3. Export for your Raspberry Pi 5
