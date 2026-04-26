@@ -1,6 +1,6 @@
 import os.path
 import time
-from ultralytics import YOLO
+from ultralytics import RTDETR
 # from ultralytics.data.loaders import build_dataloader
 # from ultralytics.cfg import get_cfg
 # from ultralytics.data.utils import check_det_dataset
@@ -12,16 +12,9 @@ from ultralytics import YOLO
 
 
 
-
+model = RTDETR("rtdetrv2-s.pt")
 # Train the model
 print('--------------------------- model train ----------------------')
-# model.train(
-#     data='/home/roee/Downloads/Drone Dataset.v2i.yolov8/data.yaml',
-#     epochs=50,
-#     imgsz=(320, 240),
-#     batch=16,
-#     name='drone_detector_yolov8n'
-# )
 
 t0 = time.monotonic()
 # dataset_yaml_file = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20250625_coco/yolo_dataset.yaml'
@@ -30,20 +23,12 @@ t0 = time.monotonic()
 # dataset_yaml_file = '/home/roee/Projects/datasets/UAV_fixed_wing_dataset/dataset_20260323/ultalytics_yolo_20260324/ultralytics_dataset_data.yaml'
 dataset_yaml_file = '/home/roee/Projects/datasets/UAV_fixed_wing_dataset/dataset_20260330/ultalytics_yolo_20260330/ultralytics_dataset_data.yaml'
 
-# cfg = get_cfg()
-# cfg.data = dataset_yaml_file
-# check_det_dataset(cfg)
-
-
-# output_name = 'drone_detector_yolov8n_20250709'
-# output_name = 'drone_detector_yolov11n_320x240_20251021'
-# output_name = 'drone_detector_yolov11n_256x256_20260104'
-
-# ----------------------------- yolo26n p2 model ---------------------------------------
 output_name = 'drone_detector_yolov26n_256x256_20260324_mixed_p2_v1'
 yolo26_p2_yaml_file = '/home/roee/Projects/datasets/UAV_fixed_wing_dataset/dataset_20260330/ultalytics_yolo_20260330/yolo26n-p2.yaml'
-yolo26_model = '/home/roee/Projects/datasets/UAV_fixed_wing_dataset/yolo_models/yolo26n.pt'
-model = YOLO(yolo26_p2_yaml_file).load(yolo26_model)
+model_file = '/home/roee/Projects/datasets/UAV_fixed_wing_dataset/yolo_models/yolo26n.pt'
+
+model = RTDETR(model_file)
+model = RTDETR(yolo26_p2_yaml_file).load(yolo26_model)
 
 # output_name = 'drone_detector_yolov26n_256x256_20260324_mixed_v1'
 # model = YOLO('../models/yolo26n.pt')
