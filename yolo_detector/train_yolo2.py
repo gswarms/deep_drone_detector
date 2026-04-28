@@ -41,8 +41,8 @@ metrics.bbox_iou = custom_bbox_iou
 # ---------------------------
 
 if __name__ == "__main__":
-    yolo_model_cfg_file = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/dataset_20260330/models/yolov26n_256x256_20260330_mixed_p2_spd/yolo26n_p2_spd_256x256.yaml'
-    dataset_yaml_file = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/dataset_20260323/ultalytics_yolo_20260324/ultralytics_dataset_data.yaml'
+    yolo_model_cfg_file = '/home/roee/Projects/datasets/UAV_fixed_wing_dataset/yolo_models/20260426_yolo26n_p2_spd_mixed/yolo26n_p2_spd_256x256.yaml'
+    dataset_yaml_file = '/home/roee/Projects/datasets/UAV_fixed_wing_dataset/dataset_20260330/ultalytics_yolo_20260330/ultralytics_dataset_data.yaml'
 
     # 1. Load the architecture
     model = YOLO(yolo_model_cfg_file)
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         data=dataset_yaml_file,
         epochs=500,
         imgsz=256,
-        batch=4,  # 256px images allow for larger batches
+        batch=128,  # 256px images allow for larger batches
         optimizer='AdamW',  # Better for custom/narrow architectures
         lr0=0.001,  # Slightly lower learning rate for stability
 
@@ -79,7 +79,8 @@ if __name__ == "__main__":
         scale=0.3,  # This is the most critical hyperparameter. It randomly zooms the image in/out by up to $90\%$.
         mosaic=1.0,  # Keep Mosaic at max for the first $80\%$ of training. It creates "synthetic" small objects by shrinking four images into one.
         close_mosaic=25,  # Disable mosaic for last 20 epochs to see "clean" 256x256 crops to refine the bounding box accuracy for the 5x5 targets.
-        multi_scale=True  # This varies the input resolution (e.g., from $192$ to $320$) every few batches. It makes the kernels scale-invariant
+        copy_paste=0.0,  # aggressive because of 50% background images
+        multi_scale=False  # This varies the input resolution (e.g., from $192$ to $320$) every few batches. It makes the kernels scale-invariant
     )
 
     # 3. Export for Raspberry Pi 5
