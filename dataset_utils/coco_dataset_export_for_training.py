@@ -4,15 +4,10 @@ import shutil
 import random
 import pathlib
 import time
-from distutils.dir_util import copy_tree
-import json
-
 import cv2
 import numpy as np
 import yaml
 import coco_dataset_manager
-import dataset_training_utils
-
 
 # TODO: use new coco dataset manager
 # TODO: balance by bbox size
@@ -87,7 +82,7 @@ class CocoToUltralyticsYoloExporter:
 
 
     def export(self, output_dataset_root_folder, split_ratios={'train': 0.7, 'val': 0.15, 'test':0.15},
-                            augment_crop=None):
+               augment_crop=None, background_balance={'ratio': None, 'method':None}):
         """
         export dataset to ultralytics yolo training format
 
@@ -97,6 +92,10 @@ class CocoToUltralyticsYoloExporter:
         :param augment_crop: parameters for augment crop
                              {'image_size': (width, height), 'num_samples': n}
                              None - no augment-crop will be done.
+        :param background_balance: ratio of background images in the dataset
+                                 None - keep all existing images
+                                 method: 'dilute' - drop labled/bckgnd images to get to the desired ratio
+                                         'expand' - duplicate labled/bckgnd images to get to the desired ratio
         :return:
         """
 
@@ -134,7 +133,6 @@ class CocoToUltralyticsYoloExporter:
         output_annotations_val_file = output_annotations_folder / 'instances_val.json'
         output_annotations_test_file = output_annotations_folder / 'instances_test.json'
 
-
         # output ultralytics-yolo dataset config file
         output_yolo_yaml_file = pathlib.Path(output_dataset_root_folder) / 'ultralytics_dataset_data.yaml'
 
@@ -163,9 +161,8 @@ class CocoToUltralyticsYoloExporter:
         #---------------------- resize / crop dataset -----------------------
         # this is specific to our application!
 
-
         #---------------------- balance dataset -----------------------
-
+        self._balance_background(background_balance, verbose=True)
 
         #----------------- split to train / test / val sets -------------------
         print('splitting dataset to train / test / val sets')
@@ -282,6 +279,18 @@ class CocoToUltralyticsYoloExporter:
         print('saving yolo dataset yaml file at: {}'.format(output_yolo_yaml_file))
         self._save_ultralytics_yolo_config_file(output_yolo_yaml_file, output_dataset_root_folder)
 
+        # ----------------- Save yolo dataset yaml file -------------------
+        output_log_file = os.path.join(output_dataset_root_folder, 'dataset_export_log.yaml')
+        print('saving dataset export parameters at: {}'.format(output_log_file))
+        log_data = {'dataset_source_folder': str(self.coco_dataset.root_folder),
+                    'output_folder': output_dataset_root_folder,
+                    'split_params': split_ratios,
+                    'augment_crop': augment_crop,
+                    'background_balance_params': background_balance}
+        self._save_dataset_export_log(output_log_file, log_data)
+
+        return
+
 
     def _save_ultralytics_yolo_config_file(self, output_yolo_yaml_file, output_dataset_root_folder):
         cats = self.coco_dataset.get_categories()
@@ -299,8 +308,13 @@ class CocoToUltralyticsYoloExporter:
         with open(output_yolo_yaml_file, 'w') as f:
             yaml.dump(yolo_dataset_cgf, f, default_flow_style=False, sort_keys=False)
 
+    @ staticmethod
+    def _save_dataset_export_log(output_log_file, log_data):
+        with open(output_log_file, 'w') as f:
+            yaml.dump(log_data, f, default_flow_style=False, sort_keys=False)
 
-    def _get_random_crop_resize(self, full_img_size, annotation_bboxes, required_image_size):
+    @staticmethod
+    def _get_random_crop_resize(full_img_size, annotation_bboxes, required_image_size):
         """
         resize dataset images to a fixed image size - for training
 
@@ -359,6 +373,111 @@ class CocoToUltralyticsYoloExporter:
         crop_bbox = None
 
         return rescale_factor, crop_bbox
+
+    def _balance_background(self, background_ratio, verbose=False):
+
+        # check input
+        if not isinstance(background_ratio, dict) or not all(k in background_ratio for k in ("ratio", "method")):
+            raise Exception('invalid background_ratio format!')
+        elif (background_ratio['ratio'] is not None) and (background_ratio['method'] is not None):
+            balance_background_ratio = True
+        else:
+            balance_background_ratio = False
+
+        # balance background
+        if balance_background_ratio:
+            image_ids = self.coco_dataset.df_images['id']  # unique
+            image_ids_annotated = list(set(self.coco_dataset.df_annotations['image_id']))  # sorted
+            image_ids_background = list(set([x for x in image_ids if x not in image_ids_annotated]))  # sorted
+
+            num_images = len(image_ids)
+            num_annotated_images = len(image_ids_annotated)
+            num_background_images = len(image_ids_background)
+            background_ratio_curr = float(num_background_images) / float(num_images)
+
+            num_annotations = len(self.coco_dataset.df_annotations)
+
+            if background_ratio['method'] == 'dilute':
+                if background_ratio_curr > background_ratio['ratio']:
+                    # na - number of annotated images (given)
+                    # x - required number of background images
+                    # solve:
+                    # x / (na+x) = r
+                    # gives:
+                    # x = r * na / (1-r)
+                    n_required_background_images = int(np.round(background_ratio['ratio'] * num_annotated_images / (1 - background_ratio['ratio'])))
+
+                    # dilute background images
+                    n_remove_images = num_background_images - n_required_background_images
+                    remove_index = np.round(np.linspace(0, num_background_images - 1, n_remove_images)).astype(np.uint32)
+                    remove_image_ids = [image_ids_background[i] for i in remove_index]
+                    for img_id in remove_image_ids:
+                        self.coco_dataset.remove_image(img_id)
+                else:
+                    # dilute annotated images
+                    # nb - number of background images (given)
+                    # x - required number of annotated images
+                    # solve:
+                    # x / (x+nb) = (1-r)
+                    # gives:
+                    # x = nb * (1-r)/r
+                    n_required_annotated_images = int(np.round(num_background_images * (1 - background_ratio['ratio']) / background_ratio['ratio'] ))
+
+                    n_remove_images = num_annotated_images - n_required_annotated_images
+                    remove_index = np.round(np.linspace(0, num_annotated_images - 1, n_remove_images)).astype(np.uint32)
+                    remove_image_ids = [image_ids_annotated[i] for i in remove_index]
+                    for img_id in remove_image_ids:
+                        self.coco_dataset.remove_image(img_id)
+
+            elif background_ratio['method'] == 'expand':
+                if background_ratio_curr < background_ratio['ratio']:
+                    # expand background images
+                    # na - number of annotated images (given)
+                    # x - required number of background images
+                    # solve:
+                    # x / (na+x) = r
+                    # gives:
+                    # x = r * na / (1-r)
+                    n_required_background_images = int(np.round(background_ratio['ratio'] * num_annotated_images / (1 - background_ratio['ratio'])))
+
+                    n_add_images = n_required_background_images - len(image_ids_background)
+                    add_index = np.round(np.linspace(0, len(image_ids_background) - 1, n_add_images))
+                    add_image_ids = [image_ids_background[i] for i in add_index]
+                    self.coco_dataset.duplicate_image(add_image_ids)
+
+                else:
+                    # expand annotated images
+                    # nb - number of background images (given)
+                    # x - required number of annotated images
+                    # solve:
+                    # x / (x+nb) = (1-r)
+                    # gives:
+                    # x = nb * (1-r)/r
+                    n_required_annotated_images = int(np.round(num_background_images * (1 - background_ratio['ratio']) / background_ratio['ratio'] ))
+
+                    n_add_images = n_required_annotated_images - len(image_ids_annotated)
+                    add_index = np.round(np.linspace(0, len(image_ids_annotated) - 1, n_add_images))
+                    add_image_ids = [image_ids_annotated[i] for i in add_index]
+                    self.coco_dataset.duplicate_image(add_image_ids)
+
+            else:
+                raise Exception('invalid background_ratio method!')
+
+            if verbose:
+                print('background balance:')
+                print('pre balance: {} images, {} background images, {} annotated images, {} annotations, background ratio={}'.format(
+                    num_images, num_background_images, num_annotated_images, num_annotations, background_ratio_curr))
+
+                image_ids = self.coco_dataset.df_images['id']  # unique
+                image_ids_annotated = set(self.coco_dataset.df_annotations['image_id'])  # sorted
+                image_ids_background = set([x for x in image_ids if x not in image_ids_annotated])  # sorted
+                num_images = len(image_ids)
+                num_annotated_images = len(image_ids_annotated)
+                num_background_images = len(image_ids_background)
+                num_annotations = len(self.coco_dataset.df_annotations)
+                new_background_ratio = float(num_background_images) / float(num_images)
+                print('post balance: {} images, {} background images, {} annotated images, {} annotations, background ratio={}'.format(
+                    num_images, num_background_images, num_annotated_images, num_annotations, new_background_ratio))
 
 
 def generate_system_mimic_crop(image, bboxes, target_idx=0, base_size=256):
@@ -430,9 +549,9 @@ if __name__ == '__main__':
     # augment_crop = None
 
 
-    base_dataset_folder = '/home/roee/Projects/datasets/UAV_fixed_wing_dataset/dataset_20260330'
+    base_dataset_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/dataset_20260330'
     input_coco_dataset_json = os.path.join(base_dataset_folder, 'merged_dataset_raw/annotations/coco_dataset.json')
-    output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260330')
+    output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260330_bg_balanced')
     split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
     # augment_crop = {'image_size': (256, 256), 'num_samples': 4}
     augment_crop = None
@@ -440,6 +559,14 @@ if __name__ == '__main__':
     seed = 42
     random.seed(seed)
 
-    c2y_exporter = CocoToUltralyticsYoloExporter(input_coco_dataset_json)
-    c2y_exporter.export(output_dataset_root_folder, split_ratios=split_ratios, augment_crop=None)
+    # load dataset
+    raw_dataset = coco_dataset_manager.CocoDatasetManager()
+    raw_dataset.load_coco(input_coco_dataset_json, verify_image_files=False)
 
+    # balance dataset
+    # background_balance = {'ratio': None, 'method': None}
+    background_balance = {'ratio': 0.15, 'method': 'dilute'}
+
+    c2y_exporter = CocoToUltralyticsYoloExporter(input_coco_dataset_json)
+    c2y_exporter.export(output_dataset_root_folder, split_ratios=split_ratios,
+                        augment_crop=None, background_balance=background_balance)
