@@ -467,6 +467,7 @@ class CocoDatasetManager:
         :return:
         """
         # TODO: check if this is not dangerous in dataset merge when comparing hashes!!!
+        # TODO: add test
 
         is_scalar = False
         if isinstance(img_ids, int):
@@ -490,6 +491,11 @@ class CocoDatasetManager:
             new_image_data = copy.deepcopy(img_data)
             new_img_id = self.add_image(str(new_img_file_name), (new_image_data['width'], new_image_data['height']), new_image_data['metadata'])
             new_img_ids.append(new_img_id)
+            # duplicate corresponding annotations!
+            ann = self.get_image_annotations(i)
+            for an in ann:
+                self.add_annotation(new_img_id, an['category_id'], an['bbox'], an['segmentation'],
+                                    an['area'], an['iscrowd'], an['metadata'])
 
         if is_scalar:
             new_img_ids = new_img_ids[0]
