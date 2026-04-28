@@ -171,6 +171,66 @@ def test_add_image(empty_manager, random_image_factory, tmp_path):
     assert (img_data["width"] == 220 and img_data["height"] == 110 and img_data["id"] == img_id3 and
             img_data["file_name"] == img3_path_relative and  img_data["metadata"] == m_data2)
 
+def test_duplicate_image(empty_manager, random_image_factory, tmp_path):
+
+    img1_path = random_image_factory(tmp_path, 200, 100, "tmp_img1.png")
+
+    # try to add image without setting root folder (should except)
+    with pytest.raises(Exception, match="root folder must be set before adding images"):
+        img_id1 = empty_manager.add_image(str(img1_path))
+
+    # set root
+    dataset_root = tmp_path
+    empty_manager.set_root(dataset_root)
+    img1_path_relative = os.path.relpath(img1_path, empty_manager.images_folder)
+
+    # add image without image size
+    img_id1 = empty_manager.add_image(str(img1_path))
+    assert empty_manager.get_image_ids() == [img_id1]
+    img_data = empty_manager.get_image(img_id1)
+    assert (img_data["width"] == 200 and img_data["height"] == 100 and img_data["id"] == img_id1  and
+            img_data["file_name"] == img1_path_relative and  img_data["metadata"] == {})
+
+    # add image with image size
+    img2_path = random_image_factory(tmp_path, 220, 110, "tmp_img2.png")
+    img2_path_relative = os.path.relpath(img2_path, empty_manager.images_folder)
+    img_id2 = empty_manager.add_image(str(img2_path), (220, 110))
+    assert empty_manager.get_image_ids() == [img_id1, img_id2]
+    img_data = empty_manager.get_image(img_id2)
+    assert (img_data["width"] == 220 and img_data["height"] == 110 and img_data["id"] == img_id2  and
+            img_data["file_name"] == img2_path_relative and  img_data["metadata"] == {})
+
+    # add image with metadata
+    img3_path = random_image_factory(tmp_path, 220, 110, "tmp_img3.png")
+    m_data = {'a':1, 'b':2}
+    img_id3 = empty_manager.add_image(str(img3_path), image_size=(220, 110), metadata=m_data)
+    img3_path_relative = os.path.relpath(img3_path, empty_manager.images_folder)
+    img_data = empty_manager.get_image(img_id3)
+    assert (img_data["width"] == 220 and img_data["height"] == 110 and img_data["id"] == img_id3 and
+            img_data["file_name"] == img3_path_relative and  img_data["metadata"] == m_data)
+
+    # duplicate non-existing image
+    with pytest.raises(Exception):
+        empty_manager.duplicate_image(100)
+
+    # duplicate image
+    img_id11 = empty_manager.duplicate_image(img_id1)
+    img_data = empty_manager.get_image(img_id11)
+    new_img_name = img1_path_relative[:-4] + '_dup' + img1_path_relative[-4:]
+    assert (img_data["width"] == 200 and img_data["height"] == 100 and img_data["id"] == img_id11  and
+            img_data["file_name"] == new_img_name and  img_data["metadata"] == {})
+
+    img_id23 = empty_manager.duplicate_image([img_id2, img_id3])
+    img_data = empty_manager.get_image(img_id23[0])
+    new_img_name = img2_path_relative[:-4] + '_dup' + img2_path_relative[-4:]
+    assert (img_data["width"] == 220 and img_data["height"] == 110 and img_data["id"] == img_id23[0]  and
+            img_data["file_name"] == new_img_name and  img_data["metadata"] == {})
+    img_data = empty_manager.get_image(img_id23[1])
+    new_img_name = img3_path_relative[:-4] + '_dup' + img3_path_relative[-4:]
+    assert (img_data["width"] == 220 and img_data["height"] == 110 and img_data["id"] == img_id23[1] and
+            img_data["file_name"] == new_img_name and  img_data["metadata"] == m_data)
+
+
 def test_remove_image(empty_manager, random_image_factory, tmp_path):
     # TODO: remove existing image
     # TODO: remove non existing image
@@ -295,8 +355,8 @@ def test_add_get_category(empty_manager):
     assert dog_id in empty_manager.df_categories["id"].values
 
     cat = empty_manager.get_categories()
-    assert cat == {1: {'name': 'cat', 'supercategory': 'animal'},
-                   2: {'name': 'dog', 'supercategory': 'animal'}}
+    assert cat == {0: {'name': 'cat', 'supercategory': 'animal'},
+                   1: {'name': 'dog', 'supercategory': 'animal'}}
 
     # add existing category
     with pytest.raises(ValueError):
@@ -314,8 +374,8 @@ def test_update_category(empty_manager):
     # update category
     empty_manager.update_category(dog_id, "puppy", "cute_animal")
     cat = empty_manager.get_categories()
-    assert cat == {1: {'name': 'cat', 'supercategory': 'animal'},
-                   2: {'name': 'puppy', 'supercategory': 'cute_animal'}}
+    assert cat == {0: {'name': 'cat', 'supercategory': 'animal'},
+                   1: {'name': 'puppy', 'supercategory': 'cute_animal'}}
 
     # update non-existing
     with pytest.raises(ValueError):
@@ -331,15 +391,15 @@ def test_remove_category(empty_manager):
     assert dog_id in empty_manager.df_categories["id"].values
 
     cat = empty_manager.get_categories()
-    assert cat == {1: {'name': 'cat', 'supercategory': 'animal'},
-                   2: {'name': 'dog', 'supercategory': 'animal'}}
+    assert cat == {0: {'name': 'cat', 'supercategory': 'animal'},
+                   1: {'name': 'dog', 'supercategory': 'animal'}}
 
     # remove category
     res = empty_manager.remove_category(cat_id)
     assert res is True
     assert cat_id not in empty_manager.df_categories["id"].values
     cat = empty_manager.get_categories()
-    assert cat == {2: {'name': 'dog', 'supercategory': 'animal'}}
+    assert cat == {1: {'name': 'dog', 'supercategory': 'animal'}}
 
     res = empty_manager.remove_category(7)
     assert res is False
@@ -353,8 +413,8 @@ def test_remap_category_name(empty_manager):
     assert "lavrador" in empty_manager.df_categories["name"].values
     assert "dog" not in empty_manager.df_categories["name"].values
     cat = empty_manager.get_categories()
-    assert cat == {1: {'name': 'cat', 'supercategory': 'animal'},
-                   2: {'name': 'lavrador', 'supercategory': 'animal'}}
+    assert cat == {0: {'name': 'cat', 'supercategory': 'animal'},
+                   1: {'name': 'lavrador', 'supercategory': 'animal'}}
 
 
 def test_get_category_name(empty_manager):
@@ -411,10 +471,10 @@ def test_get_annotation(sample_dataset_with_annotations):
     assert ann_data2 is None
 
     # get annotations by image id
-    img_id = 1
+    img_id = 0
     anns = dataset_manager.get_image_annotations(img_id)
     anns_ids = [x['id'] for x in anns]
-    assert len(anns) == 3 and anns_ids == [1, 2, 3]
+    assert len(anns) == 3 and anns_ids == [0, 1, 2]
 
     anns = dataset_manager.get_image_annotations(7)  # non existent image
     assert len(anns) == 0
@@ -455,16 +515,16 @@ def test_remove_annotation(sample_dataset_with_annotations):
     annotations = sample_dataset_with_annotations['annotations']
 
     # remove annotations
-    ann_id2 = 2
+    ann_id2 = 1
     dataset_manager.remove_annotation(ann_id2)
     assert dataset_manager.get_annotation(ann_id2) is None
 
     # remove annotations by removing category
-    cat_id2 = 2
+    cat_id2 = 1
     dataset_manager.remove_category(cat_id2)
-    assert dataset_manager.get_annotation(3) is None
+    assert dataset_manager.get_annotation(2) is None
 
-    ann_id1 = 1
+    ann_id1 = 0
     ann_data_ref = annotations[ann_id1]
     ann_data = dataset_manager.get_annotation(ann_id1)
     assert ann_data == {'id': ann_id1, 'image_id': ann_data_ref['img_id'], 'category_id': ann_data_ref['cat_id'],
@@ -472,9 +532,9 @@ def test_remove_annotation(sample_dataset_with_annotations):
                         'iscrowd': ann_data_ref['iscrowd'], 'metadata': ann_data_ref['metadata']}
 
     # remove annotations by removing image
-    image_id = 2
+    image_id = 1
     dataset_manager.remove_image(image_id)
-    assert dataset_manager.get_annotation(4) is None
+    assert dataset_manager.get_annotation(3) is None
 
 
 # -----------------------------
@@ -580,10 +640,10 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
             rename_images_by_id=False, max_num_images=10**7, verbose=True)
 
     # test results
-    img_ref[4] = {'file_path': Path(img1_path_relative).name,  # after this image is copied to images
+    img_ref[3] = {'file_path': Path(img1_path_relative).name,  # after this image is copied to images
                   'size': (200, 100),
                   'metadata': {'ia':211, 'ib':212}}
-    img_ref[5] = {'file_path': Path(img2_path_relative).name,  # after this image is copied to images
+    img_ref[4] = {'file_path': Path(img2_path_relative).name,  # after this image is copied to images
                   'size': (200, 100),
                   'metadata': {'ia':221, 'ib':222}}
     for img_id in img_ref.keys():
@@ -593,14 +653,14 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
                             'width': img_data_ref['size'][0], 'height': img_data_ref['size'][1],
                             'metadata': img_data_ref['metadata']}
 
-    cat_ref[3] = {'name': 'donkey', 'supercategory': 'animal'}
+    cat_ref[2] = {'name': 'donkey', 'supercategory': 'animal'}
     cat_data = dataset_manager.get_categories()
     assert cat_data == cat_ref
 
-    ann_ref[5] = {'img_id': 4, 'cat_id': 2, 'bbox': bbox1, 'area': 81, 'iscrowd': 0, 'metadata': {'a': 1000, 'b': 2000}}
-    ann_ref[6] = {'img_id': 4, 'cat_id': 2, 'bbox': bbox2, 'area': 82, 'iscrowd': 1, 'metadata': {}}
-    ann_ref[7] = {'img_id': 4, 'cat_id': 3, 'bbox': bbox3, 'area': 83, 'iscrowd': 0, 'metadata': {'a': 1001, 'b': 2001}}
-    ann_ref[8] = {'img_id': 5, 'cat_id': 1, 'bbox': bbox4, 'area': 84, 'iscrowd': 1, 'metadata': {'a': 1002, 'b': 2002}}
+    ann_ref[4] = {'img_id': 3, 'cat_id': 1, 'bbox': bbox1, 'area': 81, 'iscrowd': 0, 'metadata': {'a': 1000, 'b': 2000}}
+    ann_ref[5] = {'img_id': 3, 'cat_id': 1, 'bbox': bbox2, 'area': 82, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[6] = {'img_id': 3, 'cat_id': 2, 'bbox': bbox3, 'area': 83, 'iscrowd': 0, 'metadata': {'a': 1001, 'b': 2001}}
+    ann_ref[7] = {'img_id': 4, 'cat_id': 0, 'bbox': bbox4, 'area': 84, 'iscrowd': 1, 'metadata': {'a': 1002, 'b': 2002}}
     for ann_id in ann_ref.keys():
         ann_data_ref = ann_ref[ann_id]
         ann_data = dataset_manager.get_annotation(ann_id)
@@ -609,7 +669,7 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
                             'iscrowd': ann_data_ref['iscrowd'], 'metadata': ann_data_ref['metadata']}
 
     # ----------------------- test duplicate images --------------------------
-    # both path and hash dupkicates
+    # both path and hash duplicates
 
     other_manager = CocoDatasetManager()
     # set root
@@ -618,10 +678,10 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
     img1_path = random_image_factory(tmp_path, 200, 100, "tmp_img31.png")
     img1_path_relative = os.path.relpath(img1_path, other_manager.images_folder)
 
-    img2_path_relative = dataset_manager.get_image(1)['file_name']  # use an image already existing in original dataset
+    img2_path_relative = dataset_manager.get_image(0)['file_name']  # use an image already existing in original dataset
     img2_path = (dataset_manager.images_folder / Path(img2_path_relative)).resolve()
 
-    img3_path_relative = dataset_manager.get_image(2)['file_name']  # hash duplicate image
+    img3_path_relative = dataset_manager.get_image(1)['file_name']  # hash duplicate image
     img3_orig_path = (dataset_manager.images_folder / Path(img3_path_relative)).resolve()
     img3_path = (other_manager.images_folder / Path("tmp_img33.png")).resolve()
     img3_path.parent.mkdir(parents=True, exist_ok=True)
@@ -649,7 +709,7 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
             rename_images_by_id=False, max_num_images=10**7, verbose=True)
 
     # test results
-    img_ref[6] = {'file_path': Path(img1_path_relative).name,  # after this image is copied to images
+    img_ref[5] = {'file_path': Path(img1_path_relative).name,  # after this image is copied to images
                   'size': (200, 100),
                   'metadata': {'ia':311, 'ib':312}}
     assert len(dataset_manager.df_images)==6
@@ -660,9 +720,9 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
                             'width': img_data_ref['size'][0], 'height': img_data_ref['size'][1],
                             'metadata': img_data_ref['metadata']}
 
-    ann_ref[9] = {'img_id': 6, 'cat_id': 1, 'bbox': bbox1, 'area': 91, 'iscrowd': 0, 'metadata': {'a': 345, 'b': 2123}}
-    ann_ref[10] = {'img_id': 1, 'cat_id': 2, 'bbox': bbox3, 'area': 93, 'iscrowd': 1, 'metadata': {}}
-    ann_ref[11] = {'img_id': 2, 'cat_id': 2, 'bbox': bbox4, 'area': 94, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[8] = {'img_id': 5, 'cat_id': 0, 'bbox': bbox1, 'area': 91, 'iscrowd': 0, 'metadata': {'a': 345, 'b': 2123}}
+    ann_ref[9] = {'img_id': 0, 'cat_id': 1, 'bbox': bbox3, 'area': 93, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[10] = {'img_id': 1, 'cat_id': 1, 'bbox': bbox4, 'area': 94, 'iscrowd': 1, 'metadata': {}}
     for ann_id in ann_ref.keys():
         ann_data_ref = ann_ref[ann_id]
         ann_data = dataset_manager.get_annotation(ann_id)
@@ -706,13 +766,13 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
             rename_images_by_id=False, max_num_images=10**7, verbose=True)
 
     # test results
-    img_ref[7] = {'file_path': Path(img1_path_relative).stem + '_' + Path(img1_path_relative).suffix,  # renamed because of duplicate image name
+    img_ref[6] = {'file_path': Path(img1_path_relative).stem + '_' + Path(img1_path_relative).suffix,  # renamed because of duplicate image name
                   'size': (200, 100),
                   'metadata': {'ia':311, 'ib':312}}
-    img_ref[8] = {'file_path': Path(img2_path_relative).stem + '_' + Path(img2_path_relative).suffix,  # renamed because of duplicate image name
+    img_ref[7] = {'file_path': Path(img2_path_relative).stem + '_' + Path(img2_path_relative).suffix,  # renamed because of duplicate image name
                   'size': (200, 100),
                   'metadata': {'ia':321, 'ib':322}}
-    img_ref[9] = {'file_path': Path(img3_path_relative).name,
+    img_ref[8] = {'file_path': Path(img3_path_relative).name,
                   'size': (200, 100),
                   'metadata': {'ia':331, 'ib':332}}
     assert len(dataset_manager.df_images)==9
@@ -723,10 +783,10 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
                             'width': img_data_ref['size'][0], 'height': img_data_ref['size'][1],
                             'metadata': img_data_ref['metadata']}
 
-    ann_ref[12] = {'img_id': 7, 'cat_id': 1, 'bbox': bbox1, 'area': 101, 'iscrowd': 0, 'metadata': {'a': 345, 'b': 2123}}
-    ann_ref[13] = {'img_id': 8, 'cat_id': 2, 'bbox': bbox2, 'area': 102, 'iscrowd': 1, 'metadata': {}}
-    ann_ref[14] = {'img_id': 8, 'cat_id': 2, 'bbox': bbox3, 'area': 103, 'iscrowd': 1, 'metadata': {}}
-    ann_ref[15] = {'img_id': 9, 'cat_id': 2, 'bbox': bbox4, 'area': 104, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[11] = {'img_id': 6, 'cat_id': 0, 'bbox': bbox1, 'area': 101, 'iscrowd': 0, 'metadata': {'a': 345, 'b': 2123}}
+    ann_ref[12] = {'img_id': 7, 'cat_id': 1, 'bbox': bbox2, 'area': 102, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[13] = {'img_id': 7, 'cat_id': 1, 'bbox': bbox3, 'area': 103, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[14] = {'img_id': 8, 'cat_id': 1, 'bbox': bbox4, 'area': 104, 'iscrowd': 1, 'metadata': {}}
     for ann_id in ann_ref.keys():
         ann_data_ref = ann_ref[ann_id]
         ann_data = dataset_manager.get_annotation(ann_id)
@@ -769,10 +829,10 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
             rename_images_by_id=True, max_num_images=10**7, verbose=True)
 
     # test results
-    img_ref[10] = {'file_path': '0000010' + Path(img1_path_relative).suffix,  # renamed because of duplicate image name
+    img_ref[9] = {'file_path': '0000009' + Path(img1_path_relative).suffix,  # renamed because of duplicate image name
                   'size': (200, 100),
                   'metadata': {'ia':411, 'ib':412}}
-    img_ref[11] = {'file_path': '0000011' + Path(img2_path_relative).suffix,  # renamed because of duplicate image name
+    img_ref[10] = {'file_path': '0000010' + Path(img2_path_relative).suffix,  # renamed because of duplicate image name
                   'size': (200, 100),
                   'metadata': {'ia':421, 'ib':422}}
     assert len(dataset_manager.df_images)==11
@@ -783,9 +843,9 @@ def test_merge_datasets(sample_dataset_with_annotations, random_image_factory, t
                             'width': img_data_ref['size'][0], 'height': img_data_ref['size'][1],
                             'metadata': img_data_ref['metadata']}
 
-    ann_ref[16] = {'img_id': 10, 'cat_id': 1, 'bbox': bbox1, 'area': 111, 'iscrowd': 0, 'metadata': {'a': 345, 'b': 2123}}
-    ann_ref[17] = {'img_id': 11, 'cat_id': 2, 'bbox': bbox2, 'area': 112, 'iscrowd': 1, 'metadata': {}}
-    ann_ref[18] = {'img_id': 11, 'cat_id': 2, 'bbox': bbox3, 'area': 113, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[15] = {'img_id': 9, 'cat_id': 0, 'bbox': bbox1, 'area': 111, 'iscrowd': 0, 'metadata': {'a': 345, 'b': 2123}}
+    ann_ref[16] = {'img_id': 10, 'cat_id': 1, 'bbox': bbox2, 'area': 112, 'iscrowd': 1, 'metadata': {}}
+    ann_ref[17] = {'img_id': 10, 'cat_id': 1, 'bbox': bbox3, 'area': 113, 'iscrowd': 1, 'metadata': {}}
     for ann_id in ann_ref.keys():
         ann_data_ref = ann_ref[ann_id]
         ann_data = dataset_manager.get_annotation(ann_id)

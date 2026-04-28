@@ -1,5 +1,7 @@
+import copy
 import os
 import json
+import pathlib
 import pandas as pd
 from pathlib import Path
 from PIL import Image
@@ -67,7 +69,7 @@ class CocoDatasetManager:
         self._next_annotation_id = 0
         self._next_category_id = 0
 
-        self._image_get_id = 0
+        self._image_get_id = None
 
     # --------------------
     # manual set
@@ -114,7 +116,7 @@ class CocoDatasetManager:
 
         2. image file path in the json file are relative to the /images subfolder
 
-        :param json_path:
+        :param json_path: dataset annotations json file path (usually inside 'annotations' subfolder)
         :param verify_image_files: make sure all image files exist
         :return:
         """
@@ -456,6 +458,49 @@ class CocoDatasetManager:
         self.df_images.loc[len(self.df_images)] = [img_id, str(file_path_relative), width, height, metadata or {}]
         return img_id
 
+    def duplicate_image(self, img_ids: int | tuple[int] | list[int]):
+        """
+        duplicate image (and actually copy image file)
+
+        :param img_ids: image id to duplicate
+
+        :return:
+        """
+        # TODO: check if this is not dangerous in dataset merge when comparing hashes!!!
+        # TODO: add test
+
+        is_scalar = False
+        if isinstance(img_ids, int):
+            img_ids = [img_ids]
+            is_scalar = True
+
+        new_img_ids = []
+        for i in img_ids:
+            if i not in self.df_images["id"]:
+                raise Exception('image id {} invalid!'.format(i))
+            # get image
+            img_data = self.get_image(i)
+            # new image file name
+            img_file_name = self.images_folder / pathlib.Path(img_data['file_name'])
+            img_file_path = (self.images_folder / pathlib.Path(img_data['file_name'])).resolve()
+            new_img_file_name = img_file_name.with_name(img_file_name.stem + "_dup" + img_file_name.suffix)
+            new_img_file_path = self.images_folder / new_img_file_name.resolve()
+            # copy image
+            shutil.copy(str(img_file_path), str(new_img_file_path))
+            # add new image
+            new_image_data = copy.deepcopy(img_data)
+            new_img_id = self.add_image(str(new_img_file_name), (new_image_data['width'], new_image_data['height']), new_image_data['metadata'])
+            new_img_ids.append(new_img_id)
+            # duplicate corresponding annotations!
+            ann = self.get_image_annotations(i)
+            for an in ann:
+                self.add_annotation(new_img_id, an['category_id'], an['bbox'], an['segmentation'],
+                                    an['area'], an['iscrowd'], an['metadata'])
+
+        if is_scalar:
+            new_img_ids = new_img_ids[0]
+        return new_img_ids
+
     def remove_image(self, image_id: int):
         img_found = image_id in self.df_images["id"].values
         self.df_images = self.df_images[self.df_images["id"] != image_id]
@@ -498,7 +543,10 @@ class CocoDatasetManager:
         ids = sorted(self.get_image_ids())
 
         if current_image_id is None:
-            current_image_id = self._image_get_id
+            if self._image_get_id is None:
+                current_image_id = -np.inf
+            else:
+                current_image_id = self._image_get_id
 
         for i in ids:
             if i > current_image_id:
