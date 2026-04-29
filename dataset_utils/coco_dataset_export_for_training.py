@@ -280,13 +280,32 @@ class CocoToUltralyticsYoloExporter:
         self._save_ultralytics_yolo_config_file(output_yolo_yaml_file, output_dataset_root_folder)
 
         # ----------------- Save yolo dataset yaml file -------------------
+
+        image_ids = self.coco_dataset.df_images['id']  # unique
+        image_ids_annotated = set(self.coco_dataset.df_annotations['image_id'])  # sorted
+        image_ids_background = set([x for x in image_ids if x not in image_ids_annotated])  # sorted
+        num_images = len(image_ids)
+        num_annotated_images = len(image_ids_annotated)
+        num_background_images = len(image_ids_background)
+        num_annotations = len(self.coco_dataset.df_annotations)
+        new_background_ratio = float(num_background_images) / float(num_images)
+
+        dataset_size = {'images': num_images,
+                        'annotations': num_annotations}
+        background_ballance = {'annotated_images': num_annotated_images,
+                               'background_images': num_background_images,
+                               'background_ratio': new_background_ratio}
+        export_params = {'split_params': split_ratios,
+                         'background_balance_params': augment_crop,
+                         'augment_crop_params': background_balance}
+
         output_log_file = os.path.join(output_dataset_root_folder, 'dataset_export_log.yaml')
         print('saving dataset export parameters at: {}'.format(output_log_file))
         log_data = {'dataset_source_folder': str(self.coco_dataset.root_folder),
                     'output_folder': output_dataset_root_folder,
-                    'split_params': split_ratios,
-                    'augment_crop': augment_crop,
-                    'background_balance_params': background_balance}
+                    'dataset_size': dataset_size,
+                    'background_ballance': background_ballance,
+                    'export_params': export_params}
         self._save_dataset_export_log(output_log_file, log_data)
 
         return
