@@ -689,7 +689,7 @@ if __name__ == "__main__":
     # color_space = 'BGR'
 
     # ------------------ 20260420_reshafim vis ------------------------------
-    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/scenarios_vis/20260420_reshafim'
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/scenarios_vis/20260420_reshafim'
     # base_folder = os.path.join(exp_folder, '20260420_1206_49/20260420_1207_13/camera_20260420_1207_extracted')  # bad magic
     # base_folder = os.path.join(exp_folder, '20260420_1208_12/20260420_1208_51/camera_20260420_1208_extracted')  # bad magic
     # base_folder = os.path.join(exp_folder, '20260420_1208_12/20260420_1210_10/camera_20260420_1210_extracted')
@@ -704,7 +704,38 @@ if __name__ == "__main__":
     # base_folder = os.path.join(exp_folder, '20260420_1256_13/20260420_1257_37/camera_20260420_1257_extracted')  # bad magic
     # base_folder = os.path.join(exp_folder, '20260420_1256_13/20260420_1259_05/camera_20260420_1259_extracted')  # bad magic
     # base_folder = os.path.join(exp_folder, '20260420_1256_13/20260420_1300_05/camera_20260420_1300_extracted')  # bad magic
-    base_folder = os.path.join(exp_folder, '20260420_1256_13/20260420_1301_16/camera_20260420_1301_extracted')
+    # base_folder = os.path.join(exp_folder, '20260420_1256_13/20260420_1301_16/camera_20260420_1301_extracted')
+    # color_space = 'BGR'
+
+
+    # ------------------ 20260426_reshafim vis ------------------------------
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/vis_experiments/20260426_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260426_1143_21/20260426_1145_41/camera_20260426_1145_extracted')  # bad magic
+    base_folder = os.path.join(exp_folder, '20260426_1143_21/20260426_1146_49/camera_20260426_1146_extracted')
+    # base_folder = os.path.join(exp_folder, '20260426_1158_42/20260426_1159_11/camera_20260426_1159_extracted')
+    # base_folder = os.path.join(exp_folder, '20260426_1158_42/20260426_1200_36/camera_20260426_1200_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1221_51/20260426_1224_11/camera_20260426_1224_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1221_51/20260426_1225_46/camera_20260426_1225_extracted')
+    # base_folder = os.path.join(exp_folder, '20260426_1259_50/20260426_1300_48/camera_20260426_1300_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1259_50/20260426_1302_15/camera_20260426_1302_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1312_35/20260426_1313_08/camera_20260426_1313_extracted')  # no mcap
+    # base_folder = os.path.join(exp_folder, '20260426_1312_35/20260426_1314_43/camera_20260426_1314_extracted')  # no mcap
+    # base_folder = os.path.join(exp_folder, '20260426_1312_35/20260426_1315_39/camera_20260426_1315_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1348_42/20260426_1349_49/camera_20260426_1349_extracted')
+    # base_folder = os.path.join(exp_folder, '20260426_1348_42/20260426_1351_10/camera_20260426_1351_extracted')
+    # base_folder = os.path.join(exp_folder, '20260426_1348_42/20260426_1352_20/camera_20260426_1352_extracted')
+    # base_folder = os.path.join(exp_folder, '20260426_1348_42/20260426_1353_23/camera_20260426_1353_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1400_57/20260426_1401_53/camera_20260426_1401_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1400_57/20260426_1403_09/camera_20260426_1403_extracted')
+    # base_folder = os.path.join(exp_folder, '20260426_1417_22/20260426_1418_04/camera_20260426_1418_extracted')  # weird problem ???
+    # base_folder = os.path.join(exp_folder, '20260426_1417_22/20260426_1420_38/camera_20260426_1420_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1417_22/20260426_1422_42/camera_20260426_1422_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1428_39/20260426_1429_56/camera_20260426_1430_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1428_39/20260426_1431_21/camera_20260426_1431_extracted')
+    # base_folder = os.path.join(exp_folder, '20260426_1428_39/20260426_1432_45/camera_20260426_1432_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1428_39/20260426_1433_36/camera_20260426_1433_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1510_56/20260426_1511_38/camera_20260426_1511_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260426_1510_56/20260426_1513_37/camera_20260426_1513_extracted')
     color_space = 'BGR'
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% thermal dataset %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
