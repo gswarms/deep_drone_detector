@@ -101,14 +101,19 @@ class MergeLogger:
 
 if __name__ == '__main__':
     # -------- dataset_20251211 -------
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/'
-    dataset_collect_file = os.path.join(base_folder, 'dataset_20251211/dataset_scenarios.yaml')
-    merged_dataset_root_folder =  os.path.join(base_folder, 'dataset_20251211/merged_dataset_raw')
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/'
+    # dataset_collect_file = os.path.join(base_folder, 'dataset_20251211/dataset_scenarios.yaml')
+    # merged_dataset_root_folder =  os.path.join(base_folder, 'dataset_20251211/merged_dataset_raw')
 
     # -------- dataset_20260323 -------
     # base_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/'
     # dataset_collect_file = os.path.join(base_folder, 'dataset_20260330/dataset_scenarios.yaml')
     # merged_dataset_root_folder =  os.path.join(base_folder, 'dataset_20260330/merged_dataset_raw')
+
+    # -------- dataset_20260429 -------
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/'
+    dataset_collect_file = os.path.join(base_folder, 'dataset_20260429/dataset_scenarios.yaml')
+    merged_dataset_root_folder =  os.path.join(base_folder, 'dataset_20260429/merged_dataset_raw')
 
     merge_dataset(dataset_collect_file, merged_dataset_root_folder)
 

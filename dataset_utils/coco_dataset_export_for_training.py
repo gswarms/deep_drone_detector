@@ -280,13 +280,32 @@ class CocoToUltralyticsYoloExporter:
         self._save_ultralytics_yolo_config_file(output_yolo_yaml_file, output_dataset_root_folder)
 
         # ----------------- Save yolo dataset yaml file -------------------
+
+        image_ids = self.coco_dataset.df_images['id']  # unique
+        image_ids_annotated = set(self.coco_dataset.df_annotations['image_id'])  # sorted
+        image_ids_background = set([x for x in image_ids if x not in image_ids_annotated])  # sorted
+        num_images = len(image_ids)
+        num_annotated_images = len(image_ids_annotated)
+        num_background_images = len(image_ids_background)
+        num_annotations = len(self.coco_dataset.df_annotations)
+        new_background_ratio = float(num_background_images) / float(num_images)
+
+        dataset_size = {'images': num_images,
+                        'annotations': num_annotations}
+        background_ballance = {'annotated_images': num_annotated_images,
+                               'background_images': num_background_images,
+                               'background_ratio': new_background_ratio}
+        export_params = {'split_params': split_ratios,
+                         'background_balance_params': augment_crop,
+                         'augment_crop_params': background_balance}
+
         output_log_file = os.path.join(output_dataset_root_folder, 'dataset_export_log.yaml')
         print('saving dataset export parameters at: {}'.format(output_log_file))
         log_data = {'dataset_source_folder': str(self.coco_dataset.root_folder),
                     'output_folder': output_dataset_root_folder,
-                    'split_params': split_ratios,
-                    'augment_crop': augment_crop,
-                    'background_balance_params': background_balance}
+                    'dataset_size': dataset_size,
+                    'background_ballance': background_ballance,
+                    'export_params': export_params}
         self._save_dataset_export_log(output_log_file, log_data)
 
         return
@@ -547,14 +566,24 @@ if __name__ == '__main__':
     # split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
     # # augment_crop = {'image_size': (256, 256), 'num_samples': 4}
     # augment_crop = None
+    # background_balance = {'ratio': None, 'method': None}
 
+    # base_dataset_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/dataset_20260330'
+    # input_coco_dataset_json = os.path.join(base_dataset_folder, 'merged_dataset_raw/annotations/coco_dataset.json')
+    # output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260330_bg_balanced')
+    # split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
+    # # augment_crop = {'image_size': (256, 256), 'num_samples': 4}
+    # augment_crop = None
+    # background_balance = {'ratio': 0.15, 'method': 'dilute'}
 
-    base_dataset_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/dataset_20260330'
+    base_dataset_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/dataset_20260429'
     input_coco_dataset_json = os.path.join(base_dataset_folder, 'merged_dataset_raw/annotations/coco_dataset.json')
-    output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260330_bg_balanced')
+    output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260429_bg_balanced')
     split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
     # augment_crop = {'image_size': (256, 256), 'num_samples': 4}
     augment_crop = None
+    background_balance = {'ratio': 0.15, 'method': 'dilute'}
+
 
     seed = 42
     random.seed(seed)
@@ -563,10 +592,7 @@ if __name__ == '__main__':
     raw_dataset = coco_dataset_manager.CocoDatasetManager()
     raw_dataset.load_coco(input_coco_dataset_json, verify_image_files=False)
 
-    # balance dataset
-    # background_balance = {'ratio': None, 'method': None}
-    background_balance = {'ratio': 0.15, 'method': 'dilute'}
-
+    # export dataset
     c2y_exporter = CocoToUltralyticsYoloExporter(input_coco_dataset_json)
     c2y_exporter.export(output_dataset_root_folder, split_ratios=split_ratios,
                         augment_crop=None, background_balance=background_balance)

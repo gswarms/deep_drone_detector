@@ -349,6 +349,56 @@ if __name__ == '__main__':
     # metadata_yaml_file = os.path.join(dataset_root_folder, 'dataset_metadata.yaml')
 
 
+    # ------------------ 20260414_reshafim vis ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/scenarios_vis/20260414_reshafim'
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1232_56/20260414_1233_54/camera_20260414_1233_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1323_33/20260414_1323_55/camera_20260414_1324_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1323_33/20260414_1325_02/camera_20260414_1325_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1340_50/20260414_1344_49/camera_20260414_1344_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1435_39/20260414_1439_23/camera_20260414_1439_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1454_35/20260414_1455_03/camera_20260414_1455_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1454_35/20260414_1456_27/camera_20260414_1456_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1454_35/20260414_1457_53/camera_20260414_1457_extracted')  # redundant
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1502_49/20260414_1504_02/camera_20260414_1504_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1502_49/20260414_1505_22/camera_20260414_1505_extracted')  # redundant
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1502_49/20260414_1506_28/camera_20260414_1506_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1518_24/20260414_1520_30/camera_20260414_1520_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260414_1518_24/20260414_1521_43/camera_20260414_1521_extracted')
+    # metadata_yaml_file = os.path.join(dataset_root_folder, 'dataset_metadata.yaml')
+    # color_space = 'BGR'
+
+    # ------------------ 20260419_reshafim vis ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/scenarios_vis/20260419_reshafim'
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_1021_06/20260419_1022_14/camera_20260419_1022_extracted')  # bad magic (1776583388.850045240, 1776583397.667318774)
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_1021_06/20260419_1023_51/camera_20260419_1023_extracted')  # bad magic (1776583447.916517882, 1776583453.341587148)
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_1021_06/20260419_1024_31/camera_20260419_1024_extracted')  # bad magic (1776583506.846479573, 1776583512.479764883)
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_1242_06/20260419_1242_43/camera_20260419_1242_extracted')  # bad magic (1776591819.267035725, 1776591824.301698437)
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_1301_31/20260419_1302_06/camera_20260419_1302_extracted')  # bad magic (1776592977.878610475, 1776592989.550301346)
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_1301_31/20260419_1303_30/camera_20260419_1303_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_1301_31/20260419_1304_27/camera_20260419_1304_extracted')  # bad magic (1776593096.388076787, 1776593106.940383517)
+    # metadata_yaml_file = os.path.join(dataset_root_folder, 'dataset_metadata.yaml')
+    # color_space = 'BGR'
+
+    # ------------------ 20260420_reshafim vis ------------------------------
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/scenarios_vis/20260420_reshafim'
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1206_49/20260420_1207_13/camera_20260420_1207_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1208_12/20260420_1208_51/camera_20260420_1208_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1208_12/20260420_1210_10/camera_20260420_1210_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1208_12/20260420_1211_39/camera_20260420_1211_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1219_00/20260420_1220_37/camera_20260420_1220_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1233_37/20260420_1234_37/camera_20260420_1234_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1233_37/20260420_1235_49/camera_20260420_1235_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1241_27/20260420_1242_01/camera_20260420_1242_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1241_27/20260420_1243_19/camera_20260420_1243_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1241_27/20260420_1244_23/camera_20260420_1244_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1241_27/20260420_1245_39/camera_20260420_1245_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1256_13/20260420_1257_37/camera_20260420_1257_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1256_13/20260420_1259_05/camera_20260420_1259_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260420_1256_13/20260420_1300_05/camera_20260420_1300_extracted')  # bad magic
+    dataset_root_folder = os.path.join(exp_folder, '20260420_1256_13/20260420_1301_16/camera_20260420_1301_extracted')
+    metadata_yaml_file = os.path.join(dataset_root_folder, 'dataset_metadata.yaml')
+    color_space = 'BGR'
+
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% thermal dataset %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     # ------------------ reshafim 01.02.2026 thermal ------------------------------
@@ -376,8 +426,8 @@ if __name__ == '__main__':
     # metadata_yaml_file = os.path.join(dataset_root_folder, 'dataset_metadata.yaml')
 
     # ------------------ reshafim 15.04.2026 thermal ------------------------------
-    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260415_reshafim'
-    dataset_root_folder = os.path.join(exp_folder, '20260415_1202_12/20260415_1204_46/camera_20260415_1204_extracted')
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260415_reshafim'
+    # dataset_root_folder = os.path.join(exp_folder, '20260415_1202_12/20260415_1204_46/camera_20260415_1204_extracted')
     # dataset_root_folder = os.path.join(exp_folder, '20260415_1202_12/20260415_1206_29/camera_20260415_1206_extracted')
     # dataset_root_folder = os.path.join(exp_folder, '20260415_1202_12/20260415_1208_44/camera_20260415_1208_extracted')
     # dataset_root_folder = os.path.join(exp_folder, '20260415_1336_11/20260415_1338_45/camera_20260415_1338_f1_extracted')
@@ -392,16 +442,18 @@ if __name__ == '__main__':
     # dataset_root_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f2_extracted')
     # dataset_root_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f3_extracted')
     # dataset_root_folder = os.path.join(exp_folder, '20260415_1403_20/20260415_1407_24/camera_20260415_1407_f4_extracted')
-    metadata_yaml_file = os.path.join(dataset_root_folder, 'dataset_metadata.yaml')
+    # metadata_yaml_file = os.path.join(dataset_root_folder, 'dataset_metadata.yaml')
+    # color_space = 'Y16'
 
     # ------------------ 20260419_reshafim thermal ------------------------------
-    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260419_reshafim'
-    # base_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0920_06/camera_20260419_0920_extracted')  # bad magic
-    # base_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0921_15/camera_20260419_0921_extracted')  # bad magic
-    # base_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0928_10/camera_20260419_0928_extracted')  # what to do with the bird?
-    # base_folder = os.path.join(exp_folder, '20260419_0936_00/20260419_0937_08/camera_20260419_0937_extracted')  # bad magic
-    base_folder = os.path.join(exp_folder, '20260419_0936_00/20260419_0939_18/camera_20260419_0939_extracted')
-    color_space = 'Y16'
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/thermal_experiments/20260419_reshafim'
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0920_06/camera_20260419_0920_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0921_15/camera_20260419_0921_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_0918_56/20260419_0928_10/camera_20260419_0928_extracted')  # what to do with the bird?
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_0936_00/20260419_0937_08/camera_20260419_0937_extracted')  # bad magic
+    # dataset_root_folder = os.path.join(exp_folder, '20260419_0936_00/20260419_0939_18/camera_20260419_0939_extracted')
+    # metadata_yaml_file = os.path.join(dataset_root_folder, 'dataset_metadata.yaml')
+    # color_space = 'Y16'
 
 
     # ----------------------- add dataset metadata ---------------------
