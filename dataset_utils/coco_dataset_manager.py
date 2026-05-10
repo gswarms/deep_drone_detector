@@ -455,7 +455,14 @@ class CocoDatasetManager:
 
         img_id = self._next_image_id
         self._next_image_id += 1
-        self.df_images.loc[len(self.df_images)] = [img_id, str(file_path_relative), width, height, metadata or {}]
+        self.df_images.loc[len(self.df_images)] = {
+            "id": img_id,
+            "file_name": str(file_path_relative),
+            "width": width,
+            "height": height,
+            "metadata": metadata or {}
+        }
+
         return img_id
 
     def duplicate_image(self, img_ids: int | tuple[int] | list[int]):
@@ -576,9 +583,16 @@ class CocoDatasetManager:
         ann_id = self._next_annotation_id
         self._next_annotation_id += 1
         area = area if area is not None else bbox[2] * bbox[3]
-        self.df_annotations.loc[len(self.df_annotations)] = [
-            ann_id, image_id, category_id, bbox, segmentation or [], area, iscrowd, metadata or {}
-        ]
+        self.df_annotations.loc[len(self.df_annotations)] = {
+            'id': ann_id,
+            'image_id': image_id,
+            'category_id': category_id,
+            'bbox': bbox,
+            'segmentation': segmentation or [],
+            'area': area,
+            'iscrowd': iscrowd,
+            'metadata': metadata or {}
+        }
         return ann_id
 
     def remove_annotation(self, annotation_id: int):
@@ -613,7 +627,7 @@ class CocoDatasetManager:
             raise ValueError(f"Category {name} already exists.")
         cat_id = self._next_category_id
         self._next_category_id += 1
-        self.df_categories.loc[len(self.df_categories)] = [cat_id, name, supercategory]
+        self.df_categories.loc[len(self.df_categories)] = {"id": cat_id, "name": name, "supercategory": supercategory}
         return cat_id
 
     def update_category(self, category_id: int, name: str, supercategory: str = ""):
