@@ -709,9 +709,9 @@ if __name__ == "__main__":
 
 
     # ------------------ 20260426_reshafim vis ------------------------------
-    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/vis_experiments/20260426_reshafim'
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/scenarios_vis/20260426_reshafim'
     # base_folder = os.path.join(exp_folder, '20260426_1143_21/20260426_1145_41/camera_20260426_1145_extracted')  # bad magic
-    base_folder = os.path.join(exp_folder, '20260426_1143_21/20260426_1146_49/camera_20260426_1146_extracted')
+    # base_folder = os.path.join(exp_folder, '20260426_1143_21/20260426_1146_49/camera_20260426_1146_extracted')
     # base_folder = os.path.join(exp_folder, '20260426_1158_42/20260426_1159_11/camera_20260426_1159_extracted')
     # base_folder = os.path.join(exp_folder, '20260426_1158_42/20260426_1200_36/camera_20260426_1200_extracted')  # bad magic
     # base_folder = os.path.join(exp_folder, '20260426_1221_51/20260426_1224_11/camera_20260426_1224_extracted')  # bad magic
@@ -736,7 +736,43 @@ if __name__ == "__main__":
     # base_folder = os.path.join(exp_folder, '20260426_1428_39/20260426_1433_36/camera_20260426_1433_extracted')  # bad magic
     # base_folder = os.path.join(exp_folder, '20260426_1510_56/20260426_1511_38/camera_20260426_1511_extracted')  # bad magic
     # base_folder = os.path.join(exp_folder, '20260426_1510_56/20260426_1513_37/camera_20260426_1513_extracted')
+    # color_space = 'BGR'
+
+
+    # ------------------ 20260429_reshafim vis ------------------------------
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/scenarios_vis/20260429_reshafim/'
+    # base_folder = os.path.join(exp_folder, '20260429_0954_00/20260429_0955_50/camera_20260429_0955_extracted')
+    # base_folder = os.path.join(exp_folder, '20260429_0954_00/20260429_0957_15/camera_20260429_0957_extracted')
+    # base_folder = os.path.join(exp_folder, '20260429_1012_33/20260429_1013_15/camera_20260429_1013_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260429_1012_33/20260429_1014_43/camera_20260429_1014_extracted')
+    # base_folder = os.path.join(exp_folder, '20260429_1037_45/20260429_1038_39/camera_20260429_1038_extracted')
+    # base_folder = os.path.join(exp_folder, '20260429_1037_45/20260429_1039_49/camera_20260429_1039_extracted')  # bad magic
+    # base_folder = os.path.join(exp_folder, '20260429_1315_13/20260429_1316_19/camera_20260429_1316_extracted')
+    # base_folder = os.path.join(exp_folder, '20260429_1323_12/20260429_1324_06/camera_20260429_1324_extracted')
+    # base_folder = os.path.join(exp_folder, '20260429_1403_55/20260429_1406_17/camera_20260429_1406_extracted')
+    # color_space = 'BGR'
+
+
+    # ------------------ 20260506_reshafim vis ------------------------------
+    exp_folder = '/home/roee/Projects/datasets/interceptor_drone/vis_experiments/20260506_reshafim/bags'
+    base_folder = os.path.join(exp_folder, '20260506_1043_32/20260506_1045_00/camera_20260506_1045_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1043_32/20260506_1046_33/camera_20260506_1046_extracted')  # redundant
+    # base_folder = os.path.join(exp_folder, '20260506_1059_40/20260506_1100_57/camera_20260506_1101_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1103_40/20260506_1104_59/camera_20260506_1105_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1113_13/20260506_1115_17/camera_20260506_1115_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1113_13/20260506_1116_32/camera_20260506_1116_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1129_08/20260506_1130_09/camera_20260506_1130_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1129_08/20260506_1131_22/camera_20260506_1131_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1406_14/20260506_1409_48/camera_20260506_1409_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1422_08/20260506_1423_07/camera_20260506_1423_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1445_38/20260506_1446_33/camera_20260506_1446_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1445_38/20260506_1447_34/camera_20260506_1447_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1445_38/20260506_1448_32/camera_20260506_1448_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1500_00/20260506_1500_24/camera_20260506_1500_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1500_00/20260506_1501_48/camera_20260506_1501_extracted')
+    # base_folder = os.path.join(exp_folder, '20260506_1500_00/20260506_1503_32/camera_20260506_1503_extracted')
     color_space = 'BGR'
+
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% thermal dataset %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -831,6 +867,16 @@ if __name__ == "__main__":
     # base_folder = os.path.join(exp_folder, '20260420_1127_50/20260420_1134_01/camera_20260420_1134_f2_extracted')
     # base_folder = os.path.join(exp_folder, '20260420_1146_30/20260420_1146_51/camera_20260420_1147_extracted')
     # color_space = 'Y16'
+
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% non - dataset %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # ------------------ 20260505_reshafim vis ------------------------------
+
+    # exp_folder = '/home/roee/Projects/datasets/interceptor_drone/geo_orientation/20260505_reshafim'
+    # base_folder = os.path.join(exp_folder, '20260505_0934_21/20260505_0935_18/camera_20260505_0935_extracted')
+    # base_folder = os.path.join(exp_folder, '20260505_0934_21/20260505_0937_16/camera_20260505_0937_extracted')
+    # base_folder = os.path.join(exp_folder, '20260505_0934_21/20260505_0938_28/camera_20260505_0938_extracted')  # 248
+    # base_folder = os.path.join(exp_folder, '20260505_0934_21/20260505_0943_41/camera_20260505_0943_extracted')
+    # color_space = 'BGR'
 
 
     data_format = 'coco_dataset'

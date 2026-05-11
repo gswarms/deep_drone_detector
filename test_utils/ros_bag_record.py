@@ -548,7 +548,8 @@ class RosBagRecord:
 
             if save_detection_polygons:
                 t1 = time.monotonic()
-                frame_polygons.save(detection_polygons_output_file)
+                if frame_polygons.frame_ids.size > 0:
+                    frame_polygons.save(detection_polygons_output_file)
                 t_poly = t_poly + (time.monotonic() - t1)
 
             print('saving images time = {}sec'.format(t_img))
@@ -1208,7 +1209,7 @@ if __name__ == '__main__':
 
 
     # ------------------ 20260426_reshafim vis ------------------------------
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/vis_experiments/20260426_reshafim'
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/vis_experiments/20260426_reshafim'
     # bag_folder = os.path.join(base_folder, '20260426_1143_21/20260426_1145_41/camera_20260426_1145')  # bad magic
     # bag_folder = os.path.join(base_folder, '20260426_1143_21/20260426_1146_49/camera_20260426_1146')
     # bag_folder = os.path.join(base_folder, '20260426_1158_42/20260426_1159_11/camera_20260426_1159')
@@ -1234,8 +1235,47 @@ if __name__ == '__main__':
     # bag_folder = os.path.join(base_folder, '20260426_1428_39/20260426_1432_45/camera_20260426_1432')  # bad magic
     # bag_folder = os.path.join(base_folder, '20260426_1428_39/20260426_1433_36/camera_20260426_1433')  # bad magic
     # bag_folder = os.path.join(base_folder, '20260426_1510_56/20260426_1511_38/camera_20260426_1511')  # bad magic
-    bag_folder = os.path.join(base_folder, '20260426_1510_56/20260426_1513_37/camera_20260426_1513')
+    # bag_folder = os.path.join(base_folder, '20260426_1510_56/20260426_1513_37/camera_20260426_1513')
+    # clr_format = 'RGB'
+
+    # ------------------ 20260429_reshafim vis ------------------------------
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/vis_experiments/20260429_reshafim/bags'
+    # bag_folder = os.path.join(base_folder, '20260429_0954_00/20260429_0955_50/camera_20260429_0955')
+    # bag_folder = os.path.join(base_folder, '20260429_0954_00/20260429_0957_15/camera_20260429_0957')
+    # bag_folder = os.path.join(base_folder, '20260429_1012_33/20260429_1013_15/camera_20260429_1013')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260429_1012_33/20260429_1014_43/camera_20260429_1014')
+    # bag_folder = os.path.join(base_folder, '20260429_1037_45/20260429_1038_39/camera_20260429_1038')
+    # bag_folder = os.path.join(base_folder, '20260429_1037_45/20260429_1039_49/camera_20260429_1039')  # bad magic
+    # bag_folder = os.path.join(base_folder, '20260429_1315_13/20260429_1316_19/camera_20260429_1316')
+    # bag_folder = os.path.join(base_folder, '20260429_1323_12/20260429_1324_06/camera_20260429_1324')
+    bag_folder = os.path.join(base_folder, '20260429_1403_55/20260429_1406_17/camera_20260429_1406')
     clr_format = 'RGB'
+
+    # ------------------ 20260505_reshafim vis ------------------------------
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/geo_orientation/20260505_reshafim'
+    # bag_folder = os.path.join(base_folder, '20260505_0934_21/20260505_0935_18/camera_20260505_0935')
+    # bag_folder = os.path.join(base_folder, '20260505_0934_21/20260505_0937_16/camera_20260505_0937')
+    # bag_folder = os.path.join(base_folder, '20260505_0934_21/20260505_0938_28/camera_20260505_0938')
+    # bag_folder = os.path.join(base_folder, '20260505_0934_21/20260505_0943_41/camera_20260505_0943')
+
+    # ------------------ 20260506_reshafim vis ------------------------------
+    base_folder = '/home/roee/Projects/datasets/interceptor_drone/vis_experiments/20260506_reshafim/bags'
+    # bag_folder = os.path.join(base_folder, '20260506_1043_32/20260506_1045_00/camera_20260506_1045')
+    # bag_folder = os.path.join(base_folder, '20260506_1043_32/20260506_1046_33/camera_20260506_1046')  # redundant
+    # bag_folder = os.path.join(base_folder, '20260506_1059_40/20260506_1100_57/camera_20260506_1101')
+    # bag_folder = os.path.join(base_folder, '20260506_1103_40/20260506_1104_59/camera_20260506_1105')
+    # bag_folder = os.path.join(base_folder, '20260506_1113_13/20260506_1115_17/camera_20260506_1115')
+    # bag_folder = os.path.join(base_folder, '20260506_1113_13/20260506_1116_32/camera_20260506_1116')
+    # bag_folder = os.path.join(base_folder, '20260506_1129_08/20260506_1130_09/camera_20260506_1130')
+    # bag_folder = os.path.join(base_folder, '20260506_1129_08/20260506_1131_22/camera_20260506_1131')
+    # bag_folder = os.path.join(base_folder, '20260506_1406_14/20260506_1409_48/camera_20260506_1409')
+    # bag_folder = os.path.join(base_folder, '20260506_1422_08/20260506_1423_07/camera_20260506_1423')
+    # bag_folder = os.path.join(base_folder, '20260506_1445_38/20260506_1446_33/camera_20260506_1446')
+    # bag_folder = os.path.join(base_folder, '20260506_1445_38/20260506_1447_34/camera_20260506_1447')
+    # bag_folder = os.path.join(base_folder, '20260506_1445_38/20260506_1448_32/camera_20260506_1448')
+    # bag_folder = os.path.join(base_folder, '20260506_1500_00/20260506_1500_24/camera_20260506_1500')
+    # bag_folder = os.path.join(base_folder, '20260506_1500_00/20260506_1501_48/camera_20260506_1501')
+    bag_folder = os.path.join(base_folder, '20260506_1500_00/20260506_1503_32/camera_20260506_1503')
 
 
     valid_record_times = {'start': -np.inf, 'end': np.inf}
