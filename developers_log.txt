@@ -1,0 +1,54 @@
+
+2025.05.27:
+
+interfces of detector and detector tracker seems OK
+
+
+algorithmic issues:
+seems to have false detections when target is very small.
+
+algorithmic action items:
+1. extend dataset using runcam images from other days/conditions/directions
+2. augment training set by shift images - seems to have bias for targets in the middle.
+3. mix training set better considering different days
+4. add no-target reference images
+5. extend dataset with latest interception experiments
+
+
+
+preparing the dataset:
+make coco dataset for each scenario - OK
+make coco dataset all scenarios together - OK
+split coco dataset, and prepare for ultralytics training - TODO
+reformat splits to yolo format - TODO
+make coco dataset analytics to see: - TODO
+  - number of annotations per frame
+  - class split
+  - bbox pixel probability
+ make annotator compatible with dataset - TODO
+   - load dataset
+   - save dataset
+   - add / remove / change annotations
+   - run existing model for initial annotations
+
+  make test tools:
+    - add to the detector test the ability to compare results to reference dataset
+
+
+--- train and see the process works.
+collect all relevant scenarios - TODO
+annotate - TODO
+research how to properly transfer train - TODO
+compare current model to new one - TODO
+
+
+--- test other models
+nanodet-plus-m - tested, but onnx postprocessing not working yet
+yolov11n
+yolo26
+
+--- add tracker
+optical flow tracker
+
+
+

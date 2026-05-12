@@ -1,0 +1,30 @@
+
+nc: 1 
+scales:
+  n: [0.33, 0.25, 1024]
+
+backbone:
+  - [-1, 1, SPD, []]            # 0-P1/2 (256->128, channels 3->12)
+  - [-1, 1, Conv, [64, 3, 1]]    # 1-Reduce channels to 64
+  - [-1, 1, Conv, [128, 3, 2]]   # 2-P2/4
+  - [-1, 3, C2f, [128, True]]
+  - [-1, 1, Conv, [256, 3, 2]]   # 4-P3/8
+  - [-1, 6, C2f, [256, True]]
+  - [-1, 1, Conv, [512, 3, 2]]   # 6-P4/16
+  - [-1, 6, C2f, [512, True]]
+  - [-1, 1, SPPF, [512, 5]]      # 8
+
+head:
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [[-1, 5], 1, Concat, [1]]   # cat backbone P3
+  - [-1, 3, C2f, [256]]         # 11
+
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [[-1, 3], 1, Concat, [1]]   # cat backbone P2
+  - [-1, 3, C2f, [128]]         # 14 (Small target head - P2)
+
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [[-1, 11], 1, Concat, [1]]  # cat head P3
+  - [-1, 3, C2f, [256]]         # 17 (Medium target head - P3)
+
+  - [[14, 17], 1, Detect, [nc]] # Detect on P2 and P3
