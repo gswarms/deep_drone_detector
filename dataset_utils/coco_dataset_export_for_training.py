@@ -16,6 +16,414 @@ import coco_dataset_manager
 # TODO: balance by annotations metadata
 
 
+class CocoDatasetTrainingRefinery:
+    def __init__(self, input_coco_dataset_json, verbose=True):
+        """
+        balance a coco dataset by:
+        - background / annotated images
+        - TODO: add more options
+
+        :param input_coco_dataset_json: json file for input coco dataset
+        """
+        self.coco_dataset = coco_dataset_manager.CocoDatasetManager()
+        self.coco_dataset.load_coco(input_coco_dataset_json, verify_image_files=True)
+        if verbose:
+            print('loaded coco dataset from: {}'.format(input_coco_dataset_json))
+
+    def balance_background(self, background_ratio: float, balance_method, verbose=True):
+        """
+        balance the number of background images in the dataset by adding / removing images
+        * Important Note: adding/removing images will actually copy and delete image files in the images folder.
+
+        :param background_ratio: ratio of background images in the dataset = num_background_images / num_total_images
+        :param balance_method: 'dilute' - delete labled/bckgnd images to get to the desired ratio
+                               'expand' - duplicate labled/bckgnd images to get to the desired ratio
+        :param verbose: verbose mode
+        :return:
+        """
+
+        # handle inputs
+        if background_ratio < 0 or background_ratio > 0:
+            raise Exception('background_ratio must be between 0 and 1')
+        if balance_method not in ['dilute', 'expand']:
+            raise Exception('balance_method must be `dilute` or `expand`')
+
+        # balance background
+        image_ids = self.coco_dataset.df_images['id']  # unique
+        image_ids_annotated = list(set(self.coco_dataset.df_annotations['image_id']))  # sorted
+        image_ids_background = list(set([x for x in image_ids if x not in image_ids_annotated]))  # sorted
+
+        num_images = len(image_ids)
+        num_annotated_images = len(image_ids_annotated)
+        num_background_images = len(image_ids_background)
+        background_ratio_curr = float(num_background_images) / float(num_images)
+
+        num_annotations = len(self.coco_dataset.df_annotations)
+
+        if background_ratio['method'] == 'dilute':
+            if background_ratio_curr > background_ratio['ratio']:
+                # dilute background images
+
+                # 1. calc number of images to remove
+                # na - number of annotated images (given)
+                # x - required number of background images
+                # solve:
+                # x / (na+x) = r
+                # gives:
+                # x = r * na / (1-r)
+                n_required_background_images = int(np.round(background_ratio['ratio'] * num_annotated_images / (1 - background_ratio['ratio'])))
+
+                # 2. remove images
+                n_remove_images = num_background_images - n_required_background_images
+                remove_index = np.round(np.linspace(0, num_background_images - 1, n_remove_images)).astype(np.uint32)
+                remove_image_ids = [image_ids_background[i] for i in remove_index]
+                for img_id in remove_image_ids:
+                    img_data = self.coco_dataset.get_image(img_id)
+                    # remove image from dataset
+                    self.coco_dataset.remove_image(img_id)
+                    # delete image file
+                    img_file = pathlib.Path(img_data["file_name"])
+                    if img_file.exists():
+                        img_file.unlink()
+                    else:
+                        raise Exception('unable to remove image file: {} not found!'.format(str(img_file)))
+
+            else:
+                # dilute annotated images
+                # 1. calc number of images to remove
+                # nb - number of background images (given)
+                # x - required number of annotated images
+                # solve:
+                # x / (x+nb) = (1-r)
+                # gives:
+                # x = nb * (1-r)/r
+                n_required_annotated_images = int(np.round(num_background_images * (1 - background_ratio['ratio']) / background_ratio['ratio'] ))
+
+                # 2. remove images
+                n_remove_images = num_annotated_images - n_required_annotated_images
+                remove_index = np.round(np.linspace(0, num_annotated_images - 1, n_remove_images)).astype(np.uint32)
+                remove_image_ids = [image_ids_annotated[i] for i in remove_index]
+                for img_id in remove_image_ids:
+                    img_data = self.coco_dataset.get_image(img_id)
+                    # remove image from dataset
+                    self.coco_dataset.remove_image(img_id)
+                    # delete image file
+                    img_file = pathlib.Path(img_data["file_name"])
+                    if img_file.exists():
+                        img_file.unlink()
+                    else:
+                        raise Exception('unable to remove image file: {} not found!'.format(str(img_file)))
+
+        elif background_ratio['method'] == 'expand':
+            if background_ratio_curr < background_ratio['ratio']:
+                # expand background images
+                # 1. calc number of images to duplicate
+                # na - number of annotated images (given)
+                # x - required number of background images
+                # solve:
+                # x / (na+x) = r
+                # gives:
+                # x = r * na / (1-r)
+                n_required_background_images = int(np.round(background_ratio['ratio'] * num_annotated_images / (1 - background_ratio['ratio'])))
+
+                # 2. duplicate images
+                n_add_images = n_required_background_images - len(image_ids_background)
+                add_index = np.round(np.linspace(0, len(image_ids_background) - 1, n_add_images))
+                add_image_ids = [image_ids_background[i] for i in add_index]
+                self.coco_dataset.duplicate_image(add_image_ids)
+
+            else:
+                # expand annotated images
+                # 1. calc number of images to duplicate
+                # nb - number of background images (given)
+                # x - required number of annotated images
+                # solve:
+                # x / (x+nb) = (1-r)
+                # gives:
+                # x = nb * (1-r)/r
+                n_required_annotated_images = int(np.round(num_background_images * (1 - background_ratio['ratio']) / background_ratio['ratio'] ))
+
+                # 2. duplicate images
+                n_add_images = n_required_annotated_images - len(image_ids_annotated)
+                add_index = np.round(np.linspace(0, len(image_ids_annotated) - 1, n_add_images))
+                add_image_ids = [image_ids_annotated[i] for i in add_index]
+                self.coco_dataset.duplicate_image(add_image_ids)
+
+        else:
+            raise Exception('invalid background_ratio method!')
+
+        if verbose:
+            print('background balance:')
+            print('pre balance: {} images, {} background images, {} annotated images, {} annotations, background ratio={}'.format(
+                num_images, num_background_images, num_annotated_images, num_annotations, background_ratio_curr))
+
+            image_ids = self.coco_dataset.df_images['id']  # unique
+            image_ids_annotated = set(self.coco_dataset.df_annotations['image_id'])  # sorted
+            image_ids_background = set([x for x in image_ids if x not in image_ids_annotated])  # sorted
+            num_images = len(image_ids)
+            num_annotated_images = len(image_ids_annotated)
+            num_background_images = len(image_ids_background)
+            num_annotations = len(self.coco_dataset.df_annotations)
+            new_background_ratio = float(num_background_images) / float(num_images)
+            print('post balance: {} images, {} background images, {} annotated images, {} annotations, background ratio={}'.format(
+                num_images, num_background_images, num_annotated_images, num_annotations, new_background_ratio))
+
+
+    def images_resize_crop(self, required_image_size, num_resizes, remove_original_annotated_images,
+                           search_roi_scale_ratio=1, search_roi_min_width=100, search_roi_uncertainty_scale=(1, 4)):
+        """
+        resize and crop all images in the dataset
+        used mainly for training specific image sized
+
+        :param required_image_size: (width, height)
+        :param num_resizes: number of times to randomly resize / crop every image
+        :param remove_original_annotated_images: boolean
+                                                - True - remove the original uncropped image
+                                                - False - keep the original uncropped image
+        :param search_roi_scale_ratio:       random crop/rescale param - see _get_random_crop_resize
+        :param search_roi_min_width:         random crop/rescale param - see _get_random_crop_resize
+        :param search_roi_uncertainty_scale: random crop/rescale param - see _get_random_crop_resize
+        :return:
+        """
+        background_crop_scale = (1.5, 2.5)
+
+        image_ids = self.coco_dataset.df_images['id']  # unique
+
+        for img_id in image_ids:
+            img_data = self.coco_dataset.get_image(img_id)
+            ann_data = self.coco_dataset.get_image_annotations(img_id)
+
+            # get image
+            img_file_name = (self.coco_dataset.images_folder / pathlib.Path(img_data['file_name'])).resolve()
+            img = cv2.imread(img_file_name)
+            full_img_size = (img.shape[1], img.shape[0])
+
+            if len(ann_data) > 0:
+                if len(ann_data) > 1:
+                    raise Exception('more than one annotated image is not supported!')
+
+                # crop/scale
+                ann = ann_data[0]
+                for i in range(num_resizes):
+                    crop_bbox, rescale = _get_random_crop_resize(full_img_size, ann['bbox'], required_image_size,
+                                                                 search_roi_scale_ratio=search_roi_scale_ratio,
+                                                                 search_roi_min_width=search_roi_min_width,
+                                                                 search_roi_uncertainty_scale=search_roi_uncertainty_scale)
+                    img_crop = _img_crop_resize(img, crop_bbox, required_image_size)
+
+                    # adjust annotation
+                    ann_crop = [ann['bbox'][0] - crop_bbox[0], ann['bbox'][1] - crop_bbox[1], ann['bbox'][2], ann['bbox'][3]]
+                    ann_crop = [int(np.round(x * rescale)) for x in ann_crop]
+
+                    # write image
+                    new_img_file_name = img_file_name.with_name(img_file_name.stem + "_cs{:3d}".format(i) + img_file_name.suffix)
+                    cv2.imwrite(new_img_file_name, img_crop)
+
+                    # add to dataset
+                    new_img_id = self.coco_dataset.add_image(str(new_img_file_name),
+                                                             (img_crop.shape[1], img_crop.shape[0]),
+                                                             img_data['metadata'])
+                    self.coco_dataset.add_annotation(new_img_id, ann['category_id'], ann_crop, ann['segmentation'],
+                                        ann_crop[2] * ann_crop[3], ann['iscrowd'], ann['metadata'])
+
+                if remove_original_annotated_images:
+                    raise Exception('remove_original_annotated_images not implemented yet!')
+
+            else:  # this means it's a background image
+
+                for i in range(num_resizes):
+                    # crop / rescale image
+                    if i==0:
+                        pass # keep existing image
+                    else:
+                        w_min = int(np.round(full_img_size[0] / background_crop_scale[1]))
+                        h_min = int(np.round(full_img_size[1] / background_crop_scale[1]))
+                        w_max = int(np.round(full_img_size[0] / background_crop_scale[0]))
+                        h_max = int(np.round(full_img_size[1] / background_crop_scale[0]))
+                        w = np.random.randint(w_min, w_max)
+                        h = np.random.randint(h_min, h_max)
+                        xtl = np.random.randint(0, full_img_size[0] - w)
+                        ytl = np.random.randint(0, full_img_size[1] - h)
+                        crop_bbox = [xtl, ytl, w, h]
+                        img_crop = _img_crop_resize(img, crop_bbox, required_image_size)
+
+                        # write image
+                        new_img_file_name = img_file_name.with_name(img_file_name.stem + "_cs{:3d}".format(i) + img_file_name.suffix)
+                        cv2.imwrite(new_img_file_name, img_crop)
+
+                        # add to dataset
+                        new_img_id = self.coco_dataset.add_image(str(new_img_file_name),
+                                                                 (img_crop.shape[1], img_crop.shape[0]),
+                                                                 img_data['metadata'])
+
+        self.coco_dataset.save_coco()
+
+
+def _get_random_crop_resize(full_img_size, annotation_bbox, required_image_size, search_roi_scale_ratio=1, search_roi_min_width=100, search_roi_uncertainty_scale=(1, 2)):
+    """
+    resize dataset images to a fixed image size - for training
+    miminc operational system ROI crop/resize from object prior los
+
+    assumptions:
+    TODO: these constraints are simple and generic. consider using more project-specific constraints.
+    - we get an estimated LOS to the object along with it's uncertainty.
+      This translates to a "search ROI":
+      1. the search ROI always contains the object bbox - assume the estimated los and uncertainty are consistent.
+      2. there is a minimal size for the search ROI - simulates constant orientation error.
+      3. search ROI size grows with the real object bbox size - simulates position error that translates to increasing
+                                                         orientation error as range decreases.
+      4. search ROI aspect ration is 1 - uniform uncertainty.
+      5. uniform probability for object bbox location inside the search ROI.  TODO: probabilistically this is wrong (inverse)
+
+    strategy:
+    TODO: this is good only for one annotation per image! expand this for handling several annotations
+    1. select search ROI bbox:
+        a. select the search ROI width:
+            - no less than minimum size
+            - inflate the annotation bbox width in a random scale (by the scale range)
+        b. search ROI height corresponds to roi_scale_ratio
+        c. shrink search ROI to full frame size if needed
+        d. shift ROI with a random offset, keeping the annotation inside, and keeping inside the image.
+    2. crop/rescale window
+        - if search ROI is smaller than the required image size:
+            - crop window centered around the ROI (also considering full image size)
+            - no resize.
+        - if search ROI is bigger than the required image size:
+            - crop window tightly fits search ROI (might be different aspect ratio)
+            - rescale required
+
+    :param full_img_size: full image size (width, height)
+    :param annotation_bbox: annotation bbox - list of [xtl, ytl, w, h]
+    :param required_image_size: required image size (width, height)
+    :param search_roi_scale_ratio: scale ratio for ROI
+    :param search_roi_min_width: minimal roi width (roi_min_height = width / roi_scale_ration)
+    :param search_roi_uncertainty_scale: (scale_min, scale_max) the scale range for inflating the annotation bbox
+    :return: crop_bbox
+    :return: crop_rescale
+    """
+
+    annotation_bbox = np.array(annotation_bbox).flatten()
+    if annotation_bbox.size != 4:
+        raise Exception('annotation_bbox size is wrong!')
+
+    if annotation_bbox[0] < 0 or annotation_bbox[0] + annotation_bbox[2] > full_img_size[0]-1 \
+       or annotation_bbox[1] < 0 or annotation_bbox[1] + annotation_bbox[3] > full_img_size[1]-1:
+        raise Exception('annotation_bbox[0] is outside full image size!')
+    xtl_annotation = annotation_bbox[0]
+    ytl_annotation = annotation_bbox[1]
+    w_annotation = annotation_bbox[2]
+    h_annotation = annotation_bbox[3]
+
+    # handling the case where required_image_size > full_img_size
+    # 1. reduce required_image_size to full_img_size while keeping the aspect ratio
+    # 2. add this scale for inflating later
+    if required_image_size[0] > full_img_size[1] or required_image_size[1] > full_img_size[1]:
+        tmp_rescale = max(required_image_size[0] / full_img_size[1], required_image_size[1] / full_img_size[1])
+        required_image_size_reduced = [int(np.round(required_image_size[0] / tmp_rescale)),
+                                   int(np.round(required_image_size[1] / tmp_rescale))]
+        required_to_full_rescale = required_image_size[0] / required_image_size_reduced[0]
+    else:
+        required_to_full_rescale = 1
+        required_image_size_reduced = required_image_size
+
+    # randomly select search ROI size
+    search_roi_uncertainty_scale_res = search_roi_uncertainty_scale[0] + np.random.rand(1) * (search_roi_uncertainty_scale[1] - search_roi_uncertainty_scale[0])
+    search_roi_w = max(annotation_bbox[2] * search_roi_uncertainty_scale_res, search_roi_min_width)
+    search_roi_h = search_roi_w / search_roi_scale_ratio
+
+    # shrink search ROI to fit the full image if needed
+    search_roi_w, search_roi_h = _bbox_shrink_to_fit(search_roi_w, search_roi_h, full_img_size)
+
+    # make sure search ROI is not smaller than the annotation
+    search_roi_w = max(search_roi_w, w_annotation)
+    search_roi_h = max(search_roi_h, h_annotation)
+
+    # randomly select ROI position
+    x_max = min(xtl_annotation, full_img_size[0] - search_roi_w)
+    x_min = max(xtl_annotation + w_annotation - search_roi_w, 0)
+    y_max = min(ytl_annotation, full_img_size[1] - search_roi_h)
+    y_min = max(ytl_annotation + h_annotation - search_roi_h, 0)
+    search_roi_xtl = np.random.randint(x_min, x_max + 1)
+    search_roi_ytl = np.random.randint(y_min, y_max + 1)
+
+    # get crop window using required_image_size
+    scale_x = search_roi_w / required_image_size_reduced[0]
+    scale_y = search_roi_h / required_image_size_reduced[1]
+    scale_resize = max(scale_x, scale_y)
+    if scale_resize <= 1:
+        # crop window centered around the search ROI
+        # no rescale
+        crop_window_w = required_image_size_reduced[0]
+        crop_window_h = required_image_size_reduced[1]
+        rescale = 1
+
+    else:
+        # crop window tight around the search ROI
+        # rescale needed
+        if scale_x >= scale_y:
+            crop_window_w = search_roi_w
+            crop_window_h = int(np.round(crop_window_w * required_image_size_reduced[1] / required_image_size_reduced[0]))
+        else:
+            crop_window_h = search_roi_h
+            crop_window_w = int(np.round(crop_window_h * required_image_size_reduced[0] / required_image_size_reduced[1]))
+        # make sure it's inside the image
+        crop_window_w, crop_window_h = _bbox_shrink_to_fit(crop_window_w, crop_window_h, full_img_size)
+        rescale = required_image_size_reduced[0] / crop_window_w
+
+    cx = search_roi_xtl + search_roi_w / 2
+    cy = search_roi_ytl + search_roi_h / 2
+    crop_window_xtl = int(np.round(cx - crop_window_w / 2))
+    crop_window_ytl = int(np.round(cy - crop_window_h / 2))
+    crop_window_xtl = min(max(0, crop_window_xtl), full_img_size[0] - crop_window_w)
+    crop_window_ytl = min(max(0, crop_window_ytl), full_img_size[1] - crop_window_h)
+
+    crop_bbox = [crop_window_xtl, crop_window_ytl, crop_window_w, crop_window_h]
+    rescale = rescale * required_to_full_rescale
+
+    assert (crop_bbox[0] >= 0 and crop_bbox[0] + crop_bbox[2] - 1 <= full_img_size[0] - 1)
+    assert (crop_bbox[1] >= 0 and crop_bbox[1] + crop_bbox[3] - 1 <= full_img_size[1] - 1)
+
+    return crop_bbox, rescale
+
+
+def _img_crop_resize(img, crop_bbox, required_image_size):
+
+    if len(img.shape) == 3:
+        img_crop = img[crop_bbox[1]: crop_bbox[1] + crop_bbox[3],
+        crop_bbox[0]: crop_bbox[0] + crop_bbox[2], :]
+    elif len(img.shape) == 2:
+        img_crop = img[crop_bbox[1]: crop_bbox[1] + crop_bbox[3],
+        crop_bbox[0]: crop_bbox[0] + crop_bbox[2]]
+    else:
+        raise Exception('invalid image shape!')
+    if crop_bbox[2] != required_image_size[0] or crop_bbox[3] != required_image_size[1]:
+        img_crop = cv2.resize(img_crop, required_image_size)
+    return img_crop
+
+
+def _bbox_shrink_to_fit(bbox_w, bbox_h, image_size):
+    """
+    shrink bbox to fit a reference image size
+    keep aspect ratio
+    :param bbox: [xtl, ytl, w, h]
+    :param image_size:  [width, height]
+    :return: bbox_shrinked
+    """
+
+    # shrink search ROI to fit the full image if needed
+    scale_x = bbox_w / image_size[0]
+    scale_y = bbox_h / image_size[1]
+    scale_resize = max(scale_x, scale_y)
+    if scale_resize > 1:
+        bbox_w_shrink = int(np.floor(bbox_w / scale_resize))
+        bbox_h_shrink = int(np.floor(bbox_h / scale_resize))
+    else:
+        bbox_w_shrink = int(np.floor(bbox_w))
+        bbox_h_shrink = int(np.floor(bbox_h))
+
+    return bbox_w_shrink, bbox_h_shrink
+
+
 class CocoToUltralyticsYoloExporter:
     def __init__(self, input_coco_dataset_json):
         """
@@ -115,12 +523,8 @@ class CocoToUltralyticsYoloExporter:
         output_images_val_folder.mkdir(parents=True, exist_ok=True)
         output_images_test_folder = output_images_folder / 'test'
         output_images_test_folder.mkdir(parents=True, exist_ok=True)
+
         # output annotation files
-        # output_annotations_folder = pathlib.Path(output_dataset_root_folder) / 'annotations'
-        # output_annotations_folder.mkdir(parents=True, exist_ok=True)
-        # output_annotations_train_file = output_annotations_folder / 'instances_train.json'
-        # output_annotations_val_file = output_annotations_folder / 'instances_val.json'
-        # output_annotations_test_file = output_annotations_folder / 'instances_test.json'
         output_annotations_folder = pathlib.Path(output_dataset_root_folder) / 'labels'
         output_annotations_folder.mkdir(parents=True, exist_ok=True)
         output_annotations_train_folder = output_annotations_folder / 'train'
@@ -159,7 +563,46 @@ class CocoToUltralyticsYoloExporter:
         #     assert cat_id3 == cat_id, 'category id missmatch!'
 
         #---------------------- resize / crop dataset -----------------------
-        # this is specific to our application!
+        if augment_crop is not None:
+            # this is specific to our application!
+            image_ids = self.coco_dataset.get_image_ids()
+
+            for image_id in image_ids:
+                # get image
+                img_data = self.coco_dataset.get_image(image_id=image_id)
+                img_size = (int(img_data['width']), int(img_data['height']))
+                img_path = str(self.coco_dataset.images_folder / img_data['file_name'])
+                img = cv2.imread(img_path)
+                # get annotations
+                img_annotations_dict = self.coco_dataset.get_image_annotations(image_id)
+                cnt = 0
+                for j in range(augment_crop["num_samples"]):
+                    cnt += 1
+                    ann_bboxes = [x['bbox'] for x in img_annotations_dict]
+                    rescale_factor, crop_bbox = self._get_random_crop_resize(img_size, ann_bboxes, augment_crop["image_size"])
+                    xtl,ytl, w, h = crop_bbox
+                    img_tmp = img[xtl:xtl+w, ytl:ytl+h]
+                    rescale = rescale_factor != 1
+                    if rescale:
+                        img_tmp = cv2.resize(img_tmp, augment_crop["image_size"])
+                    # save new image
+                    new_img_path = img_path.split('.')[0] + '_rszcrp{}'.format(cnt) + img_path.split('.')[1]
+                    cv2.imwrite(new_img_path, img_tmp)
+                    # add image
+                    img_id_new = self.coco_dataset.add_image(new_img_path, augment_crop["image_size"], metadata=img_data['metadata'])
+                    # add annotations
+                    for ann in img_annotations_dict:
+                        # convert annotation bbox to cropped-resized image
+                        if rescale:
+                            wi = ann['bbox'][2] * augment_crop["image_size"][0] / w
+                            hi= ann['bbox'][3] * augment_crop["image_size"][1] / h
+                        else:
+                            wi, hi = [w, h]
+                        # add
+                        ann_bbox = (ann['bbox'][0] - xtl, ann['bbox'][1] - ytl, wi, hi)
+                        d['dataset'].add_annotation(img_id_new, category_id=ann['category_id'], bbox=ann_bbox,
+                                                    area=ann['area'], iscrowd=ann['iscrowd'], metadata=ann['metadata'])
+
 
         #---------------------- balance dataset -----------------------
         self._balance_background(background_balance, verbose=True)
@@ -211,7 +654,7 @@ class CocoToUltralyticsYoloExporter:
                                                  area=ann['area'], iscrowd=ann['iscrowd'], metadata=ann['metadata'])
                         ann_count += 1
                 else:
-                    raise Exception('not implemented yet')
+                    # raise Exception('not implemented yet')
                     cnt = 0
                     img = cv2.imread(img_path)
                     for j in range(augment_crop["num_samples"]):
@@ -499,65 +942,6 @@ class CocoToUltralyticsYoloExporter:
                     num_images, num_background_images, num_annotated_images, num_annotations, new_background_ratio))
 
 
-def generate_system_mimic_crop(image, bboxes, target_idx=0, base_size=256):
-    img_h, img_w = image.shape[:2]
-
-    # 1. Get the actual target location (center)
-    # YOLO format: [class, xc, yc, w, h] normalized
-    target = bboxes[target_idx]
-    true_xc, true_yc = target[1] * img_w, target[2] * img_h
-
-    # 2. Simulate Estimator Error (Shift)
-    # Adjust 'sigma' to match your real-world covariance
-    sigma = 40
-    est_xc = true_xc + np.random.normal(0, sigma)
-    est_yc = true_yc + np.random.normal(0, sigma)
-
-    # 3. Simulate Covariance/Uncertainty (Scale)
-    # Sometimes we take a 256 crop, sometimes larger (up to 480)
-    capture_size = int(np.random.uniform(base_size, 480))
-
-    # 4. Calculate Crop Coordinates
-    x1 = int(est_xc - capture_size / 2)
-    y1 = int(est_yc - capture_size / 2)
-
-    # Ensure the crop contains the target (Requirement #3 & #4)
-    # If the simulated error pushed the target out, clip it
-    tw, th = target[3] * img_w, target[4] * img_h
-    x1 = max(min(x1, int(true_xc - tw / 2)), int(true_xc + tw / 2 - capture_size))
-    y1 = max(min(y1, int(true_yc - th / 2)), int(true_yc + th / 2 - capture_size))
-
-    # Clamp to image boundaries
-    x1 = max(0, min(x1, img_w - capture_size))
-    y1 = max(0, min(y1, img_h - capture_size))
-
-    # 5. Execute Crop and Resize
-    crop = image[y1:y1 + capture_size, x1:x1 + capture_size]
-    final_img = cv2.resize(crop, (base_size, base_size))
-
-    # 6. Update Labels
-    # We must account for the shift (x1, y1) AND the scaling factor
-    scale = base_size / capture_size
-    new_bboxes = []
-    for b in bboxes:
-        bx_px = b[1] * img_w
-        by_px = b[2] * img_h
-        bw_px = b[3] * img_w
-        bh_px = b[4] * img_h
-
-        # New center relative to crop and then scaled
-        nx = (bx_px - x1) * scale / base_size
-        ny = (by_px - y1) * scale / base_size
-        nw = (bw_px * scale) / base_size
-        nh = (bh_px * scale) / base_size
-
-        # Only keep if the object is still mostly in the frame
-        if 0 < nx < 1 and 0 < ny < 1:
-            new_bboxes.append([b[0], nx, ny, nw, nh])
-
-    return final_img, new_bboxes
-
-
 if __name__ == '__main__':
 
     # base_dataset_folder = '/home/roee/Projects/datasets/interceptor_drone/deep_learning_uav_detection_dataset/dataset_20251211'
@@ -580,8 +964,8 @@ if __name__ == '__main__':
     input_coco_dataset_json = os.path.join(base_dataset_folder, 'merged_dataset_raw/annotations/coco_dataset.json')
     output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260429_bg_balanced')
     split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
-    # augment_crop = {'image_size': (256, 256), 'num_samples': 4}
-    augment_crop = None
+    augment_crop = {'image_size': (256, 256), 'num_samples': 4}
+    # augment_crop = None
     background_balance = {'ratio': 0.15, 'method': 'dilute'}
 
 
@@ -592,7 +976,9 @@ if __name__ == '__main__':
     raw_dataset = coco_dataset_manager.CocoDatasetManager()
     raw_dataset.load_coco(input_coco_dataset_json, verify_image_files=False)
 
+
+
     # export dataset
     c2y_exporter = CocoToUltralyticsYoloExporter(input_coco_dataset_json)
     c2y_exporter.export(output_dataset_root_folder, split_ratios=split_ratios,
-                        augment_crop=None, background_balance=background_balance)
+                        augment_crop=augment_crop, background_balance=background_balance)

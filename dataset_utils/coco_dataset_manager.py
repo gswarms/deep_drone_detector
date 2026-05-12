@@ -826,6 +826,26 @@ class CocoDatasetManager:
                     self.add_annotation(image_id, cat_id, [x, y, w, h])
 
 
+    def show_img(self, image_id, plot_annotations=True, color=(0, 255, 0), thickness=1):
+        import cv2
+        img_data = self.get_image(image_id)
+        ann_data = self.get_image_annotations(image_id)
+
+        # get image
+        img_file_name = (self.images_folder / pathlib.Path(img_data['file_name'])).resolve()
+        img = cv2.imread(img_file_name)
+
+        # plot annotation
+        if plot_annotations:
+            for ann in ann_data:
+                cv2.rectangle(
+                    img,
+                    (ann['bbox'][0], ann['bbox'][1]),  # top-left
+                    (ann['bbox'][0] + ann['bbox'][2], ann['bbox'][1] + ann['bbox'][3]),  # bottom-right
+                    color, thickness)
+        return img
+
+
 def _bbox_iou(box1, box2):
     """
     Compute IoU between two boxes.
