@@ -1,3 +1,4 @@
+import os
 import copy
 import cv2
 import numpy as np
@@ -66,7 +67,7 @@ def get_random_crop_resize_test(draw_crop=False):
                 cv2.imshow("annotation {}".format(ann_bbox), img_i)
                 cv2.waitKey(10)
 
-                img_crop = cdeft._img_crop_resize(img_i, crop_bbox, rescale)
+                img_crop = cdeft._img_crop_resize(img_i, crop_bbox, required_image_size)
 
                 # re - Draw crop annotation
                 ann_crop = [ann_bbox[0] - crop_bbox[0], ann_bbox[1] - crop_bbox[1], ann_bbox[2], ann_bbox[3]]
@@ -90,15 +91,18 @@ def get_random_crop_resize_test(draw_crop=False):
     cv2.destroyAllWindows()
 
 def images_resize_crop_test():
-    input_coco_dataset_json = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/example_dataset/refined_dataset/annotations/coco_dataset.json'
+    dataset_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/example_dataset/refined_dataset'
+    input_coco_dataset_json = os.path.join(dataset_folder, 'annotations/coco_dataset.json')
     required_image_size = [256, 256]
     num_resizes = 5
     remove_original_annotated_images = False
     plot = True
+    log_file = os.path.join(dataset_folder, 'refinery_log.txt')
 
-    cdtr = cdeft.CocoDatasetTrainingRefinery(input_coco_dataset_json, verbose=True)
+    cdtr = cdeft.CocoDatasetRefinery(input_coco_dataset_json, log_file=log_file, verbose=True)
     cdtr.images_resize_crop(required_image_size, num_resizes, remove_original_annotated_images,
-                           search_roi_scale_ratio=1, search_roi_min_width=50, search_roi_uncertainty_scale=(1, 5))
+                           search_roi_scale_ratio=1, search_roi_min_width=50, search_roi_uncertainty_scale=(1, 5),
+                           background_crop_scale=(1.5, 2.5))
 
     if plot:
         image_ids = cdtr.coco_dataset.get_image_ids()
