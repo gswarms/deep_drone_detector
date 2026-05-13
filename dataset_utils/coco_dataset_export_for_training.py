@@ -9,11 +9,6 @@ import numpy as np
 import yaml
 import coco_dataset_manager
 
-# TODO: use new coco dataset manager
-# TODO: balance by bbox size
-# TODO: balance by annotted / non-annotated
-# TODO: balance by images metadata
-# TODO: balance by annotations metadata
 
 
 class CocoDatasetRefinery:
@@ -22,7 +17,15 @@ class CocoDatasetRefinery:
         refine dataset for NN model training:
         - balance background / annotated images
         - resize/crop all images
-        - TODO: add more options
+        - TODO: add more options:
+                - balance by bbox size
+                - balance by images metadata
+                - balance by annotations metadata
+
+        *** WARNING: the refinery does not preserve the dataset!
+                     it may delete / duplicates image files and annotations
+                     Therefore it is best to keep a separate raw copy of the dataset,
+                     and use the refinery on a different copy!!!
 
         :param input_coco_dataset_json: json file for input coco dataset
         :param log_file: path to log file

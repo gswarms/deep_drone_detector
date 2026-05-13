@@ -1,4 +1,5 @@
 import os
+import shutil
 import copy
 import cv2
 import numpy as np
@@ -26,7 +27,7 @@ def get_random_crop_resize_test(draw_crop=False):
     n = 5
 
     # Load image
-    img_file = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/scenarios_vis/20260506_reshafim/20260506_1043_32/20260506_1045_00/camera_20260506_1045_extracted/images/029.png'
+    img_file = './example_dataset/raw_dataset/images/0000394.png'
     img = cv2.imread(img_file)
 
     for ann_bbox in annotation_bbox:
@@ -91,7 +92,13 @@ def get_random_crop_resize_test(draw_crop=False):
     cv2.destroyAllWindows()
 
 def images_resize_crop_test():
-    dataset_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/example_dataset/refined_dataset'
+    # copy './example_dataset/raw_dataset' to './example_dataset/refined_dataset'
+    source_dataset_folder = './example_dataset/raw_dataset'
+    dataset_folder = './example_dataset/refined_dataset'
+    if os.path.isdir(dataset_folder):
+        shutil.rmtree(dataset_folder)
+    shutil.copytreedd(source_dataset_folder, dataset_folder)
+
     input_coco_dataset_json = os.path.join(dataset_folder, 'annotations/coco_dataset.json')
     required_image_size = [256, 256]
     num_resizes = 5

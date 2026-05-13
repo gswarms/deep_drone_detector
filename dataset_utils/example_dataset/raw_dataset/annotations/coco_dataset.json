@@ -1,0 +1,387 @@
+{
+    "images": [
+        {
+            "id": 388,
+            "file_name": "0000388.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 389,
+            "file_name": "0000389.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 390,
+            "file_name": "0000390.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 391,
+            "file_name": "0000391.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 392,
+            "file_name": "0000392.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 393,
+            "file_name": "0000393.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 394,
+            "file_name": "0000394.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 395,
+            "file_name": "0000395.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 396,
+            "file_name": "0000396.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 397,
+            "file_name": "0000397.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 398,
+            "file_name": "0000398.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251214_132707",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "haze",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        },
+        {
+            "id": 399,
+            "file_name": "0000399.png",
+            "width": 640,
+            "height": 480,
+            "metadata": {
+                "datetime": "20251208_152358",
+                "location": "reshafim",
+                "camera": "arducam_IMX708_B0310",
+                "clouds": "mostly_clear",
+                "visibility": "good",
+                "daytime": "noon",
+                "lighting": "good",
+                "view_direction": "north",
+                "sun_direction": "back"
+            }
+        }
+    ],
+    "annotations": [
+        {
+            "id": 92,
+            "image_id": 397,
+            "category_id": 0,
+            "bbox": [
+                384,
+                158,
+                255,
+                173
+            ],
+            "segmentation": [],
+            "area": 44288,
+            "iscrowd": 0,
+            "metadata": {
+                "subcategory": "fms_1800mm_ranger_green"
+            }
+        },
+        {
+            "id": 93,
+            "image_id": 396,
+            "category_id": 0,
+            "bbox": [
+                462,
+                259,
+                177,
+                83
+            ],
+            "segmentation": [],
+            "area": 14940,
+            "iscrowd": 0,
+            "metadata": {
+                "subcategory": "fms_1800mm_ranger_green"
+            }
+        },
+        {
+            "id": 94,
+            "image_id": 395,
+            "category_id": 0,
+            "bbox": [
+                497,
+                293,
+                142,
+                54
+            ],
+            "segmentation": [],
+            "area": 7830,
+            "iscrowd": 0,
+            "metadata": {
+                "subcategory": "fms_1800mm_ranger_green"
+            }
+        },
+        {
+            "id": 95,
+            "image_id": 394,
+            "category_id": 0,
+            "bbox": [
+                512,
+                310,
+                127,
+                42
+            ],
+            "segmentation": [],
+            "area": 5376,
+            "iscrowd": 0,
+            "metadata": {
+                "subcategory": "fms_1800mm_ranger_green"
+            }
+        },
+        {
+            "id": 96,
+            "image_id": 393,
+            "category_id": 0,
+            "bbox": [
+                508,
+                318,
+                108,
+                32
+            ],
+            "segmentation": [],
+            "area": 3456,
+            "iscrowd": 0,
+            "metadata": {
+                "subcategory": "fms_1800mm_ranger_green"
+            }
+        },
+        {
+            "id": 97,
+            "image_id": 392,
+            "category_id": 0,
+            "bbox": [
+                500,
+                318,
+                88,
+                25
+            ],
+            "segmentation": [],
+            "area": 2200,
+            "iscrowd": 0,
+            "metadata": {
+                "subcategory": "fms_1800mm_ranger_green"
+            }
+        },
+        {
+            "id": 98,
+            "image_id": 391,
+            "category_id": 0,
+            "bbox": [
+                500,
+                321,
+                76,
+                22
+            ],
+            "segmentation": [],
+            "area": 1672,
+            "iscrowd": 0,
+            "metadata": {
+                "subcategory": "fms_1800mm_ranger_green"
+            }
+        },
+        {
+            "id": 99,
+            "image_id": 390,
+            "category_id": 0,
+            "bbox": [
+                505,
+                323,
+                66,
+                20
+            ],
+            "segmentation": [],
+            "area": 1320,
+            "iscrowd": 0,
+            "metadata": {
+                "subcategory": "fms_1800mm_ranger_green"
+            }
+        },
+        {
+            "id": 100,
+            "image_id": 389,
+            "category_id": 0,
+            "bbox": [
+                505,
+                324,
+                59,
+                19
+            ],
+            "segmentation": [],
+            "area": 1121,
+            "iscrowd": 0,
+            "metadata": {
+                "subcategory": "fms_1800mm_ranger_green"
+            }
+        },
+        {
+            "id": 101,
+            "image_id": 388,
+            "category_id": 0,
+            "bbox": [
+                492,
+                319,
+                54,
+                15
+            ],
+            "segmentation": [],
+            "area": 810,
+            "iscrowd": 0,
+            "metadata": {
+                "subcategory": "fms_1800mm_ranger_green"
+            }
+        }
+    ],
+    "categories": [
+        {
+            "id": 0,
+            "name": "rc-plane",
+            "supercategory": ""
+        }
+    ]
+}
