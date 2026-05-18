@@ -455,13 +455,33 @@ class CocoDatasetManager:
 
         img_id = self._next_image_id
         self._next_image_id += 1
-        self.df_images.loc[len(self.df_images)] = {
-            "id": img_id,
-            "file_name": str(file_path_relative),
-            "width": width,
-            "height": height,
-            "metadata": metadata or {}
+
+        new_data = {
+            "id": [img_id],
+            "file_name": [str(file_path_relative)],
+            "width": [width],
+            "height": [height],
+            "metadata": [metadata or {}]
         }
+        # Create a temporary 1-row DF with correct types
+        new_row_df = pd.DataFrame(new_data).astype({
+            "id": self.df_images["id"].dtype.type,
+            "file_name": self.df_images["file_name"].dtype.type,
+            "width": self.df_images["width"].dtype.type,
+            "height": self.df_images["height"].dtype.type,
+            "metadata": self.df_images["metadata"].dtype.type
+        })
+        # Append it
+        self.df_images = pd.concat([self.df_images, new_row_df], ignore_index=True)
+
+
+        # self.df_images.loc[len(self.df_images)] = {
+        #     "id": img_id,
+        #     "file_name": str(file_path_relative),
+        #     "width": width,
+        #     "height": height,
+        #     "metadata": metadata or {}
+        # }
 
         return img_id
 
@@ -521,7 +541,11 @@ class CocoDatasetManager:
             self.df_images.loc[self.df_images["id"] == image_id, "metadata"] = [metadata]
 
     def get_image(self, image_id: int) -> dict:
-        row = self.df_images[self.df_images["id"] == image_id]
+
+        # keep types consistent
+        id_dtype = self.df_images["id"].dtype.type
+
+        row = self.df_images[self.df_images["id"] == id_dtype(image_id)]
         if row.empty:
             return None
         self._image_get_id = row.iloc[0]["id"]
@@ -583,16 +607,40 @@ class CocoDatasetManager:
         ann_id = self._next_annotation_id
         self._next_annotation_id += 1
         area = area if area is not None else bbox[2] * bbox[3]
-        self.df_annotations.loc[len(self.df_annotations)] = {
-            'id': ann_id,
-            'image_id': image_id,
-            'category_id': category_id,
-            'bbox': bbox,
-            'segmentation': segmentation or [],
-            'area': area,
-            'iscrowd': iscrowd,
-            'metadata': metadata or {}
+
+        new_data = {
+            'id': [ann_id],
+            'image_id': [image_id],
+            'category_id': [category_id],
+            'bbox': [bbox],
+            'segmentation': [segmentation or []],
+            'area': [area],
+            'iscrowd': [iscrowd],
+            'metadata': [metadata or {}]
         }
+        # Create a temporary 1-row DF with correct types
+        new_row_df = pd.DataFrame(new_data).astype({
+            "id": self.df_annotations["id"].dtype.type,
+            "image_id": self.df_annotations["image_id"].dtype.type,
+            "category_id": self.df_annotations["category_id"].dtype.type,
+            "bbox": self.df_annotations["bbox"].dtype.type,
+            "area": self.df_annotations["area"].dtype.type,
+            "iscrowd": self.df_annotations["iscrowd"].dtype.type,
+            "metadata": self.df_annotations["metadata"].dtype.type
+        })
+        # Append it
+        self.df_annotations = pd.concat([self.df_annotations, new_row_df], ignore_index=True)
+
+        # self.df_annotations.loc[len(self.df_annotations)] = {
+        #     'id': ann_id,
+        #     'image_id': image_id,
+        #     'category_id': category_id,
+        #     'bbox': bbox,
+        #     'segmentation': segmentation or [],
+        #     'area': area,
+        #     'iscrowd': iscrowd,
+        #     'metadata': metadata or {}
+        # }
         return ann_id
 
     def remove_annotation(self, annotation_id: int):
@@ -610,7 +658,11 @@ class CocoDatasetManager:
             raise Exception('annotation id {} does not exist!'.format(annotation_id))
 
     def get_annotation(self, annotation_id: int) -> dict:
-        row = self.df_annotations[self.df_annotations["id"] == annotation_id]
+
+        # keep types consistent
+        id_dtype = self.df_annotations["id"].dtype.type
+
+        row = self.df_annotations[self.df_annotations["id"] == id_dtype(annotation_id)]
         if row.empty:
             return None
         return row.iloc[0].to_dict()
