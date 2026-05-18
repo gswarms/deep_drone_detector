@@ -67,7 +67,7 @@ class CocoDatasetRefinery:
         """
 
         # handle inputs
-        if background_ratio < 0 or background_ratio > 0:
+        if background_ratio < 0 or background_ratio > 1:
             raise Exception('background_ratio must be between 0 and 1')
         if balance_method not in ['dilute', 'expand']:
             raise Exception('balance_method must be `dilute` or `expand`')
@@ -94,8 +94,8 @@ class CocoDatasetRefinery:
         self._log('   - {} annotations'.format(num_annotations))
         self._log('   - background ratio = {}'.format(background_ratio_curr))
 
-        if background_ratio['method'] == 'dilute':
-            if background_ratio_curr > background_ratio['ratio']:
+        if balance_method == 'dilute':
+            if background_ratio_curr > background_ratio:
                 # dilute background images
 
                 # 1. calc number of images to remove
@@ -105,7 +105,7 @@ class CocoDatasetRefinery:
                 # x / (na+x) = r
                 # gives:
                 # x = r * na / (1-r)
-                n_required_background_images = int(np.round(background_ratio['ratio'] * num_annotated_images / (1 - background_ratio['ratio'])))
+                n_required_background_images = int(np.round(background_ratio * num_annotated_images / (1 - background_ratio)))
 
                 # 2. remove images
                 n_remove_images = num_background_images - n_required_background_images
@@ -116,7 +116,7 @@ class CocoDatasetRefinery:
                     # remove image from dataset
                     self.coco_dataset.remove_image(img_id)
                     # delete image file
-                    img_file = pathlib.Path(img_data["file_name"])
+                    img_file = self.coco_dataset.images_folder / pathlib.Path(img_data["file_name"])
                     if img_file.exists():
                         img_file.unlink()
                     else:
@@ -131,7 +131,7 @@ class CocoDatasetRefinery:
                 # x / (x+nb) = (1-r)
                 # gives:
                 # x = nb * (1-r)/r
-                n_required_annotated_images = int(np.round(num_background_images * (1 - background_ratio['ratio']) / background_ratio['ratio'] ))
+                n_required_annotated_images = int(np.round(num_background_images * (1 - background_ratio) / background_ratio ))
 
                 # 2. remove images
                 n_remove_images = num_annotated_images - n_required_annotated_images
@@ -142,14 +142,14 @@ class CocoDatasetRefinery:
                     # remove image from dataset
                     self.coco_dataset.remove_image(img_id)
                     # delete image file
-                    img_file = pathlib.Path(img_data["file_name"])
+                    img_file = self.coco_dataset.images_folder / pathlib.Path(img_data["file_name"])
                     if img_file.exists():
                         img_file.unlink()
                     else:
                         raise Exception('unable to remove image file: {} not found!'.format(str(img_file)))
 
-        elif background_ratio['method'] == 'expand':
-            if background_ratio_curr < background_ratio['ratio']:
+        elif balance_method == 'expand':
+            if background_ratio_curr < background_ratio:
                 # expand background images
                 # 1. calc number of images to duplicate
                 # na - number of annotated images (given)
@@ -158,7 +158,7 @@ class CocoDatasetRefinery:
                 # x / (na+x) = r
                 # gives:
                 # x = r * na / (1-r)
-                n_required_background_images = int(np.round(background_ratio['ratio'] * num_annotated_images / (1 - background_ratio['ratio'])))
+                n_required_background_images = int(np.round(background_ratio * num_annotated_images / (1 - background_ratio)))
 
                 # 2. duplicate images
                 n_add_images = n_required_background_images - len(image_ids_background)
@@ -175,7 +175,7 @@ class CocoDatasetRefinery:
                 # x / (x+nb) = (1-r)
                 # gives:
                 # x = nb * (1-r)/r
-                n_required_annotated_images = int(np.round(num_background_images * (1 - background_ratio['ratio']) / background_ratio['ratio'] ))
+                n_required_annotated_images = int(np.round(num_background_images * (1 - background_ratio) / background_ratio ))
 
                 # 2. duplicate images
                 n_add_images = n_required_annotated_images - len(image_ids_annotated)
@@ -184,7 +184,7 @@ class CocoDatasetRefinery:
                 self.coco_dataset.duplicate_image(add_image_ids)
 
         else:
-            raise Exception('invalid background_ratio method!')
+            raise Exception('invalid balance_method!')
 
         self.coco_dataset.save_coco()
 
@@ -233,8 +233,10 @@ class CocoDatasetRefinery:
         self._log('   - search_roi_uncertainty_scale = {}'.format(search_roi_uncertainty_scale))
         self._log('   - background_crop_scale = {}'.format(background_crop_scale))
 
-        image_ids = self.coco_dataset.df_images['id']  # unique
-        for img_id in image_ids:
+        image_ids = copy.deepcopy(self.coco_dataset.get_image_ids())
+        for i, img_id in enumerate(image_ids):
+            print(f"\rProgress: {i}/{len(image_ids)}", end="")
+
             img_data = self.coco_dataset.get_image(img_id)
             ann_data = self.coco_dataset.get_image_annotations(img_id)
 
@@ -303,6 +305,8 @@ class CocoDatasetRefinery:
                         new_img_id = self.coco_dataset.add_image(str(new_img_file_name),
                                                                  (img_crop.shape[1], img_crop.shape[0]),
                                                                  img_data['metadata'])
+        print('\n')
+
 
         self.coco_dataset.save_coco()
 
@@ -394,7 +398,7 @@ def _get_random_crop_resize(full_img_size, annotation_bbox, required_image_size,
         required_image_size_reduced = required_image_size
 
     # randomly select search ROI size
-    search_roi_uncertainty_scale_res = search_roi_uncertainty_scale[0] + np.random.rand(1) * (search_roi_uncertainty_scale[1] - search_roi_uncertainty_scale[0])
+    search_roi_uncertainty_scale_res = search_roi_uncertainty_scale[0] + np.random.rand(1)[0] * (search_roi_uncertainty_scale[1] - search_roi_uncertainty_scale[0])
     search_roi_w = max(annotation_bbox[2] * search_roi_uncertainty_scale_res, search_roi_min_width)
     search_roi_h = search_roi_w / search_roi_scale_ratio
 
@@ -767,16 +771,22 @@ if __name__ == '__main__':
     # augment_crop = None
     # background_balance = {'ratio': 0.15, 'method': 'dilute'}
 
-    base_dataset_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/dataset_20260429'
+    # base_dataset_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/dataset_20260429'
+    # input_coco_dataset_json = os.path.join(base_dataset_folder, 'merged_dataset_raw/annotations/coco_dataset.json')
+    # output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260429_bg_balanced')
+    # split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
+
+    base_dataset_folder = '/home/roee/Projects/datasets/uav_vis_dataset/dataset_20260513'
     input_coco_dataset_json = os.path.join(base_dataset_folder, 'merged_dataset_raw/annotations/coco_dataset.json')
-    output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260429_bg_balanced')
+    output_dataset_root_folder = os.path.join(base_dataset_folder, 'ultalytics_yolo_20260513')
     split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
 
     seed = 42
     random.seed(seed)
 
     # ----------------- refine dataset ---------------------------
-    refinery = CocoDatasetRefinery(input_coco_dataset_json)
+    refinery_log_file = os.path.join(base_dataset_folder, 'dataset_refinery_log.txt')
+    refinery = CocoDatasetRefinery(input_coco_dataset_json, refinery_log_file)
 
     # we have too many background images.
     # balance background ratio to 0.15 by diluting background images
@@ -784,7 +794,7 @@ if __name__ == '__main__':
 
     # resize images to 256x256 by random cropping
     refinery.images_resize_crop(required_image_size=(256, 256),
-                                num_resizes=5,
+                                num_resizes=3,
                                 remove_original_annotated_images=False,
                                 search_roi_scale_ratio=1,
                                 search_roi_min_width=50,
@@ -794,7 +804,7 @@ if __name__ == '__main__':
     # ---------------- export to ultralytics YOLO format ---------------------
     # load dataset
     raw_dataset = coco_dataset_manager.CocoDatasetManager()
-    raw_dataset.load_coco(input_coco_dataset_json, verify_image_files=False)
+    raw_dataset.load_coco(input_coco_dataset_json, verify_image_files=True)
 
     # export dataset
     c2y_exporter = CocoToUltralyticsYoloExporter(input_coco_dataset_json)
