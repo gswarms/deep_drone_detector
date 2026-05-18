@@ -456,9 +456,9 @@ if __name__ == '__main__':
     # dataset_root_folder = os.path.join(exp_folder, '20260506_1406_14/20260506_1409_48/camera_20260506_1409_extracted')
     # dataset_root_folder = os.path.join(exp_folder, '20260506_1422_08/20260506_1423_07/camera_20260506_1423_extracted')
     # dataset_root_folder = os.path.join(exp_folder, '20260506_1445_38/20260506_1446_33/camera_20260506_1446_extracted')
-    # dataset_root_folder = os.path.join(exp_folder, '20260506_1445_38/20260506_1447_34/camera_20260506_1447_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260506_1445_38/20260506_1447_34/camera_20260506_1447_extracted')  # redundant
     # dataset_root_folder = os.path.join(exp_folder, '20260506_1445_38/20260506_1448_32/camera_20260506_1448_extracted')
-    # dataset_root_folder = os.path.join(exp_folder, '20260506_1500_00/20260506_1500_24/camera_20260506_1500_extracted')
+    # dataset_root_folder = os.path.join(exp_folder, '20260506_1500_00/20260506_1500_24/camera_20260506_1500_extracted')  # redundant
     # dataset_root_folder = os.path.join(exp_folder, '20260506_1500_00/20260506_1501_48/camera_20260506_1501_extracted')
     dataset_root_folder = os.path.join(exp_folder, '20260506_1500_00/20260506_1503_32/camera_20260506_1503_extracted')
     metadata_yaml_file = os.path.join(dataset_root_folder, 'dataset_metadata.yaml')

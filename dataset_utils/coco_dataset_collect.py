@@ -111,9 +111,14 @@ if __name__ == '__main__':
     # merged_dataset_root_folder =  os.path.join(base_folder, 'dataset_20260330/merged_dataset_raw')
 
     # -------- dataset_20260429 -------
-    base_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/'
-    dataset_collect_file = os.path.join(base_folder, 'dataset_20260429/dataset_scenarios.yaml')
-    merged_dataset_root_folder =  os.path.join(base_folder, 'dataset_20260429/merged_dataset_raw')
+    # base_folder = '/home/roee/Projects/datasets/interceptor_drone/uav_detection_dataset/'
+    # dataset_collect_file = os.path.join(base_folder, 'dataset_20260429/dataset_scenarios.yaml')
+    # merged_dataset_root_folder =  os.path.join(base_folder, 'dataset_20260429/merged_dataset_raw')
+
+    # -------- dataset_20260513 -------
+    base_folder = '/home/roee/Projects/datasets/uav_vis_dataset/'
+    dataset_collect_file = os.path.join(base_folder, 'dataset_20260513/dataset_scenarios.yaml')
+    merged_dataset_root_folder =  os.path.join(base_folder, 'dataset_20260513/merged_dataset_raw')
 
     merge_dataset(dataset_collect_file, merged_dataset_root_folder)
 
